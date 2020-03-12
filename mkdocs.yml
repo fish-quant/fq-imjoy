@@ -1,0 +1,75 @@
+# Project information
+site_name: FISH-joy
+site_description: Analyze smFISH images in ImJoy
+site_author: Florian MUELLER
+site_url: https://muellerflorian.github.io/fish-joy/
+
+# Repository
+repo_name: GitHub
+repo_url: https://github.com/muellerflorian/fish-joy.git
+edit_uri: ""
+
+# Copyright
+copyright: 'Copyright &copy; 2019 Florian MUELLER, Arthur IMBERT'
+
+# Configuration
+theme:
+  name: 'material'
+  #name: mkdocs
+  # 404 page
+  static_templates:
+    - 404.html
+
+  # Don't include MkDocs' JavaScript
+  include_search_page: false
+  search_index_only: true
+
+  # Default values, taken from mkdocs_theme.yml
+  language: en
+  feature:
+    tabs: true
+  palette:
+    primary: indigo
+    accent: indigo
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: /img/icons8-eukaryotic-cells-filled-100.png
+  logo:
+    icon: wb_sunny
+
+# Customization
+extra:
+  social:
+    - type: github-alt
+      link: https://github.com/fish-quant
+
+# MD extension
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.tasklist
+  - pymdownx.superfences
+  - pymdownx.tilde
+  - attr_list
+
+nav:
+    - Overview & Installation: index.md   # Needed for material theme but not for others
+    - ImJoy: tools-imjoy.md  
+    - Data: data.md
+    - FISH-quant:
+      - Overview: fq-overview.md
+      - Loading data: fq-load-data.md
+      - Spot detection: fq-spot-detection.md
+    - Support workflows:
+      - Split channels: fiji-split-channels.md     
+    - Advanced:
+      - Developer notes: developer-notes.md
+      - Licence: licence.md
+
+
+
+#theme:
+#  name: 'material'
