@@ -1,7 +1,14 @@
 
 # FISH-quant: RNA detection in smFISH images
-Python package to analyze smFISH images.
+In the repository, we provide ImJoy plugins with graphical user interfaces to faciliate the analysis 
+of smFISH images.
 
-Uses 
-* **bigfish**: Python code for analysis
-* **ImJoy**: graphical user interface
+Code is build on
+
+* **bigfish**: Python code performin the actual analysis.
+* **ImJoy**: graphical user interface and data visualization.
+  
+In the other **overview sections** below we describe
+
+* How to install the **setup ImJoy**. 
+* How to organize the **data**.

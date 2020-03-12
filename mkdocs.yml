@@ -56,13 +56,15 @@ markdown_extensions:
   - attr_list
 
 nav:
-    - Overview: index.md   # Needed for material theme but not for others
-    - ImJoy: 
-      - Summary: imjoy.md  
-      - What is ImJoy?: imjoy-overview.md  
-      - Jupyter for Python plugins: imjoy-jupyter.md
-    - Using FISH-quant:
-      - Data specification: data-specs.md
+    - Overview & Installation: index.md   # Needed for material theme but not for others
+    - ImJoy: tools-imjoy.md  
+    - Data: data.md
+    - FISH-quant:
+      - Overview: fq-overview.md
+      - Loading data: fq-load-data.md
+      - Spot detection: fq-spot-detection.md
+    - Support workflows:
+      - Split channels: fiji-split-channels.md     
     - Advanced:
       - Developer notes: developer-notes.md
       - Licence: licence.md
