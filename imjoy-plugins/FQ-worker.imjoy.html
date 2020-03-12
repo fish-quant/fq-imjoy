@@ -18,8 +18,8 @@ Python plugin performing analyze of smFISH images.
   "api_version": "0.1.7",
   "env": "",
   "permissions": [],
-  "requirements": { "stable":["pip: -U git+https://github.com/fish-quant/big-fish@master"],
-                    "dev": []},
+  "requirements": { "stable":["pip: -U git+https://github.com/fish-quant/big-fish@prepare_v1"],
+                    "dev": ["pip: --editable D:\\Documents\\code\\GitHub\\projects\\big-fish"]},
   "dependencies": [],
   "runnable": false
 }
@@ -45,15 +45,10 @@ if sys.platform == "darwin":
     import matplotlib
     matplotlib.use('PS')
 
-if api.TAG == 'dev':
-    sys.path.insert(0, str(Path(r'D:\Documents\code\GitHub\projects\big-fish')))
 api.log(' >>>> SYS PATH:')
 api.log(sys.path)
 
-import bigfish.stack as stack
-import bigfish.plot as plot
-import bigfish.detection as detection
-
+from bigfish import stack, plot, detection
 
 def create_folder(path_new):
     """
