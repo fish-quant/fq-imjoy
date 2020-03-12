@@ -64,7 +64,7 @@
     "w": 20,
     "h": 10
    },
-   "runnable": true,
+   "runnable": false,
    "uri": "imjoy-plugins\\FQ-image-viewer.imjoy.html"
   },
   {
@@ -92,9 +92,7 @@
     "stable": [
      "pip: -U git+https://github.com/fish-quant/big-fish@prepare_v1"
     ],
-    "dev": [
-     "pip: --editable D:\\Documents\\code\\GitHub\\projects\\big-fish@prepare_v1"
-    ]
+    "dev": []
    },
    "dependencies": [],
    "runnable": false,

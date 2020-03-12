@@ -255,7 +255,6 @@ Plugin renders the user-interface of FISH-quant.
     </div>
     <div class="column col-6">
         <button class="btn btn-primary" @click="btn_select_analysis_region">Select smaller region to test analysis</button>
-        <button class="btn btn-primary" @click="btn_save_settings">Save settings</button>
     </div>
   </div>
 </div>
@@ -393,27 +392,16 @@ Plugin renders the user-interface of FISH-quant.
 		</div> <!-- END: card body for detection -->
 	</div> <!-- END: card for detection -->
 
-	<!-- Card for GMM -->
-	<div class="card" style="margin-top: 5px">
-		<div class="card-header">
-			<div class="card-title h5">Decompose close RNAs in individual RNAs</div>
-			<div class="card-subtitle text-gray">Detect RNAS in filtered images.</div>
-		</div>
-		<div class="card-body">
-			<div id="graph_GMM" ></div>
-			<button class="btn btn-primary" @click="btn_detection_GMM">Perform GMM analysis</button>
-		</div> <!-- END: card body for GMM -->
-	</div> <!-- END: card for GMM -->
-
 	<!-- Card for batch processing -->
 	<div class="card" style="margin-top: 5px">
 		<div class="card-header">
-			<div class="card-title h5">Batch process all files</div>
-			<div class="card-subtitle text-gray">Specified settings will be used to process all files.</div>
+			<div class="card-title h5">Process file(s)</div>
+			<div class="card-subtitle text-gray">Specified settings will be used to process selected file or all files in folder.</div>
 		</div>
 		<div class="card-body">
-			<div id="graph_GMM" ></div>
+      <button class="btn btn-primary" @click="btn_detection_file">Analyze current image</button>
 			<button class="btn btn-primary" @click="btn_detection_batch">Launch batch processing</button>
+      <button class="btn btn-primary" @click="btn_save_settings">Save settings</button>
 		</div> <!-- END: card body for GMM -->
 	</div> <!-- END: card for GMM -->
 
@@ -632,6 +620,10 @@ class ImJoyPlugin {
           self.detection_batch()
         },
 
+        // Callback to plot detections detection
+        btn_detection_file: async function(){
+          self.detection_file()
+        },
 
       }
     })
@@ -802,10 +794,32 @@ class ImJoyPlugin {
 
   }
 
-  // Test thresholds for detection
+  // Detect current file
+  async detection_file() {
+
+    this.fq_worker.detection_file({
+
+                      // To scan folder and store results
+                      'channels': this.store.channels,
+                      'channel_selected': this.store.channel_selected,
+                      'reg_exp': this.store.reg_exp,
+                      'data_path': this.store.data_path,
+                      'output_path': this.store.output_path,
+                      'channel_selected': this.store.channel_selected,
+
+                      // Filter & detection
+                      'sigma': this.store.sigma,
+                      'minimum_distance': this.store.minimum_distance,
+                      'detection_threshold': this.store.detection_threshold,
+                      })
+  }
+
+
+  // Batch detection
   async detection_batch() {
 
     this.fq_worker.detection_batch({
+      
                       // To scan folder and store results
                       'channels': this.store.channels,
                       'reg_exp': this.store.reg_exp,
@@ -819,6 +833,9 @@ class ImJoyPlugin {
                       'detection_threshold': this.store.detection_threshold,
                       })
   }
+
+
+
 
   // Write settings to json file
   async save_settings() {
