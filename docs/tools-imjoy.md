@@ -7,14 +7,7 @@
 * Some of its main **features** are:
 
     1. Specific functionality is provided by **plugins**, which can be installed with simple links. Available 
-        plugins are listed in the plugin list on the left part of the interface. Plugins using Python require 
-        a Plugin engine to be executed. Installation and usasage is detailed below.  
-
-        !!! abstract "Quick summary for how to connect ImJoy to Jupyter engine"
-            1. Open **anaconda terminal**. 
-            2. **Activate environment**: `conda activate fq-imjoy`
-            3. **Start Jupyter engine**: `imjoy --jupyter`
-            4. **Connect** ImJoy to Jupyter Engine 🚀.
+        plugins are listed in the plugin list on the left part of the interface. Plugins using Python require a Plugin engine to be executed. Installation and usasage is detailed below.  
 
     2. ImJoy can have several **workspaces**. Each workspace can contain multiple plugins and is 
         dedicated to a specific data processing task. Workspaces can be selected from little puzzle 
