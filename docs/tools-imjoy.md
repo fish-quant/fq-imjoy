@@ -100,8 +100,7 @@ choose Python 3.7 and your operating system. You  can then use the annoconda pro
 
 We further recommend creating a **dedicated environment** to run code in this analysis package. 
 This guarantess that only necessary code is installed. 
-To create an environment called `fq-imjoy`, open an anaconda prompt and type. Note that you will also install Jupyter, which will allow to run Python plugins in ImJoy.
-Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`): 
+To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`): 
 
 ```
 conda create --name fq-imjoy python=3.7

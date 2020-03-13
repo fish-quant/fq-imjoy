@@ -127,7 +127,7 @@ class ImJoyPlugin():
 
     async def setup(self):
         api.log('FQ-worker plugin initialized.')
-        self.file_manager = await api.getFileManager(api.ENGINE_URL)
+        self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
         self.cwd = Path.cwd() 
   
     def run(self, ctx):
@@ -505,6 +505,8 @@ class ImJoyPlugin():
                         'sigma': tuple(config['sigma']),
                         'show_status': False
                         })
+        
+
 
         # Save results
         image_name = self.image_names[channel_selected]["image_name"]
@@ -514,7 +516,7 @@ class ImJoyPlugin():
         np.savetxt( file_save,
                     np.asarray(spots),
                     fmt='%i',
-                    header="Z;Y;X", delimiter=';', comments='')
+                    header="Z;Y;X", delimiter=',', comments='')
         api.log(f'\nFQ-worker [detection_image]: results saved as {file_save}')
 
         # Save settings for file
@@ -524,8 +526,7 @@ class ImJoyPlugin():
         config['image_identifier'] = self.image_names
 
         await self.save_settings(config)
-
-        api.showStatus('Batch processing finished!')
+        api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
 
 
     async def detection_batch(self,config):
@@ -591,7 +592,7 @@ class ImJoyPlugin():
             np.savetxt( file_save,
                         np.asarray(spots),
                         fmt='%i',
-                        header="Z;Y;X", delimiter=';', comments='')
+                        header="Z;Y;X", delimiter=',', comments='')
             api.log(f'\nFQ-worker [detection_batch]: results saved as {file_save}')
 
             # Save settings for file
