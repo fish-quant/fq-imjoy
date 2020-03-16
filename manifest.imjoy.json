@@ -90,7 +90,7 @@
    "permissions": [],
    "requirements": {
     "stable": [
-     "pip: -U git+https://github.com/fish-quant/big-fish@prepare_v1"
+     "pip: -U git+https://github.com/muellerflorian/big-fish@test-setup"
     ],
     "dev": []
    },
