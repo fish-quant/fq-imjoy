@@ -20,7 +20,7 @@
 ### Installing plugins
 We provide links to install ImJoy plugins for the different workflows. 
 
-If you press on the installation link, the ImJoy web app will open and display a
+If you press on the installation link, the ImJoy app will open and display a
 dialog asking if you want to install the specified plugin. To confirm, press 
 the `install` button. 
 
@@ -43,7 +43,7 @@ are available, you will see a corresponding symbol next to the plugin name.
 ## Running Python plugins 
 Most of the provided plugins use Python for data processing. To use these plugins, 
 you have to connect ImJoy to a Plugin engine. For this repository, we use **Jupyter notebooks** as 
-and engine, which can be installed via Miniconda (see section about Python Installation [below](#jupyter-for-imjoy)). 
+and engine, which can be installed via Miniconda (see section about Python Installation [below](#installing-python-for-imjoy)). 
 
 ### Connect Jupyter engine
 
