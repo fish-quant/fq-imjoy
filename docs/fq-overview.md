@@ -1,18 +1,23 @@
 
 ## Installation
-You can install FISH-quant with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-quant@stable&upgrade=1" target="_blank">**link.**</a>
+* If you use, FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-quant@stable&upgrade=1" target="_blank">**this link.**</a> 
+    
+    First time installation can take a few minutes, since several Python libraries are installed.
 
-This will not only install the **main plugin** `FISH-quant`, but also some additional plugins. 
-First time installation can take a few minutes, since the necessary Python libraries are collected.
+* Once installed, the plugin will be saved in the  **workspace `fq-main`** as described [here](tools-imjoy.md#opening-a-workspace).  
 
-The most important additionaln plugin that's installed is the `FQ-worker`. 
+In the ImJoy app, you have **main plugin** `FISH-quant`, as wells as several helper plugins. 
 
-![fq-plugins.png](img/fq-plugins.png){: style="width:300px"}
+!!! info "The most important additionaln plugin that's installed is the `FQ-worker`."
+     
 
-This **Python plugin** performs the actual data analysis, and 
-runs on a Juypter engine, as described in the [installation instructions](tools-imjoy.md#connect-jupyter-engine). 
-So when using FISH-quant, you have to connect ImJoy to Jupyter and make sure that the FQ-worker is running on 
-this engine. 
+    ![fq-plugins.png](img/fq-plugins.png){: style="width:300px"}
+
+    This **Python plugin** performs the actual data analysis, and 
+    runs on a Juypter engine, as described in the [installation instructions](tools-imjoy.md#connect-jupyter-engine). 
+
+    So when using FISH-quant, you have to connect ImJoy to a Jupyter engine and make sure that the FQ-worker is running on 
+    this engine. 
 
 
 ## General usage
