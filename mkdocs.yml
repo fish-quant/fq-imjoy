@@ -1,12 +1,12 @@
 # Project information
-site_name: FISH-joy
+site_name: FISH-quant
 site_description: Analyze smFISH images in ImJoy
-site_author: Florian MUELLER
-site_url: https://muellerflorian.github.io/fish-joy/
+site_author: Florian MUELLER, Arthur IMBERT
+site_url: https://github.com/fish-quant/fq-imjoy/
 
 # Repository
 repo_name: GitHub
-repo_url: https://github.com/muellerflorian/fish-joy.git
+repo_url: https://github.com/fish-quant/fq-imjoy.git
 edit_uri: ""
 
 # Copyright

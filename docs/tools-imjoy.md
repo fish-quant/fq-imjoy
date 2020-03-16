@@ -7,14 +7,7 @@
 * Some of its main **features** are:
 
     1. Specific functionality is provided by **plugins**, which can be installed with simple links. Available 
-        plugins are listed in the plugin list on the left part of the interface. Plugins using Python require 
-        a Plugin engine to be executed. Installation and usasage is detailed below.  
-
-        !!! abstract "Quick summary for how to connect ImJoy to Jupyter engine"
-            1. Open anaconda terminal. 
-            2. **Activate environment**: `conda activate fq-imjoy`
-            3. **Start Jupyter engine**: `imjoy --jupyter`
-            4. Connect ImJoy to Jupyter Engine 🚀.
+        plugins are listed in the plugin list on the left part of the interface. Plugins using Python require a Plugin engine to be executed. Installation and usasage is detailed below.  
 
     2. ImJoy can have several **workspaces**. Each workspace can contain multiple plugins and is 
         dedicated to a specific data processing task. Workspaces can be selected from little puzzle 
@@ -26,18 +19,23 @@
 
 ### Installing plugins
 We provide links to install ImJoy plugins for the different workflows. 
-These installation links also specify in which **ImJoy workspaces** the plugin will be installed  
 
 If you press on the installation link, the ImJoy web app will open and display a
 dialog asking if you want to install the specified plugin. To confirm, press 
-the `install` button.
+the `install` button. 
 
 ![imjoy-plugin-installation](img/imjoy-plugin-installation.png){: style="width:400px"}
 
+These installation links also specify in which [ImJoy workspaces](tools-imjoy.md#opening-a-workspace) the plugin will be installed. 
+
 ### Opening a workspace
 Once a plugin is installed, ImJoy remembers the workspaces and plugins it contains. 
+
 If you want to redo an analysis, you simply have to open the [ImJoy app](https://imjoy.io/#/app) 
-and select the workspace `fq-main` for this package: 
+and select the workspace `fq-main` for this package. 
+
+If **updates** for the installed plugins 
+are available, you will see a corresponding symbol next to the plugin name.
 
 ![imjoy-workspacer.gif](img/imjoy-workspace.gif){: style="width:500px"}
 
@@ -100,8 +98,7 @@ choose Python 3.7 and your operating system. You  can then use the annoconda pro
 
 We further recommend creating a **dedicated environment** to run code in this analysis package. 
 This guarantess that only necessary code is installed. 
-To create an environment called `fq-imjoy`, open an anaconda prompt and type. Note that you will also install Jupyter, which will allow to run Python plugins in ImJoy.
-Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`): 
+To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`): 
 
 ```
 conda create --name fq-imjoy python=3.7
@@ -130,7 +127,7 @@ You have several options
 At one point, your conda environment might get corrupted. You can easily remove it, and create a new one
 
 1. Open anaconda terminal
-0. **Activate base environment**: `conda activate base`
+0. **Activate base environment**: `conda deactivate`
 0. **Remove `fq-imjoy` environment**: `conda env remove --name fq-imjoy`
 
 

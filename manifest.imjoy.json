@@ -90,9 +90,11 @@
    "permissions": [],
    "requirements": {
     "stable": [
-     "pip: -U git+https://github.com/muellerflorian/big-fish@test-setup"
+     "pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"
     ],
-    "dev": []
+    "dev": [
+     "pip: --editable D:\\Documents\\code\\GitHub\\projects\\big-fish"
+    ]
    },
    "dependencies": [],
    "runnable": false,
