@@ -16,7 +16,9 @@ Install Material: `pip install mkdocs-material`
 
 * Launch dev-server: `mkdocs serve`
 * Building the site: `mkdocs build`
-* Deploy to GitHub pages: `mkdocs gh-deploy [--clean] [--force]`
+* Deploy to GitHub pages: `mkdocs gh-deploy
+
+    __Note__ if this does not work, force commit with `mkdocs gh-deploy --clean --force`
 
 ### Some options
 
