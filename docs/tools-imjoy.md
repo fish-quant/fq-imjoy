@@ -43,7 +43,7 @@ are available, you will see a corresponding symbol next to the plugin name.
 ## Running Python plugins 
 Most of the provided plugins use Python for data processing. To use these plugins, 
 you have to connect ImJoy to a Plugin engine. For this repository, we use **Jupyter notebooks** as 
-and engine, which can be installed via Miniconda (see section about Python Installation [below](#installing-python-for-imjoy)). 
+and engine, which can be installed via Miniconda (see installation instructions below [below](#installing-jupyter-engine-for-imjoy)). 
 
 ### Connect Jupyter engine
 
@@ -92,7 +92,7 @@ registered engines by pressing on the rocket symbol.
 * **Known engines** (but not connected) will be shown with their name in gray, with a little trash symbol next to them. Pressing on the trash symbol will remove the engine. 
 
 
-## Installing Jupyter for ImJoy
+## Installing Jupyter engine for ImJoy
 We recommend installing an [Miniconda distribution of Python](https://docs.conda.io/en/latest/miniconda.html): 
 choose Python 3.7 and your operating system. You  can then use the annoconda prompt to excecute the different commands listed below. 
 
