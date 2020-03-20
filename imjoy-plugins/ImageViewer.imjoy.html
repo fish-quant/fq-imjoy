@@ -1,0 +1,593 @@
+﻿<docs>
+# ImageViewer
+
+</docs>
+
+<config lang="json">
+{
+  "name": "ImageViewer",
+  "type": "window",
+  "tags": [],
+  "ui": "",
+  "version": "0.4.5",
+  "cover": "",
+  "description": "Image viewer powered by OpenLayers and itk-vtk-viewer",
+  "icon": "extension",
+  "inputs": null,
+  "outputs": null,
+  "api_version": "0.1.7",
+  "env": "",
+  "permissions": [],
+  "requirements": [
+    "https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js",
+    "https://static.imjoy.io/spectre.css/spectre.min.css",
+    "https://static.imjoy.io/spectre.css/spectre-exp.min.css",
+    "https://static.imjoy.io/spectre.css/spectre-icons.min.css",
+    "https://oeway.github.io/itk-vtk-viewer/itkVtkViewerCDN.js",
+    "https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css",
+    "https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"
+  ],
+  "dependencies": [],
+  "defaults": {"fullscreen": true}
+}
+</config>
+
+<script lang="javascript">
+const Map = ol.Map;
+const View = ol.View;
+const Draw = ol.interaction.Draw;
+const Modify = ol.interaction.Modify;
+const Select = ol.interaction.Select;
+const defaultInteractions = ol.interaction.defaults;
+const TileLayer = ol.layer.Tile;
+const Style = ol.style.Style;
+const Fill = ol.style.Fill;
+const Stroke = ol.style.Stroke;
+const Text = ol.style.Text;
+const VectorLayer = ol.layer.Vector;
+const OSM = ol.source.OSM;
+const VectorSource = ol.source.Vector;
+const MousePosition = ol.control.MousePosition;
+const LayerSwitcher = ol.control.LayerSwitcher;
+const Zoomify = ol.source.Zoomify;
+const Static = ol.source.ImageStatic;
+const ImageLayer = ol.layer.Image;
+const Projection = ol.proj.Projection;
+const createStringXY = ol.coordinate.createStringXY;
+const DragAndDrop = ol.interaction.DragAndDrop;
+const GeoJSON = ol.format.GeoJSON;
+const RasterSource = ol.source.Raster;
+const getWidth = ol.extent.getWidth;
+const getCenter = ol.extent.getCenter;
+const Layer = ol.layer.Layer;
+const fromLonLat = ol.proj.fromLonLat;
+const toLonLat = ol.proj.toLonLat;
+const CircleStyle = ol.style.Circle;
+const Snap = ol.interaction.Snap;
+const defaultControls = ol.control.defaults;
+
+function mobileAndTabletcheck() {
+  var check = false;
+  (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+  return check;
+};
+
+function debounce(func, wait, immediate) {
+      var timeout;
+      return function() {
+        var context = this, args = arguments;
+        var later = function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+      };
+    };
+
+var CanvasLayer = /*@__PURE__*/(function (Layer) {
+  function CanvasLayer(options) {
+    Layer.call(this, options);
+    this.viewerElement = document.createElement('div');
+    this.viewerElement.id = 'viewer';
+    this.viewerElement.style.position = 'relative';
+    this.sync_callback = options.sync_callback;
+  }
+
+  if ( Layer ) CanvasLayer.__proto__ = Layer;
+  CanvasLayer.prototype = Object.create( Layer && Layer.prototype );
+  CanvasLayer.prototype.constructor = CanvasLayer;
+
+  CanvasLayer.prototype.getSourceState = function getSourceState () {
+    return 'ready';
+  };
+
+  CanvasLayer.prototype.render = function render (frameState) {
+    var width = frameState.size[0];
+    var height = frameState.size[1];
+    if(this.sync_callback){
+      this.sync_callback()
+    }
+    return this.viewerElement; //return the viewer element
+  };
+
+  return CanvasLayer;
+}(Layer));
+
+
+const numpy2vtkType = {
+  'int8': {componentType: 'int8_t', arrayType: Int8Array },
+  'uint8': {componentType: 'uint8_t', arrayType: Uint8Array },
+  'int16': {componentType: 'int16_t', arrayType: Int16Array },
+  'uint16': {componentType: 'uint16_t', arrayType: Uint16Array },
+  'int32': {componentType: 'int32_t', arrayType: Int32Array },
+  'uint32': {componentType: 'uint32_t', arrayType: Uint32Array },
+  'float32': {componentType: 'float', arrayType: Float32Array },
+  'float64': {componentType: 'double', arrayType: Float64Array }
+}
+
+function convertVtkImage(data){
+  if(data.__jailed_type__ === 'ndarray'){
+    if(data.__shape__.length === 2 || (data.__shape__.length==3 && data.__shape__[2]<=3)){
+      const dtype = numpy2vtkType[data.__dtype__];
+      const dshape = data.__shape__.length === 2? data.__shape__ : data.__shape__.slice(0, 2)
+      const channels =  data.__shape__.length === 3 ?  data.__shape__[2] : 1;
+      return itkVtkViewer.utils.vtkITKHelper.convertItkToVtkImage({
+        imageType: { dimension: 2, pixelType: 1, componentType: dtype.componentType, components:channels},
+        name: 'Image',
+        origin: [0,0],
+        spacing: [1,1],
+        direction: {data: [1,0,0,1]},
+        size: [dshape[1], dshape[0]],
+        data: new dtype.arrayType(data.__value__.buffer)
+      })
+    }
+    else if(data.__shape__.length === 3){
+      return itkVtkViewer.utils.vtkITKHelper.convertItkToVtkImage({
+        imageType: { dimension: 3, pixelType: 1, componentType: dtype.componentType, components: 1},
+        name: 'image',
+        origin: [0,0,0],
+        spacing: [1,1,1],
+        direction: {data: [1,0,0,0,1,0,0,0,1]},
+        size: [dshape[2], dshape[1], dshape[0]],
+        data: new dtype.arrayType(data.__value__.buffer)
+      })
+    }
+    else{
+      throw new Error(`Unsupported shape: ${arr.shape}`)
+    }
+  }
+}
+
+const app = new Vue({
+  el: '#app',
+  data: {
+    viewProxy: null,
+    renderWindow: null,
+    interactor: null,
+    renderer: null,
+    modifyInteraction: null,
+    drawInteraction: null,
+    snapInteraction: null,
+    itkInteraction: null,
+    anntation_mode: false,
+    freehand_mode: false,
+    vector_source: null,
+    loading: false
+  },
+  methods: {
+    anntation_mode_changed(){
+      if(this.anntation_mode){
+        this.startAnnotation(this.vector_source, this.freehand_mode)
+      }
+      else{
+        this.stopAnnotation()
+      }
+    },
+    openFileDialog(){
+      this.$refs['file-input'].click();
+    },
+    async loadFiles(){
+      const files = this.$refs['file-input'].files;
+      if(files && files.length>0){
+        try{
+          this.loading = true;
+          await this.displayMap(this.$refs['file-input'].files)
+        }
+        finally{
+          this.loading = false;
+        }
+      }
+      
+    },
+    convertCoordinates(x, y){
+      const view = this.viewProxy.getInteractor().getView()
+      const renderPosition = {x: x, y: y};
+      const bounds = view.getContainer().getBoundingClientRect();
+      const canvas = view.getCanvas();
+      const scaleX = canvas.width / bounds.width;
+      const scaleY = canvas.height / bounds.height;
+      // recover mouse clientX and clientY: https://kitware.github.io/vtk-js/api/Rendering_Core_RenderWindowInteractor.html
+      const map_pixel_pos = this.map.getEventPixel({clientX:renderPosition.x/scaleX+bounds.left, clientY: bounds.height-renderPosition.y/scaleY+bounds.top})
+      const mapPosition = this.map.getCoordinateFromPixelInternal(map_pixel_pos);
+      // const projection = this.map.getProjection();
+      const c = itkVtkViewer.utils.vtkCoordinate.newInstance()
+      c.setRenderer(this.renderer)
+      c.setCoordinateSystemToDisplay();
+      c.setValue(renderPosition.x, renderPosition.y)
+      const worldPosition = c.getComputedWorldValue();
+      return {mapPosition: mapPosition, worldPosition: worldPosition}
+    },
+    synchronizeVtkCoordinate(){
+      const camera = this.viewProxy.getCamera();
+      // const map_veiw = this.map.getView();
+      // const center = map_veiw.getCenter();
+      // const viewTranslation = camera.getPhysicalTranslation();
+      const pscale = camera.getParallelScale()
+      const p1 = this.convertCoordinates(0,0);
+      const p2 = this.convertCoordinates(100,100);
+      const scale_factor = pscale/(p1.worldPosition[0] - p2.worldPosition[0])
+      const new_scale = Math.abs((p1.mapPosition[0]-p2.mapPosition[0])*scale_factor);
+      if(new_scale && new_scale !== pscale){
+        camera.setParallelScale(new_scale);
+        this.viewProxy.updateDataProbeSize();
+        this.viewProxy.updateScaleBar();
+      }
+      const p3 = this.convertCoordinates(0,0);
+      const diff_x = p3.worldPosition[0] - p3.mapPosition[0]
+      const diff_y = p3.worldPosition[1]  -p3.mapPosition[1] 
+      // map_veiw.setCenter([center[0]+diff_x, center[1]+diff_y]);
+      const viewFocus = camera.getFocalPoint();
+      const viewPoint = camera.getPosition();
+      camera.setFocalPoint(viewFocus[0]-diff_x, viewFocus[1]-diff_y, viewFocus[2]);
+      camera.setPosition(viewPoint[0]-diff_x, viewPoint[1]-diff_y, viewPoint[2]);
+      camera.computeDistance()
+      this.viewProxy.renderLater()
+    },
+    synchronizeMapCoordinate(){
+      const map_veiw = this.map.getView();
+      const resolution = map_veiw.getResolution();
+      const center = map_veiw.getCenter();
+      const p1 = this.convertCoordinates(0,0);
+      const p2 = this.convertCoordinates(1,1);
+      const res_factor = resolution/(p1.mapPosition[0] - p2.mapPosition[0])
+      const new_res = Math.abs((p1.worldPosition[0]-p2.worldPosition[0])*res_factor);
+      if(new_res !== 0 && new_res !== resolution){
+        map_veiw.setResolution(new_res)
+      }
+      const diff_x = p1.worldPosition[0] - p1.mapPosition[0]
+      const diff_y = p1.worldPosition[1] - p1.mapPosition[1]
+      map_veiw.setCenter([center[0]+diff_x, center[1]+diff_y]);      
+    },
+    async displayMap(files, image_array, lut_name='Viridis'){
+      this.vector_source = new VectorSource();
+      
+      var vector_layer = new VectorLayer({
+        source: this.vector_source,
+        style: new Style({
+          fill: new Fill({
+            color: 'rgba(255, 255, 255, 0.2)'
+          }),
+          stroke: new Stroke({
+            color: '#ffcc33',
+            width: 2
+          }),
+          image: new CircleStyle({
+            radius: 7,
+            fill: new Fill({
+              color: '#ffcc33'
+            })
+          })
+        })
+      });
+
+      const containerStyle = {
+        position: 'relative',
+        width: '100%',
+        height: '600px',
+        minHeight: '400px',
+        minWidth: '400px',
+        margin: '1',
+        padding: '1',
+        top: '0',
+        left: '0',
+        overflow: 'hidden',
+        display: 'block-inline'
+      };
+      const viewerStyle = {
+        backgroundColor: [1.0, 1.0, 1.0],
+        containerStyle: containerStyle,
+      };
+      
+      var itk_layer = new CanvasLayer({
+        sync_callback: this.synchronizeVtkCoordinate
+      });
+
+      let viewer;
+      let extent;
+      document.getElementById('toolbar').innerHTML = '';
+      if(!files && !image_array){
+        const imageData = this.generateData2D();
+        const extent_3d = imageData.getExtent();
+        extent =  [extent_3d[0], extent_3d[2], extent_3d[1], extent_3d[3]];
+        viewer = itkVtkViewer.createViewer(itk_layer.viewerElement, {
+          viewerStyle: viewerStyle,
+          image: imageData,
+          pointSets: null,
+          geometries: null,
+          use2D: true,
+          rotate: false,
+          uiContainer: document.getElementById('toolbar')
+        })
+      }
+      else if(image_array){
+        const vtkImage = convertVtkImage(image_array)
+        const extent_3d = vtkImage.getExtent();
+        extent =  [extent_3d[0], extent_3d[2], extent_3d[1], extent_3d[3]];
+        viewer = itkVtkViewer.createViewer(itk_layer.viewerElement, {
+          viewerStyle: viewerStyle,
+          image: vtkImage,
+          pointSets: null,
+          geometries: null,
+          use2D: true,//extent_3d[4] === extent_3d[5] === 0,
+          rotate: false,
+          uiContainer: document.getElementById('toolbar')
+        })
+      }
+      else{
+        config = await itkVtkViewer.utils.readFiles( {files: files} )
+        config.uiContainer = document.getElementById('toolbar');
+        viewer = itkVtkViewer.createViewer(itk_layer.viewerElement, config)
+        const vs = viewer.getViewProxy().getRenderer().getVolumes()
+        if(vs.length>0){
+          const extent_3d = vs[0].getBounds()
+          extent =  [extent_3d[0], extent_3d[2], extent_3d[1], extent_3d[3]];
+        }
+        else{
+          console.warn('Extent is not set.')
+          extent = [0,0, 100, 100];
+        }
+      }
+
+      // Change lut
+      viewer.setColorMap(0, lut_name)
+
+      // clear the map
+      const mapElement = document.getElementById('map');
+      mapElement.innerHTML = '';
+      
+      // itk_layer.viewerElement.children[1].style.top = '58px'
+      // itk_layer.viewerElement.children[1].style.left = '60px'
+      // document.getElementById('map').appendChild(itk_layer.viewerElement.children[1])
+      setTimeout(()=>{
+        viewer.setUserInterfaceCollapsed(true);
+      }, 3000)
+
+      const viewProxy = viewer.getViewProxy()
+      const renderWindow = viewProxy.getRenderWindow()
+      renderWindow.getViews()[0].initialize()
+      // viewer.setViewMode('ZPlane');
+      this.viewProxy = viewer.getViewProxy();
+      this.viewProxy.updateOrientation(2, 1, [0, 1, 0])
+      this.renderWindow = this.viewProxy.getRenderWindow()
+      this.interactor = this.renderWindow.getInteractor()
+      this.renderer = this.viewProxy.getRenderer()
+    
+      // assuming the current plane is z plane
+      
+      const projection = new Projection({
+          code: 'image',
+          units: 'pixels',
+          extent: extent,
+          // axisOrientation: 'esu',
+      });
+
+      this.map = new Map({
+        interactions: ol.interaction.defaults({altShiftDragRotate:false, pinchRotate:false}),
+        controls: defaultControls(),
+        layers: [
+         itk_layer, vector_layer,
+        ],
+        target: 'map',
+        view: new View({
+          projection: projection,
+          center: getCenter(extent),
+          zoom: 1,
+          minZoom: -10
+        })
+      });
+      this.enableItkInteraction();
+      this.anntation_mode_changed();
+    },
+    enableItkInteraction(){	
+      this.itkInteraction = new ol.interaction.Pointer();	
+      this.itkInteraction.handleEvent = (e)=>{	
+        this.itkInteraction.updateTrackedPointers_(e);	
+        const interactor = this.interactor;	
+        if(e.type == 'pointermove'){
+          interactor.handleMouseMove(e.originalEvent);
+        }
+        //return true means propagate the event	
+        return true;	
+      }	
+      this.map.addInteraction(this.itkInteraction);	
+    },
+    startAnnotation(source, freehand){
+      if(!source){
+        console.error("Please specify an annotation layer source")
+      }
+      if (this.modifyInteraction) {
+        this.map.removeInteraction(this.modifyInteraction)
+      }
+      this.modifyInteraction = new Modify({source: source});
+      this.map.addInteraction(this.modifyInteraction);
+      if (this.drawInteraction) {
+        this.map.removeInteraction(this.drawInteraction)
+      }
+      this.drawInteraction = new Draw({
+        source: source,
+        type: 'Polygon',
+        freehand: freehand
+      });
+      this.map.addInteraction(this.drawInteraction);
+      if (this.snapInteraction) {
+        this.map.removeInteraction(this.snapInteraction)
+      }
+      this.snapInteraction = new Snap({source: source});
+      this.map.addInteraction(this.snapInteraction);
+
+      // if(this.itkInteraction)
+      // this.map.removeInteraction(this.itkInteraction);
+    },
+    stopAnnotation(){
+      if(this.drawInteraction)
+      this.map.removeInteraction(this.drawInteraction);
+      if(this.snapInteraction)
+      this.map.removeInteraction(this.snapInteraction);
+      if(this.modifyInteraction)
+      this.map.removeInteraction(this.modifyInteraction);
+    },
+    generateData(){
+      const size = [100, 100, 100]
+      const imgArray = new Uint16Array(new ArrayBuffer(100*100*100*2));
+      for(let i=0;i<100*100*100;i++){
+        imgArray[i] = Math.floor(Math.random() * Math.floor(65535));
+      }
+      const imageData = itkVtkViewer.utils.vtkITKHelper.convertItkToVtkImage({
+        imageType: { dimension: 3, pixelType: 1, componentType: 'uint16_t', components: 1},
+        name: 'test image',
+        origin: [0,0,0],
+        spacing: [1,1,1],
+        direction:{data: [1,0,0,0,1,0,0,0,1]},
+        size: size,
+        data: imgArray
+      })
+      return imageData
+    },
+    generateData2D(){
+      const size = [100, 100]
+      const imgArray = new Uint16Array(new ArrayBuffer(100*100*2));
+      for(let i=0;i<100*100;i++){
+        imgArray[i] = Math.floor(Math.random() * Math.floor(65535));
+      }
+      const imageData = itkVtkViewer.utils.vtkITKHelper.convertItkToVtkImage({
+        imageType: { dimension: 2, pixelType: 1, componentType: 'uint16_t', components: 1},
+        name: 'test image',
+        origin: [0,0],
+        spacing: [1,1],
+        direction:{data: [1,0,0,1]},
+        size: size,
+        data: imgArray
+      })
+      return imageData
+    }
+  }
+})
+
+
+class ImJoyPlugin {
+  async setup() {
+  }
+
+  async imshow(image_array){
+    app.displayMap(null, image_array)
+  }
+
+  async run(ctx) {
+    if(ctx.data){
+      
+      var lut_name = 'Viridis'
+      if(ctx.data.lut_name){
+        lut_name = ctx.data.lut_name
+      }
+      app.displayMap(ctx.data.files, ctx.data.image_array, lut_name)
+    }
+  }
+}
+
+api.export(new ImJoyPlugin())
+</script>
+
+<window>
+  <div id="app">
+    <header class="navbar">
+    <section class="navbar-section">
+      <a class="navbar-brand text-bold mr-2">ImageViewer</a>
+      <!-- <a href="..." class="btn btn-link">Docs</a>
+      <a href="..." class="btn btn-link">GitHub</a> -->
+      <label class="form-switch">
+        <input type="checkbox" v-model="anntation_mode" @change="anntation_mode_changed">
+        <i class="form-icon"></i> Annotation
+      </label>
+      <label class="form-switch" v-if="anntation_mode">
+        <input type="checkbox" v-model="freehand_mode" @change="anntation_mode_changed">
+        <i class="form-icon"></i> Freehand
+      </label>
+
+      <div class="input-group input-inline">
+        <button class="btn hide-on-mobile" @click="openFileDialog()">Load Local File</button>
+      <!-- <button class="btn input-group-btn" @click="readTestFile()">Load Example File</button> -->
+
+      </div>
+    </section>
+    </header>
+    <!-- <h4 >{{status}}</h4> -->
+    <input ref="file-input" @change="loadFiles" type="file" name="name" style="display: none;" />
+    <!-- <canvas ref="image_canvas" style="width:35%;" width="100" height="100"></canvas> -->
+    <div v-if="loading" class="loading loading-lg floating"></div>
+    <div id='toolbar'></div>
+    <div id="map">
+      
+    </div>
+    
+  </div>
+</window>
+
+<style>
+.floating {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+}
+#toolbar {
+  position: absolute;
+  top: 112px;
+  left: 10px;
+}
+#toolbar > div:nth-child(1){
+  fill: #448aff;
+}
+.ol-layer{
+  top: 0px;
+}
+#viewer > div:nth-child(2) {
+  top: 64px!important;
+}
+#viewer > div:first-child {
+  height: calc(100vh - 64px)!important;
+  min-height: 100px!important;
+}
+.icon::before {
+  position: relative;
+}
+.navbar {
+  padding-left: 10px;
+}
+.navbar .navbar-brand {
+  font-size: 1.5rem;
+  text-decoration: none;
+}
+
+.mouse-position{
+  padding-left: 124px;
+  padding-top: 10px;
+}
+
+@media all and (max-width: 512px) { /* Change Width Here */
+  .hide-on-mobile {
+     display: none;
+  }
+}
+</style>

@@ -1,5 +1,5 @@
 
-# Data
+# Loading data
 In the tab, you can define where your data is located, its naming convention, and load selected images
 to test the analysis.
 
@@ -22,7 +22,10 @@ to test the analysis.
     satisfying the selection criteria. Only images that satisfy all criteria, e.g. they must have all specified channels, 
     will be listed. 
 7. A list in the lower part of the interface will then be populated. You can load an image by clicking on the arrow symbol. 
-    This will load for a given position all specified channels.        
+    This will load for a given position all specified channels and show them in the image carousel.
+
+    Double-clickin on an image will show it in the [image viewer](imjoy-imageviewer.md).
+            
 
     ![fq-ui-scan-folder.png](img/fq-ui-scan-folder.png){: style="width:500px"}
 

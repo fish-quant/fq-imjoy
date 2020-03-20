@@ -9,7 +9,7 @@
    "type": "window",
    "tags": [],
    "ui": "",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "cover": "",
    "description": "Analyze smFISH images with big-fish in ImJoy.",
    "icon": "extension",
@@ -27,6 +27,7 @@
    "dependencies": [
     "fish-quant/fq-imjoy:FQ-worker",
     "fish-quant/fq-imjoy:FQ-image-viewer",
+    "fish-quant/fq-imjoy:ImageViewer",
     "oeway/ImJoy-Plugins:Tabbed-Docs"
    ],
    "defaults": {
@@ -70,7 +71,7 @@
   {
    "name": "FQ-worker",
    "type": "native-python",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "description": "Worker to process smFISH images.",
    "tags": [
     "stable",
@@ -93,12 +94,41 @@
      "pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"
     ],
     "dev": [
-     "pip: --editable D:\\Documents\\code\\GitHub\\projects\\big-fish"
+     ""
     ]
    },
    "dependencies": [],
    "runnable": false,
    "uri": "imjoy-plugins\\FQ-worker.imjoy.html"
+  },
+  {
+   "name": "ImageViewer",
+   "type": "window",
+   "tags": [],
+   "ui": "",
+   "version": "0.4.5",
+   "cover": "",
+   "description": "Image viewer powered by OpenLayers and itk-vtk-viewer",
+   "icon": "extension",
+   "inputs": null,
+   "outputs": null,
+   "api_version": "0.1.7",
+   "env": "",
+   "permissions": [],
+   "requirements": [
+    "https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js",
+    "https://static.imjoy.io/spectre.css/spectre.min.css",
+    "https://static.imjoy.io/spectre.css/spectre-exp.min.css",
+    "https://static.imjoy.io/spectre.css/spectre-icons.min.css",
+    "https://oeway.github.io/itk-vtk-viewer/itkVtkViewerCDN.js",
+    "https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css",
+    "https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"
+   ],
+   "dependencies": [],
+   "defaults": {
+    "fullscreen": true
+   },
+   "uri": "imjoy-plugins\\ImageViewer.imjoy.html"
   }
  ],
  "collections": []
