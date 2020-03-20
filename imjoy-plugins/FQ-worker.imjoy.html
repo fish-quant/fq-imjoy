@@ -1,5 +1,9 @@
 ﻿<docs lang="markdown">
 Python plugin performing analyze of smFISH images. 
+
+__DEV NOTE__: with tag "dev" no requirements will be installed. Make sure that you have
+big-fish installed in the env where you run this plugin. Either the stable version from 
+`https://github.com/muellerflorian/big-fish@test-setup` or a local editable installation.
 </docs>
 
 TODO: update install link to fish-quant/big-fish once PR for pip installation is merged.
@@ -8,7 +12,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
 {
   "name": "FQ-worker",
   "type": "native-python",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Worker to process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -21,7 +25,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
   "env": "",
   "permissions": [],
   "requirements": { "stable":["pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"],
-                    "dev": ["pip: --editable D:\\Documents\\code\\GitHub\\projects\\big-fish"]},
+                    "dev": [""]},
   "dependencies": [],
   "runnable": false
 }
@@ -43,12 +47,26 @@ from skimage import io
 import pandas as pd
 from skimage.exposure import rescale_intensity
 
+# For MAC
 if sys.platform == "darwin":
     import matplotlib
     matplotlib.use('PS')
 
-api.log(' >>>> SYS PATH:')
-api.log(sys.path)
+# Dev mode
+if api.TAG == 'dev1':
+    import sys
+    import socket
+    hostname = socket.gethostname()
+
+    if hostname == 'DESKTOP-U9QO0OG-1':
+        path_fq = r'D:\Work\GitHub\projects\big-fish'
+
+    elif hostname == 'Janosch':
+        path_fq = r'D:\Documents\GitHub\projects\big-fish'
+
+    sys.path.insert(0, path_fq) 
+    api.log(' >>>> SYS PATH:')
+    api.log(sys.path)
 
 from bigfish import stack, plot, detection
 
@@ -93,36 +111,47 @@ def create_output_path(data_path, output_path):
     return output_path_return
 
 
-async def image_mip_url(img, name_save, file_manager, rescale=True):
+async def image_mip(img, name_save, file_manager, create_url=False, rescale=True):
     """
     Provide a base64 encoded URL of a MIP.
     """
-    img_MIP = stack.maximum_projection(img)
+    img_mip = stack.maximum_projection(img)
 
-    if rescale:
-        pa, pb = np.percentile(img_MIP, (0.1,99.9))
-        img_MIP = rescale_intensity(img_MIP, in_range=(pa, pb),out_range=np.uint8).astype('uint8')
+    #await api.showDialog(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": img_mip})
 
-    stack.save_image(img_MIP, name_save)
-    api.log(name_save)
+    # Create URL for image to be shown in interface
+    if create_url:
 
-    # Preferred solution, but doesn't work yet. 
-    # Bug in Jupyter: returned content-Type is "text/html" but should be "image/png"
-    # Causes CORB error in Chrome.
+        # Rescale image (only required when creating url)
+        if rescale:
+            pa, pb = np.percentile(img_mip, (0.1,99.9))
+            img_mip_save = rescale_intensity(img_mip, in_range=(pa, pb),out_range=np.uint8).astype('uint8')
+        else:
+            img_mip_save = np.copy(img_mip)
 
-    """
-    file_url = await file_manager.getFileUrl({'path': name_save})
-    api.log(file_url)
-    return file_url, img_MIP.shape
-    """
+        stack.save_image(img_mip_save, name_save)
+        api.log(name_save)
+
+        # Preferred solution, but doesn't work yet. 
+        # Bug in Jupyter: returned content-Type is "text/html" but should be "image/png"
+        # Causes CORB error in Chrome.
+
+        """
+        img_url = await file_manager.getFileUrl({'path': name_save})
+        api.log(file_url)
+        return img_mip, img_mip.shape, file_url
+        """
     
-    # Workaround until content type is fixed
-    with open(name_save, 'rb') as f:
-        data = f.read()
-        result = base64.b64encode(data).decode('ascii')
-        url_base64 = 'data:image/png;base64,' + result
+        # Workaround until content type is fixed
+        with open(name_save, 'rb') as f:
+            data = f.read()
+            result = base64.b64encode(data).decode('ascii')
+            img_url = 'data:image/png;base64,' + result
     
-    return url_base64, img_MIP.shape
+    else:
+        img_url = None
+    
+    return img_mip, img_mip.shape, img_url
     
 
 class ImJoyPlugin():
@@ -137,6 +166,54 @@ class ImJoyPlugin():
 
     def get_engine_url(self):
         return api.ENGINE_URL
+
+    async def show_image(self, config):
+        """
+        Show filtered image
+        """
+        # Parameters
+        api.log('\nFQ-worker [show_image]: received data:')
+        api.log(config)
+
+        channel_selected = config['channel_selected']
+        image_type = config['image_type']
+        image_dim = config['image_dim']
+        display_type = config['display_type']
+
+        # Check if channel was selected
+        if len(channel_selected) == 0:
+            api.alert('Please select which channel should be processed!')
+            return
+
+        # Get index of selected channel
+        #api.log(self.image_names[channel_selected])
+        channel_index = self.image_names[channel_selected]["index"]
+        api.log(f'channel_index: {channel_index}; image_type: {image_type}; image_dim: {image_dim};')
+        
+        # Get image to be shown
+        if image_type == 'raw':
+            if image_dim == 'orig':
+                image_array = self.image[0, channel_index, :, :, :]
+            
+            elif image_dim == 'mip':
+                image_array = self.image_mips[channel_index, :, :]
+
+        elif image_type == 'filtered':
+            if image_dim == 'orig':
+                image_array = self.image_filt
+
+            elif image_dim == 'mip':
+                image_array = self.image_filt_mip
+
+        #api.log(image_array.size())
+
+        # Show image
+        if display_type == 'window':
+            p = await api.createWindow(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array})
+        elif display_type == 'dialog':
+            p = await api.showDialog (type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array})
+  
+        
 
     async def save_settings(self, config):
         """
@@ -259,7 +336,10 @@ class ImJoyPlugin():
         # Loop over channels and build 5D tensor (starfish)
         tensors_3d = []
         tensors_4d = []
-        image = []
+
+        mip_tensors = []
+
+        #image = []
         image_names = {}
 
         for index, channel_name in enumerate(channel_names):
@@ -279,7 +359,9 @@ class ImJoyPlugin():
 
             if config['create_mips']:
                 name_save = str(path_save / f'img_mip_dum__{channel_name}.png')
-                url, shape = await image_mip_url(tensor_3d, name_save, self.file_manager, rescale = True)
+                img_mip, shape, url = await image_mip(tensor_3d, name_save, self.file_manager, create_url=True, rescale=True)
+
+                mip_tensors.append(img_mip)
                 mips.append({'url':url,'shape':shape,'channel':channel_name,'image_name':image_name})
 
         # stack 3-d tensors in 4-d
@@ -304,8 +386,8 @@ class ImJoyPlugin():
 
         # Return MIPs
         if config['create_mips']:
+            self.image_mips = np.stack(mip_tensors, axis=0)
             return mips
-    
     
     async def filter_image(self,config):
         """
@@ -336,7 +418,7 @@ class ImJoyPlugin():
             return
 
         # Get index of channel that will be analyzed
-        channel_index = self.image_names[channel_selected]["index"]
+        channel_index = image_names[channel_selected]["index"]
         api.log(f'FQ-worker [filter_image]: filter channel {channel_selected} with index {channel_index}')
 
         # Crop image if specified
@@ -357,7 +439,6 @@ class ImJoyPlugin():
             if (y_min<0): x_min = 0
             if (y_max>n_y): y_max = n_y
 
-  
         # Select image and filter
         if x_min:
             img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
@@ -370,15 +451,17 @@ class ImJoyPlugin():
         self.channel_selected = channel_selected
         self.channel_index = channel_index
 
+
         # Create MIP and provide base64 encoded strings
         if config['create_mips']:
             path_save = create_output_path(path_data_full, config['output_path']) / 'imjoy-tmp' / 'mips'
             create_folder(path_save)
             
             name_save = str(path_save / f'img_filt_mip_dum_c{channel_index}.png')
-            url,shape = await image_mip_url(img_filt, name_save, self.file_manager, rescale = True)
+            #url,shape = await image_mip_url(img_filt, name_save, self.file_manager, rescale = True)
+            img_mip, shape, url = await image_mip(img_filt, name_save, self.file_manager, create_url=True, rescale=True)
 
-            # Return results
+            self.image_filt_mip = img_mip
             if show_status: api.showStatus('Filtering finished!')
             return {'url':url,'shape':shape,'min':img_filt.min().item(),'max':img_filt.max().item()}  # .item() to convert to number
 

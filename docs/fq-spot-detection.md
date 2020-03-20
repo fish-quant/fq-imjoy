@@ -20,7 +20,11 @@ In this tab, the user will specify
       ![fq-select-region.gif](img/fq-select-region.gif){: style="width:450px"}
       
 3. **Filter image**. Here you can change the paramaters of the LoG (Laplacian of Gaussian filter).
-   Filtered image will be shown in the interface, and you can also save it to the harddrive for closer inspection.
+   Filtered image will be shown in the interface. 
+   
+   * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate [section](imjoy-imageviewer.md) for more details on how to use the image viewer.
+   * To show the image in a interface that can be resized and kept open, press the button button `Show`.
+   * You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
 
 4. **Establish detection thresholds**. This will be performed on the filtered image. 
    
@@ -32,7 +36,7 @@ In this tab, the user will specify
 
         ![fq-detection-thresholds.png](img/fq-detection-thresholds.png){: style="width:350px"}
 
-    3. Pressing `Test thresholds` will calculate for each threshold the number
+    1. Pressing `Test thresholds` will calculate for each threshold the number
        of detected spots and show this as a graph. 
          * This plot is interactive. When you hoover over it
            it will show you the corresponding values, you can also zoom, and save it as an image. 
@@ -41,13 +45,13 @@ In this tab, the user will specify
 
         ![fq-detection-curve.png](img/fq-detection-curve.png){: style="width:350px"}
     
-    4. To apply the threshold, press the button `Apply detection threshold`. Once finished, 
+    2. To apply the threshold, press the button `Apply detection threshold`. Once finished, 
         this will show the results in a separate window, where the spot detections can be toogled and the 
         image contrast be changed. 
 
         ![fq-inspect-spots.gif](img/fq-inspect-spots.gif){: style="width:350px"}
 
-    5. You can then analyze either
+    3. You can then analyze either
         * The **currently selected image** with the button `Analyze current image`
         * All **images in the folder** with the button `Launch batch processing`
         For each analysed images, results files will be created in the specified results folder. 

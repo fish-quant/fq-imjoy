@@ -30,6 +30,7 @@ Plugin renders the user-interface of FISH-quant.
   "dependencies":  [
           "fish-quant/fq-imjoy:FQ-worker",
           "fish-quant/fq-imjoy:FQ-image-viewer",
+          "fish-quant/fq-imjoy:ImageViewer",
           "oeway/ImJoy-Plugins:Tabbed-Docs"],
   "defaults": {"w": 30, "h": 20}
 }
@@ -41,8 +42,8 @@ Plugin renders the user-interface of FISH-quant.
   <section class="navbar-section">
   </section>
   <section class="navbar-section">
-    <a @click="openUrl('https://github.com/muellerflorian')" class="btn btn-link">GitHub</a>
-    <a @click="btn_help('Overview','1st chapter')" class="btn btn-link">Docs</a>
+    <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link">GitHub</a>
+    <a @click="openUrl('https://fish-quant.github.io/fq-imjoy')" class="btn btn-link">Docs</a>
   </section>
 </header>
 </attachment>
@@ -186,7 +187,7 @@ Plugin renders the user-interface of FISH-quant.
 				<div class="carousel-container">
 					<!-- carousel item -->
 					<figure class="carousel-item" v-for="(img, i) in images">
-						<img class="img-responsive rounded" v-bind:src="img.url" :alt="img.index" v-on:dblclick="openUrl(images[current_index].url)" :key="img.key">
+						<img class="img-responsive rounded" v-bind:src="img.url" :alt="img.index" v-on:dblclick="dblclick_show_image_raw(img.index)" :key="img.key">
 					</figure>
 
 				</div>
@@ -286,12 +287,13 @@ Plugin renders the user-interface of FISH-quant.
 
       <!-- BUTTON to save -->
         <div class="column col-3">
-          <button class="btn btn-primary" @click="btn_save_image_filtered">Save filtered image</button>
+          <button class="btn btn-primary" @click="btn_show_image_filtered">Show</button>
+          <button class="btn btn-primary" @click="btn_save_image_filtered">Save</button>
         </div>
       </div>
       <br>
 
-			<img v-if="img_filt" class="img-responsive rounded img-embed" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="openUrl(img_filt.url)" id="cont_img_filt"></img>
+			<img v-if="img_filt" class="img-responsive rounded img-embed" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
 		</div> <!-- END: card body for filtering -->
 	</div> <!-- END: card for filtering -->
 
@@ -499,18 +501,12 @@ class ImJoyPlugin {
                 this.detection_threshold = threshold
         },
 
-
-        // Show help
-        btn_help: async function(tab_name, section_id){
-          api.alert('Show help for tab' + tab_name + ', section ' + section_id)
-        },
-
-        // DATA: remove channel
+        // Data: remove channel
         remove_channel: function(ch) {
           this.channels.splice(this.channels.indexOf(ch), 1);
         },
 
-        // DATA: add channel
+        // Data: add channel
         add_channel: function() {
            this.channels.push({name: this.ch_name,identifier: this.ch_ident})
             // Reset fields
@@ -541,8 +537,8 @@ class ImJoyPlugin {
         // Scan data directory
         btn_scan_folder: async function() {
           var config = {channels: this.channels,
-                    reg_exp: this.reg_exp,
-                    data_path: this.data_path}
+                        reg_exp: this.reg_exp,
+                        data_path: this.data_path}
           var file_list  = await this.fq_worker.scan_folder(config)
 
           // Get all channel names
@@ -589,10 +585,40 @@ class ImJoyPlugin {
           self.save_settings()
         },
 
+        // Callback to save filtered image
+        dblclick_show_image_raw: async function(channel_selected){
+          console.log(channel_selected)
+          this.fq_worker.show_image({
+                      'channel_selected': channel_selected,
+                      'image_type': 'raw',
+                      'image_dim': 'mip',
+                      'display_type': 'dialog'
+                      })
+        },
 
         // Callback to filter image
         btn_filter_image: async function(){
           self.filter_image()
+        },
+
+        // Callback to show filtered image: as resizable window
+        btn_show_image_filtered: async function(){
+          this.fq_worker.show_image({
+                      'channel_selected': this.channel_selected,
+                      'image_type': 'filtered',
+                      'image_dim': 'mip',
+                      'display_type': 'window'
+                      })
+        },
+
+        // Callback to show filtered image: as dialog
+        dblclick_show_image_filtered: async function(){
+          this.fq_worker.show_image({
+                      'channel_selected': this.channel_selected,
+                      'image_type': 'filtered',
+                      'image_dim': 'mip',
+                      'display_type': 'dialog'
+                      })
         },
 
         // Callback to save filtered image
@@ -683,21 +709,12 @@ class ImJoyPlugin {
     }
     console.log('[FQ] sending data to viewer.')
     
-    //api.showDialog({'type': 'imjoy/image', 
-    //                 'data': {'src': img_selected['url']}
-    //                })
-    
     await this.fq_viewer.run({'data':{
                               'url': img_selected['url'],
                               'shape':img_selected['shape'],
                               'callback_return_region': this.set_analysis_region}
                               })
 
-    //await this.fq_viewer.run({'data':{
-    //                          'url': 'https://imgs.xkcd.com/comics/online_communities.png',
-    //                          'shape': [1000,1000],
-    //                          'callback_return_region': this.set_analysis_region}
-    //                          })
   }
 
   // Filter image
@@ -722,6 +739,7 @@ class ImJoyPlugin {
       this.store.img_filt_max = this.store.img_filt_load['max']
 
   }
+
 
   // Save filtered image
   async save_image_filtered() {
