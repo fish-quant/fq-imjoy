@@ -209,9 +209,9 @@ class ImJoyPlugin():
 
         # Show image
         if display_type == 'window':
-            p = await api.createWindow(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array})
+            p = await api.createWindow(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
         elif display_type == 'dialog':
-            p = await api.showDialog (type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array})
+            p = await api.showDialog (type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
   
         
 

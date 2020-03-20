@@ -9,7 +9,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.4.6",
+  "version": "0.4.5",
   "cover": "",
   "description": "Image viewer powered by OpenLayers and itk-vtk-viewer",
   "icon": "extension",
@@ -261,8 +261,9 @@ const app = new Vue({
       const diff_y = p1.worldPosition[1] - p1.mapPosition[1]
       map_veiw.setCenter([center[0]+diff_x, center[1]+diff_y]);      
     },
-    async displayMap(files, image_array){
+    async displayMap(files, image_array, lut_name='Viridis'){
       this.vector_source = new VectorSource();
+      
       var vector_layer = new VectorLayer({
         source: this.vector_source,
         style: new Style({
@@ -349,6 +350,10 @@ const app = new Vue({
           extent = [0,0, 100, 100];
         }
       }
+
+      // Change lut
+      viewer.setColorMap(0, lut_name)
+
       // clear the map
       const mapElement = document.getElementById('map');
       mapElement.innerHTML = '';
@@ -492,7 +497,12 @@ class ImJoyPlugin {
 
   async run(ctx) {
     if(ctx.data){
-      app.displayMap(ctx.data.files, ctx.data.image_array)
+      
+      var lut_name = 'Viridis'
+      if(ctx.data.lut_name){
+        lut_name = ctx.data.lut_name
+      }
+      app.displayMap(ctx.data.files, ctx.data.image_array, lut_name)
     }
   }
 }
