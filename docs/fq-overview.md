@@ -20,9 +20,23 @@ In the ImJoy app, you have **main plugin** `FISH-quant`, as wells as several hel
     this engine. 
 
 
-## General usage
-To start FISH-quant, simpy press on the plugin name itself. This will open an interface with different tabs, that 
+## General use
+
+### Start FISH-quant
+Simply press on the plugin name itself. This will open an interface with different tabs, that 
 allow to control the main workflows: 
 
 * **Data specifications**: allows to specify how the data should be read, and to load images for analysis.
 * **Detection**: perform RNA detection on individual images, and batch analysis images in one folder.
+
+
+### Maximize ImJoy
+To maximize the available space in the ImJoy window, you can do two things:
+
+1. Start ImJoy as a **Chrome App**. This will detach ImJoy from Chrome and show it as a separate application with its own icon in the taskbar 
+   
+    ![imjoy-open-as-app.gif](img/imjoy-open-as-app.gif){: style="width:300px"}
+
+2. **Minimize the plugin side-bar** once you launched FISH-quant. 
+   
+    ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
