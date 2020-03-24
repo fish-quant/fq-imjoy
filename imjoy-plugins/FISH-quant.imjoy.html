@@ -13,7 +13,7 @@ Plugin renders the user-interface of FISH-quant.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "cover": "",
   "description": "Analyze smFISH images with big-fish in ImJoy.",
   "icon": "extension",
@@ -187,7 +187,7 @@ Plugin renders the user-interface of FISH-quant.
 				<div class="carousel-container">
 					<!-- carousel item -->
 					<figure class="carousel-item" v-for="(img, i) in images">
-						<img class="img-responsive rounded" v-bind:src="img.url" :alt="img.index" v-on:dblclick="dblclick_show_image_raw(img.index)" :key="img.key">
+						<img class="img-responsive rounded" style="margin-top: 5px; max-height: 600px;" v-bind:src="img.url" :alt="img.index" v-on:dblclick="dblclick_show_image_raw(img.index)" :key="img.key">
 					</figure>
 
 				</div>
@@ -229,13 +229,8 @@ Plugin renders the user-interface of FISH-quant.
 
 
 
-<attachment name="segmentation">
-<h5> Not implemented yet .... will come shortly </h5>
-</attachment>
-
-
+<!-- RNA DETECTION -->
 <attachment name="detection">
-
 
 <div class="container">
   <div class="columns">
@@ -293,7 +288,7 @@ Plugin renders the user-interface of FISH-quant.
       </div>
       <br>
 
-			<img v-if="img_filt" class="img-responsive rounded img-embed" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
+			<img v-if="img_filt" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
 		</div> <!-- END: card body for filtering -->
 	</div> <!-- END: card for filtering -->
 
@@ -389,7 +384,7 @@ Plugin renders the user-interface of FISH-quant.
 			</div>
 
       <!-- Plot results -->
-      <div id="graph_detection" v-if="detection_threshold" class="graph_resize" style="margin-top: 5px"></div>
+      <div id="graph_detection" v-if="detection_threshold" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
 
 		</div> <!-- END: card body for detection -->
 	</div> <!-- END: card for detection -->
@@ -408,6 +403,12 @@ Plugin renders the user-interface of FISH-quant.
 	</div> <!-- END: card for GMM -->
 
 
+</attachment>
+
+
+
+<attachment name="segmentation">
+<h5> Not implemented yet .... will come shortly </h5>
 </attachment>
 
 
@@ -466,6 +467,7 @@ class ImJoyPlugin {
           channel_selected:'',
           sigma: [1,0.75,0.75],  // ZYX
           minimum_distance: 2,
+          detetection_plot: [],
           detection_threshold :null,
           img_filt_load : null,
           img_filt_min:0,
@@ -779,7 +781,7 @@ class ImJoyPlugin {
         }
 
     Plotly.newPlot('graph_detection', data,layout,{responsive: true});
-
+    
     graph_detection.on('plotly_click', async (data) => {
           var txt = '',
               th = [],
@@ -792,6 +794,10 @@ class ImJoyPlugin {
           this.app.setThreshold(th)
     });
     // Extend traces - didnt work: Plotly.extendTraces(graph_detection, { y:[[th_tests[1]]] },[0])
+
+    //Plotly.downloadImage('graph_detection', {format: 'png', width: 800, height: 600, filename: name_detection });
+    this.store.detetection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600}) //.then(function(dataUrl) {api.log(dataUrl)})
+    api.log(this.store.detetection_plot)
   }
 
 
@@ -801,7 +807,8 @@ class ImJoyPlugin {
     var spots = await this.fq_worker.detect_apply({
                               'detection_threshold': this.store.detection_threshold,
                               'sigma': this.store.sigma,
-                              'show_status': true
+                              'show_status': true,
+                              'detection_plot': this.store.detetection_plot
                               })
 
     this.fq_viewer.run({'data':{
@@ -829,7 +836,9 @@ class ImJoyPlugin {
                       'sigma': this.store.sigma,
                       'minimum_distance': this.store.minimum_distance,
                       'detection_threshold': this.store.detection_threshold,
-                      })
+                      });
+
+
   }
 
 

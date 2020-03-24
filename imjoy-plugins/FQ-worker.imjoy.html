@@ -12,7 +12,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
 {
   "name": "FQ-worker",
   "type": "native-python",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Worker to process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -41,6 +41,7 @@ from pathlib import Path
 import json
 import re
 import base64
+from datetime import datetime
 
 import numpy as np
 from skimage import io
@@ -227,6 +228,11 @@ class ImJoyPlugin():
         name_save = config['name_settings']
         config.pop('name_settings')
 
+        # Add more fields
+        now = datetime.now() # current date and time
+        config['date'] = now.strftime("%d/%m/%Y__%H:%M:%S")
+        
+        # Save as json
         with open(name_save, 'w') as json_file:
             json.dump(config, json_file,indent=4, separators=(',', ': '))
 
@@ -442,8 +448,10 @@ class ImJoyPlugin():
         # Select image and filter
         if x_min:
             img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
+            self.filter_full = False
         else:
             img = self.image[0, channel_index, :, :, :]
+            self.filter_full = True
 
         img_filt = stack.log_filter(img, sigma)
         self.image_filt = img_filt
@@ -537,6 +545,8 @@ class ImJoyPlugin():
             n_detections[i] = spots.shape[0]
             api.log(f'Testing threshold {i}/{n_thresholds}: {threshold}  ... {n_detections[i]} spots detected.')
 
+        if show_status: api.showStatus('Performing predection ... finished!')
+
         return [thresholds_spot.tolist(), n_detections.tolist()]
 
 
@@ -549,6 +559,10 @@ class ImJoyPlugin():
         threshold = config['detection_threshold']
         sigma = config['sigma']
         show_status = config['show_status']
+        
+        # Save detection plot
+        if 'detection_plot' in config:
+            self.detetection_plot = config['detection_plot']
 
         spots, radius, _ = detection.spots_thresholding(self.image_filt, tuple(sigma), self.mask_lm, threshold)
         return spots.tolist()
@@ -564,34 +578,35 @@ class ImJoyPlugin():
         channel_selected = config['channel_selected']
         channels = config['channels']
 
-        # Some preparation
+        # Path to save results
         path_save = create_output_path(self.path_data_full, config['output_path']) / 'spot_detection' 
         create_folder(path_save)
-        ch_dict = {channel['name']: channel['identifier'] for channel in channels}
         
-        # Filter
-        api.showStatus(f'Processing file: filtering image')
-        await self.filter_image({
-                        'sigma': tuple(config['sigma']),
-                        'channel_selected': channel_selected,
-                        'create_mips': False,
-                        'show_status': False
-                        })
+        # Check if full size image has been processed already - if yes, filtering and local max can be reused
+        if not self.filter_full:
 
-        # Detection
-        api.showStatus(f'Processing file: spot detection')
-        await self.calc_local_max({
-                        'minimum_distance': config['minimum_distance'],
-                        'show_status': False
-                        })
+            # Filter
+            api.showStatus(f'Processing file: filtering image')
+            await self.filter_image({
+                            'sigma': tuple(config['sigma']),
+                            'channel_selected': channel_selected,
+                            'create_mips': False,
+                            'show_status': False
+                            })
 
+            # Detection
+            api.showStatus(f'Processing file: spot detection')
+            await self.calc_local_max({
+                            'minimum_distance': config['minimum_distance'],
+                            'show_status': False
+                            })
+
+        # Apply spot detection
         spots = await self.detect_apply({
                         'detection_threshold': config['detection_threshold'],
                         'sigma': tuple(config['sigma']),
                         'show_status': False
                         })
-        
-
 
         # Save results
         image_name = self.image_names[channel_selected]["image_name"]
@@ -604,7 +619,16 @@ class ImJoyPlugin():
                     header="Z;Y;X", delimiter=',', comments='')
         api.log(f'\nFQ-worker [detection_image]: results saved as {file_save}')
 
+        # Save detection plot
+        file_save = path_save / f'{name_base}__detection_tests.png'
+        header, img_encoded = self.detetection_plot.split(",", 1)
+        img_decoded = base64.b64decode(img_encoded)
+        with open(file_save, 'wb') as f:
+            f.write(img_decoded)
+        api.log(f'\nFQ-worker [detection_image]: detection tests saved as {file_save}')
+
         # Save settings for file
+        ch_dict = {channel['name']: channel['identifier'] for channel in channels}
         ch_ident = ch_dict[channel_selected]
         config['name_settings'] = os.path.join(path_save, name_base + '__settings.json')
         config['image_size'] = self.image_size
