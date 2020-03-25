@@ -9,7 +9,7 @@
    "type": "window",
    "tags": [],
    "ui": "",
-   "version": "0.0.2",
+   "version": "0.0.3",
    "cover": "",
    "description": "Analyze smFISH images with big-fish in ImJoy.",
    "icon": "extension",
@@ -71,7 +71,7 @@
   {
    "name": "FQ-worker",
    "type": "native-python",
-   "version": "0.0.2",
+   "version": "0.0.3",
    "description": "Worker to process smFISH images.",
    "tags": [
     "stable",

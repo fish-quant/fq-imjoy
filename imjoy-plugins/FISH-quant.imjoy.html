@@ -383,7 +383,7 @@ Plugin renders the user-interface of FISH-quant.
 			</div>
 
       <!-- Plot results -->
-      <div id="graph_detection" v-if="detection_threshold" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
+      <div id="graph_detection" v-show="status_thresholds_tested" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
 
 		</div> <!-- END: card body for detection -->
 	</div> <!-- END: card for detection -->
@@ -465,7 +465,7 @@ class ImJoyPlugin {
           sigma: [1,0.75,0.75],  // ZYX
           minimum_distance: 2,
           detetection_plot: [],
-          detection_threshold :null,
+          detection_threshold: null,
           img_filt: [],
           img_filt_load : null,
           img_filt_min:0,
@@ -688,6 +688,14 @@ class ImJoyPlugin {
       this.store.status_thresholds_tested = false
       this.store.status_detection_applied = false
 
+      this.store.img_filt = []
+      this.store.analysis_region = []
+
+      var graph_detection = document.getElementById('graph_detection');
+      if (graph_detection != null){
+          Plotly.purge(graph_detection);
+      };
+
       // Store parameters for next launch
       api.setConfig('data_path', this.store.data_path)
       api.setConfig('reg_exp', this.store.reg_exp)
@@ -764,13 +772,7 @@ class ImJoyPlugin {
   // Test thresholds for detection
   async detection_test_thresholds() {
 
-    var graph_detection = document.getElementById('graph_detection');
-    if (graph_detection != null){
-     Plotly.purge(graph_detection);
-    };
-    //
-
-    this.store.detection_threshold = this.store.th_range_max
+    this.store.status_thresholds_tested = false
 
     var th_tests = await this.fq_worker.detect_test_thresholds({
                               'threshold_range': [this.store.th_range_min,
@@ -781,8 +783,11 @@ class ImJoyPlugin {
                               'show_status': true
                               })
 
-    
+    this.store.status_thresholds_tested = true
+
     // Create plotly plot
+    var graph_detection = document.getElementById('graph_detection');
+    
     var data = [{
           x: th_tests[0],
           y: th_tests[1],
@@ -794,7 +799,7 @@ class ImJoyPlugin {
                     yaxis: { title: { text: '# detected spots'}},
         }
 
-    Plotly.newPlot('graph_detection', data,layout,{responsive: true});
+    await Plotly.newPlot('graph_detection', data, layout, {responsive: true});
     
     graph_detection.on('plotly_click', async (data) => {
           var txt = '',
@@ -809,16 +814,18 @@ class ImJoyPlugin {
     });
     // Extend traces - didnt work: Plotly.extendTraces(graph_detection, { y:[[th_tests[1]]] },[0])
 
-    //Plotly.downloadImage('graph_detection', {format: 'png', width: 800, height: 600, filename: name_detection });
-    this.store.detetection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600}) //.then(function(dataUrl) {api.log(dataUrl)})
-    
-    this.store.status_thresholds_tested = true
+    this.store.detetection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600})
+  
   }
 
 
   // Test thresholds for detection
   async detection_apply() {
 
+    if ( this.store.detection_threshold == null){
+      api.alert('Please set a numeric value to test the intensity threshold!')
+      return
+    }
     var spots = await this.fq_worker.detect_apply({
                               'detection_threshold': this.store.detection_threshold,
                               'sigma': this.store.sigma,
