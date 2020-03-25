@@ -24,10 +24,11 @@ In the ImJoy app, you have **main plugin** `FISH-quant`, as wells as several hel
 
 ### Start FISH-quant
 Simply press on the plugin name itself. This will open an interface with different tabs, that 
-allow to control the main workflows: 
+allow to control the main workflows. Controls will only be enabled, when all necessary parameters
+are defined.
 
-* **Data specifications**: allows to specify how the data should be read, and to load images for analysis.
-* **Detection**: perform RNA detection on individual images, and batch analysis images in one folder.
+1. **Data specifications**: allows to specify how the data should be read, and to load images for analysis.
+2. **Detection**: perform RNA detection on individual images, and batch analysis images in one folder.
 
 
 ### Maximize ImJoy

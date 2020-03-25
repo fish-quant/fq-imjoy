@@ -62,6 +62,6 @@ In this tab, the user will specify
 ## Results
 For each analyzed image, two files will be created and stored under the orginal image name with a suffix
 
-* `**__settings.json`: file with all analysis settings. 
+* `**__analysis_details`: file with details about the analysis: all settings, and some basic image properties.
 * `**___spots.csv`: csv file with the position of all detected spots (in pixel). 
 

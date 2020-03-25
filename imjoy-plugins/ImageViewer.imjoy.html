@@ -36,6 +36,7 @@
 const Map = ol.Map;
 const View = ol.View;
 const Draw = ol.interaction.Draw;
+const createBox = ol.interaction.Draw.createBox;
 const Modify = ol.interaction.Modify;
 const Select = ol.interaction.Select;
 const defaultInteractions = ol.interaction.defaults;
@@ -428,8 +429,12 @@ const app = new Vue({
       }
       this.drawInteraction = new Draw({
         source: source,
-        type: 'Polygon',
-        freehand: freehand
+        freehand: freehand,
+        type: 'Circle',
+        
+        //type: 'Circle',
+        //geometryFunction: createBox
+
       });
       this.map.addInteraction(this.drawInteraction);
       if (this.snapInteraction) {
@@ -546,6 +551,12 @@ api.export(new ImJoyPlugin())
 </window>
 
 <style>
+
+.corner-annotation {
+  font-size: 2rem;
+  color: gray;
+}
+  
 .floating {
   position: absolute;
   left: 50%;

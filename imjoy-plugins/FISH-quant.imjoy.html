@@ -119,7 +119,7 @@ Plugin renders the user-interface of FISH-quant.
 						<div class="form-group">
 							<!-- Add button name -->
 							<div class="col-1 col-sm-12">
-								<button class="btn btn-action btn-primary btn-lg s-circle" @click="add_channel" :disabled="ch_name.length==0 && ch_ident.length==0 "><i class="icon icon-plus"></i>
+								<button class="btn btn-action btn-primary btn-lg s-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0"><i class="icon icon-plus"></i>
 								</button>
 							</div>
 							<!-- Channel name -->
@@ -164,7 +164,7 @@ Plugin renders the user-interface of FISH-quant.
 			</div>
       <!-- CHANNELS: END of panel -->
 			<br>
-			<button class="btn btn-primary p-centered" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</button>
+			<button class="btn btn-primary p-centered" :disabled="channels.length==0" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</button>
 
 		</div> <!-- END: card body to specify data-->
 	</div> <!-- END: card to specify data- -->
@@ -174,7 +174,7 @@ Plugin renders the user-interface of FISH-quant.
 	<div class="card">
 		<div class="card-header">
 			<div class="card-title h5">Data in folder fitting search criteria</div>
-			<div class="card-subtitle text-gray">Select one data-set to specify detection parameters.</div>
+			<div class="card-subtitle text-gray">Select one data-set for further processing.</div>
 		</div>
 
 		<div class="card-body">
@@ -224,7 +224,6 @@ Plugin renders the user-interface of FISH-quant.
 	</div> <!-- ENDL Card to list data -->
 	<br>
 
-
 </attachment>
 
 
@@ -250,7 +249,7 @@ Plugin renders the user-interface of FISH-quant.
 
     </div>
     <div class="column col-6">
-        <button class="btn btn-primary" @click="btn_select_analysis_region">Select smaller region to test analysis</button>
+        <button class="btn btn-primary" @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region to test analysis</button>
     </div>
   </div>
 </div>
@@ -267,7 +266,7 @@ Plugin renders the user-interface of FISH-quant.
       <!-- BUTTON to filter -->
       <div class="columns">
         <div class="column col-3">
-			    <button class="btn btn-primary" @click="btn_filter_image">Filter image</button>
+			    <button class="btn btn-primary" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</button>
         </div>
 
     <!-- FORM GROUP FOR SIGMAS -->
@@ -282,8 +281,8 @@ Plugin renders the user-interface of FISH-quant.
 
       <!-- BUTTON to save -->
         <div class="column col-3">
-          <button class="btn btn-primary" @click="btn_show_image_filtered">Show</button>
-          <button class="btn btn-primary" @click="btn_save_image_filtered">Save</button>
+          <button class="btn btn-primary" :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Show</button>
+          <button class="btn btn-primary" :disabled="status_image_filtered==false" @click="btn_save_image_filtered">Save</button>
         </div>
       </div>
       <br>
@@ -303,7 +302,7 @@ Plugin renders the user-interface of FISH-quant.
       <!-- Test thresholds -->
       <div class="columns">
         <div class="column col-3">
-          <button class="btn btn-primary" @click="btn_detection_test_thresholds">Test tresholds</button>
+          <button class="btn btn-primary" :disabled="status_image_filtered==false" @click="btn_detection_test_thresholds">Test different thresholds</button>
         </div>
 
         <div class="column col-3">
@@ -379,7 +378,7 @@ Plugin renders the user-interface of FISH-quant.
 
       <!-- Apply thresholds -->
 			<div class="input-group">
-				<button class="btn btn-primary input-group-btn" @click="btn_detection_apply">Apply detection threshold</button>
+				<button class="btn btn-primary input-group-btn" :disabled="status_thresholds_tested==false" @click="btn_detection_apply">Apply detection threshold</button>
         <input type="text" class="form-input" v-model.number="detection_threshold" placeholder="Set threshold either manually or by clicking on graph below">
 			</div>
 
@@ -396,9 +395,8 @@ Plugin renders the user-interface of FISH-quant.
 			<div class="card-subtitle text-gray">Specified settings will be used to process selected file or all files in folder.</div>
 		</div>
 		<div class="card-body">
-      <button class="btn btn-primary" @click="btn_detection_file">Analyze current image</button>
-			<button class="btn btn-primary" @click="btn_detection_batch">Launch batch processing</button>
-      <button class="btn btn-primary" @click="btn_save_settings">Save settings</button>
+      <button class="btn btn-primary" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</button>
+			<button class="btn btn-primary" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</button>
 		</div> <!-- END: card body for GMM -->
 	</div> <!-- END: card for GMM -->
 
@@ -461,21 +459,25 @@ class ImJoyPlugin {
           reg_exp: reg_exp,
           pixel_size_xy: await api.getConfig('pixel_size_xy'),
           pixel_size_z:  await api.getConfig('pixel_size_z'),
-          img_filt: null,
           images: [],
           current_index: 0,
-          channel_selected:'',
+          channel_selected: null,
           sigma: [1,0.75,0.75],  // ZYX
           minimum_distance: 2,
           detetection_plot: [],
           detection_threshold :null,
+          img_filt: [],
           img_filt_load : null,
           img_filt_min:0,
           img_filt_max:0,
           th_range_min:0,
           th_range_max:5000,
           th_range_nbins:50,
-
+          status_image_loaded: false,
+          status_image_filtered: false,
+          status_channel_selected: false,
+          status_thresholds_tested: false,
+          status_detection_applied: false
     }
 
     this.app = new Vue({
@@ -582,11 +584,6 @@ class ImJoyPlugin {
         },
 
 
-        // Callback to save settings
-        btn_save_settings: async function(){
-          self.save_settings()
-        },
-
         // Callback to save filtered image
         dblclick_show_image_raw: async function(channel_selected){
           console.log(channel_selected)
@@ -664,6 +661,7 @@ class ImJoyPlugin {
       console.log(file)
       console.log(this.store.channels)
 
+      this.store.images = []
       var mips = await this.fq_worker.load_image({
                             'file': file,
                             'channels': this.store.channels,
@@ -674,7 +672,6 @@ class ImJoyPlugin {
                             })
 
       // Assign images to carousel
-      this.store.images = []
       mips.map(mip => this.app.showImage({
                             'url': mip.url,
                             'index': mip.channel,
@@ -683,6 +680,13 @@ class ImJoyPlugin {
                             'shape': mip.shape,
                             })
       )
+
+      // Set boolean status
+      this.store.status_image_loaded = true
+      this.store.channel_selected = null
+      this.store.status_image_filtered = false
+      this.store.status_thresholds_tested = false
+      this.store.status_detection_applied = false
 
       // Store parameters for next launch
       api.setConfig('data_path', this.store.data_path)
@@ -722,6 +726,8 @@ class ImJoyPlugin {
   // Filter image
   async filter_image() {
 
+      this.store.img_filt = []
+
       this.store.img_filt_load = await this.fq_worker.filter_image({
                             'sigma': this.store.sigma,
                             'channel_selected': this.store.channel_selected,
@@ -740,6 +746,7 @@ class ImJoyPlugin {
       this.store.img_filt_min = this.store.img_filt_load['min']
       this.store.img_filt_max = this.store.img_filt_load['max']
 
+      this.store.status_image_filtered = true
   }
 
 
@@ -757,6 +764,12 @@ class ImJoyPlugin {
   // Test thresholds for detection
   async detection_test_thresholds() {
 
+    var graph_detection = document.getElementById('graph_detection');
+    if (graph_detection != null){
+     Plotly.purge(graph_detection);
+    };
+    //
+
     this.store.detection_threshold = this.store.th_range_max
 
     var th_tests = await this.fq_worker.detect_test_thresholds({
@@ -768,7 +781,8 @@ class ImJoyPlugin {
                               'show_status': true
                               })
 
-    var graph_detection = document.getElementById('graph_detection')
+    
+    // Create plotly plot
     var data = [{
           x: th_tests[0],
           y: th_tests[1],
@@ -797,7 +811,8 @@ class ImJoyPlugin {
 
     //Plotly.downloadImage('graph_detection', {format: 'png', width: 800, height: 600, filename: name_detection });
     this.store.detetection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600}) //.then(function(dataUrl) {api.log(dataUrl)})
-    api.log(this.store.detetection_plot)
+    
+    this.store.status_thresholds_tested = true
   }
 
 
@@ -817,6 +832,7 @@ class ImJoyPlugin {
                               'points':spots}
                               })
 
+    this.store.status_detection_applied = true
   }
 
   // Detect current file
@@ -862,28 +878,6 @@ class ImJoyPlugin {
   }
 
 
-
-
-  // Write settings to json file
-  async save_settings() {
-
-    this.fq_worker.save_settings({
-
-                        // General information about the files to be processed
-                        'data_path': this.store.data_path,
-                        'output_path': this.store.output_path,
-                        'pixel_size_xy': this.store.pixel_size_xy,
-                        'pixel_size_z':this.store.pixel_size_z,
-                        'reg_exp':this.store.reg_exp,
-                        'channels':this.store.channels,
-                        'channel_selected': this.store.channel_selected,
-
-                        // Filter & detection
-                        'sigma': this.store.sigma,
-                        'minimum_distance': this.store.minimum_distance,
-                        'detection_threshold': this.store.detection_threshold,
-                        })
-  }
 
   async run(ctx) {
 

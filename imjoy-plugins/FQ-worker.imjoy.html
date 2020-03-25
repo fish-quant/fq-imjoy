@@ -157,11 +157,21 @@ async def image_mip(img, name_save, file_manager, create_url=False, rescale=True
 
 class ImJoyPlugin():
 
+    # 
     async def setup(self):
         api.log('FQ-worker plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
         self.cwd = Path.cwd() 
-  
+        self.analysis_details = {
+                'date': '',
+                'data_specs': {},
+                'image_properties': {},
+                'spot_detection': {'counts': {},
+                                  'settings' :{}
+                                   }
+        }
+                
+
     def run(self, ctx):
         api.alert('Helper plugin without run function.')
 
@@ -214,29 +224,23 @@ class ImJoyPlugin():
         elif display_type == 'dialog':
             p = await api.showDialog (type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
   
-        
 
-    async def save_settings(self, config):
+    async def save_analysis_details(self, name_save):
         """
         Save settings as json file.
         """
         # Parameters
-        api.log('\nFQ-worker [save_settings]: received data:')
-        api.log(config)
-
-        # Name to save settings
-        name_save = config['name_settings']
-        config.pop('name_settings')
+        api.log('\nFQ-worker [save_analysis_details]')
 
         # Add more fields
         now = datetime.now() # current date and time
-        config['date'] = now.strftime("%d/%m/%Y__%H:%M:%S")
-        
+        self.analysis_details['date'] = now.strftime("%d/%m/%Y__%H:%M:%S")
+
         # Save as json
         with open(name_save, 'w') as json_file:
-            json.dump(config, json_file,indent=4, separators=(',', ': '))
+            json.dump(self.analysis_details, json_file,indent=4, separators=(',', ': '))
 
-        api.log(f'Settings file save as {name_save}')
+        api.log(f'Analysis details saved as {name_save}')
 
 
     def scan_folder(self, config):
@@ -309,6 +313,11 @@ class ImJoyPlugin():
         api.log('\nFQ-worker [scan_folder]: scan results:')
         api.log(scan_results)
         
+        # Save analysis details
+        self.analysis_details['data_specs']['data_path'] = str(path_data_full)
+        self.analysis_details['data_specs']['channels'] = channels
+        self.analysis_details['data_specs']['reg_exp'] = reg_exp
+
         return scan_results
 
 
@@ -380,7 +389,7 @@ class ImJoyPlugin():
 
         self.image = image
         self.image_names = image_names
-        self.image_size = image.shape
+        #self.image_size = image.shape
 
         self.image_filt = []
         self.mask_lm = []
@@ -389,6 +398,11 @@ class ImJoyPlugin():
         self.channel_names = channel_name
 
         if show_status: api.showStatus('Image loaded!')
+
+        # Save some image properties
+        self.analysis_details['data_specs']['output_path'] = config['output_path']
+        self.analysis_details['image_properties']['image_names'] = image_names
+        self.analysis_details['image_properties']['size'] = image.shape
 
         # Return MIPs
         if config['create_mips']:
@@ -454,11 +468,28 @@ class ImJoyPlugin():
             self.filter_full = True
 
         img_filt = stack.log_filter(img, sigma)
+
         self.image_filt = img_filt
         self.mask_lm = []
         self.channel_selected = channel_selected
         self.channel_index = channel_index
 
+        # Save settings of spot detection
+        self.analysis_details['spot_detection']['settings']['filter'] = {
+            'method' : 'LoG',
+            'sigma': sigma
+        }
+
+        # Save some image properties
+        self.analysis_details['image_properties']['channel_selected'] = channel_selected
+        self.analysis_details['image_properties']['intensity'] = {
+            'raw_mean': np.mean(img),
+            'raw_median': np.median(img),
+            'raw_std': np.std(img),
+            'filt_mean': np.mean(img_filt),
+            'filt_median': np.median(img_filt),
+            'filt_std': np.std(img_filt),
+        }
 
         # Create MIP and provide base64 encoded strings
         if config['create_mips']:
@@ -507,6 +538,11 @@ class ImJoyPlugin():
         # Local maximum detection
         self.mask_lm = detection.local_maximum_detection(self.image_filt, minimum_distance = minimum_distance)
 
+        # Settings
+        self.analysis_details['spot_detection']['settings']['detection'] = {
+            'method': 'localmax',
+            'mind_dist': minimum_distance
+        }
 
     async def detect_test_thresholds(self,config):
         '''
@@ -553,7 +589,8 @@ class ImJoyPlugin():
     async def detect_apply(self,config):
         '''
         Apply spot detection.
-        Returns spots as a nested list [[Z0,Y0,X0],[Z1,Y1,X1], .... ]
+        Returns spots as a nested list [[Z0,Y0,X0],[Z1,Y1,X1], .... ]. 
+        Why return? Can then be used to display in calling plugin
         '''
         # Get parameters
         threshold = config['detection_threshold']
@@ -565,6 +602,12 @@ class ImJoyPlugin():
             self.detetection_plot = config['detection_plot']
 
         spots, radius, _ = detection.spots_thresholding(self.image_filt, tuple(sigma), self.mask_lm, threshold)
+
+        # Save analysis details
+        self.analysis_details['spot_detection']['settings']['detection']['threshold'] = threshold
+        self.analysis_details['spot_detection']['counts'] = {
+            'spots': len(spots)
+        }
         return spots.tolist()
 
     async def detection_file(self,config):
@@ -620,21 +663,19 @@ class ImJoyPlugin():
         api.log(f'\nFQ-worker [detection_image]: results saved as {file_save}')
 
         # Save detection plot
-        file_save = path_save / f'{name_base}__detection_tests.png'
-        header, img_encoded = self.detetection_plot.split(",", 1)
-        img_decoded = base64.b64decode(img_encoded)
-        with open(file_save, 'wb') as f:
-            f.write(img_decoded)
-        api.log(f'\nFQ-worker [detection_image]: detection tests saved as {file_save}')
+        if hasattr(self, 'detetection_plot'): 
+            file_save = path_save / f'{name_base}__detection_tests.png'
+            header, img_encoded = self.detetection_plot.split(",", 1)
+            img_decoded = base64.b64decode(img_encoded)
+            with open(file_save, 'wb') as f:
+                f.write(img_decoded)
+            api.log(f'\nFQ-worker [detection_image]: detection tests saved as {file_save}')
 
-        # Save settings for file
-        ch_dict = {channel['name']: channel['identifier'] for channel in channels}
-        ch_ident = ch_dict[channel_selected]
-        config['name_settings'] = os.path.join(path_save, name_base + '__settings.json')
-        config['image_size'] = self.image_size
-        config['image_identifier'] = self.image_names
+        # Save analysis details
+        name_save = os.path.join(path_save, name_base + '__analysis_details.json')
+        await self.save_analysis_details(name_save)
 
-        await self.save_settings(config)
+        # Update status
         api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
 
 
@@ -704,13 +745,9 @@ class ImJoyPlugin():
                         header="Z;Y;X", delimiter=',', comments='')
             api.log(f'\nFQ-worker [detection_batch]: results saved as {file_save}')
 
-            # Save settings for file
-            ch_ident = ch_dict[channel_selected]
-            config['name_settings'] = os.path.join(path_save, name_base + '__settings.json')
-            config['image_size'] = self.image_size
-            config['image_identifier'] = file_process
-
-            await self.save_settings(config)
+            #  Save analysis details
+            name_save = os.path.join(path_save, name_base + '__analysis_details.json')
+            await self.save_analysis_details(name_save)
 
         api.showStatus('Batch processing finished!')
 
