@@ -25,6 +25,7 @@ In this tab, the user will specify
    * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate [section](imjoy-imageviewer.md) for more details on how to use the image viewer.
    * To show the image in a interface that can be resized and kept open, press the button button `Show`.
    * You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
+   * The filter size will be stored and reused when you launch ImJoy the next time.
 
 4. **Establish detection thresholds**. This will be performed on the filtered image. 
    

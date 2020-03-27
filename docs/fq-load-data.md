@@ -24,10 +24,11 @@ to test the analysis.
 7. A list in the lower part of the interface will then be populated. You can load an image by clicking on the arrow symbol. 
     This will load for a given position all specified channels and show them in the image carousel.
 
-    Double-clickin on an image will show it in the [image viewer](imjoy-imageviewer.md).
-            
+    Double-clicking on an image will show it in the [image viewer](imjoy-imageviewer.md).    
 
     ![fq-ui-scan-folder.png](img/fq-ui-scan-folder.png){: style="width:500px"}
+
+8. Most specified parameters (except the channel list), will be stored and reused when you launch ImJoy the next time.
 
 ## Trouble shooting
 
