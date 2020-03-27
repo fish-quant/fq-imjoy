@@ -159,7 +159,7 @@ class ImJoyPlugin():
         }
                 
     async def run(self, ctx):
-        self.FQ_interface = await api.createWindow(type= "FQ-interface",name='FISH-quant')
+        self.FQ_interface = await api.createWindow(type="FQ-interface",name='FISH-quant')
 
     def get_engine_url(self):
         return api.ENGINE_URL
@@ -555,11 +555,11 @@ class ImJoyPlugin():
 
         # Loop over thresholds
         if show_status: api.showStatus('Performing predection ... testing thresholds')
-
+        self.FQ_interface.emit('create_detection_plot',[])
         thresholds_spot = np.around(np.linspace(threshold_range[0], threshold_range[1],threshold_range[2] ))
 
         n_thresholds = threshold_range[2]
-        n_detections = np.empty(n_thresholds,dtype='int')
+        n_detections = np.zeros(n_thresholds,dtype='int')
 
         for i in range(n_thresholds):
             api.showProgress((i+1)/n_thresholds)
@@ -568,7 +568,9 @@ class ImJoyPlugin():
             n_detections[i] = spots.shape[0]
             api.log(f'Testing threshold {i}/{n_thresholds}: {threshold}  ... {n_detections[i]} spots detected.')
 
-            #api.FISHquant.emit('update_detection','test-data')
+            # TODO: replace this with an extend trace
+            #self.FQ_interface.emit('update_detection', [thresholds_spot[0:i].tolist(), n_detections[0:i].tolist()])
+            self.FQ_interface.emit('extend_detection_plot', [thresholds_spot[i].tolist(), n_detections[i].tolist()])
 
         if show_status: api.showStatus('Performing predection ... finished!')
 
