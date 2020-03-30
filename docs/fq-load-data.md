@@ -21,8 +21,9 @@ to test the analysis.
 6. Once all parameters are defined, you can press `Scan folder ...`. This will scan the folder for all images
     satisfying the selection criteria. Only images that satisfy all criteria, e.g. they must have all specified channels, 
     will be listed. 
-7. A list in the lower part of the interface will then be populated. You can load an image by clicking on the arrow symbol. 
+7. A list in the lower part of the interface will then be populated. You can load an image by clicking on the download symbol. 
     This will load for a given position all specified channels and show them in the image carousel.
+    The loaded image will then be indicated with a gray background and its specifications shown in the upper part of the interface.
 
     Double-clicking on an image will show it in the [image viewer](imjoy-imageviewer.md).    
 
@@ -30,7 +31,7 @@ to test the analysis.
 
 8. Most specified parameters (except the channel list), will be stored and reused when you launch ImJoy the next time.
 
-## Trouble shooting
+## Troubleshooting
 
 ### No images were found
 This means that the specified criteria did not provide any positive hits. This can have several reasons

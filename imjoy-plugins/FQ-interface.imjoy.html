@@ -37,6 +37,7 @@ Plugin renders the user-interface of FISH-quant.
 <attachment name="nav_bar">
 <header class="navbar">
   <section class="navbar-section">
+    <span> {{ txt_navbar }}</span>
   </section>
   <section class="navbar-section">
     <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link">GitHub</a>
@@ -196,7 +197,7 @@ Plugin renders the user-interface of FISH-quant.
 			</div>
 
 			<div style="text-align: center;">
-				<table class="table table-striped table-hover">
+				<table class="table table-hover">
 					<thead>
 						<tr>
 							<th>Identifier</th>
@@ -205,13 +206,10 @@ Plugin renders the user-interface of FISH-quant.
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="file in files" :key="file.file_ident">
+						<tr v-for="file in files" :key="file.file_ident" v-bind:class="{'active':(file === file_loaded)}">
 							<td>{{file.file_ident}}</td>
 							<td>{{file.fov}}</td>
-							<!--  <td> <span v-for="m in file.channels" :key="m">{{m}}, </span> </td> -->
-							<td>
-								<button class="btn btn-primary action btn-lg s-circle" @click="btn_load_image(file)"><i class="icon icon-download"></i></button>
-							</td>
+							<td><button class="btn btn-primary action btn-lg s-circle" @click="btn_load_image(file)"><i class="icon icon-download"></i></button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -423,6 +421,7 @@ class ImJoyPlugin {
       let data = [{
           x: [],
           y: [],
+          mode: "lines+markers",
           type: 'scatter'
         }],
 
@@ -485,9 +484,11 @@ class ImJoyPlugin {
     // For vue
     this.store = {
           active_tab: 'data',
+          txt_navbar: 'Specify and open image for processing',
           fq_worker: this.fq_worker,
           fq_worker_url: fq_worker_url,
           files: [],
+          file_loaded: '',
           data_path: data_path, 
           output_path:"acquisition>>analysis",
           channels: [],
@@ -578,13 +579,13 @@ class ImJoyPlugin {
 
         // Scan data directory
         btn_scan_folder: async function() {
-          var config = {channels: this.channels,
+          let config = {channels: this.channels,
                         reg_exp: this.reg_exp,
                         data_path: this.data_path}
-          var file_list  = await this.fq_worker.scan_folder(config)
+          let file_list  = await this.fq_worker.scan_folder(config)
 
           // Get all channel names
-          var ch_names = this.channels.map(channel => channel['name'])
+          let ch_names = this.channels.map(channel => channel['name'])
 
           // Replace file list
           this.files = []
@@ -593,7 +594,7 @@ class ImJoyPlugin {
 
           function update_files(file){
 
-            var file_info = {
+            let file_info = {
                   file_ident: file['file_ident'],
                   fov: file['fov'],
                   img_ext: file['img_ext']
@@ -707,13 +708,13 @@ class ImJoyPlugin {
       this.store.status_thresholds_tested = false
       this.store.status_detection_applied = false
 
-      var graph_detection = document.getElementById('graph_detection');
+      let graph_detection = document.getElementById('graph_detection');
       if (graph_detection != null){
           Plotly.purge(graph_detection);
       };
 
       // Load image
-      var mips = await this.fq_worker.load_image({
+      let mips = await this.fq_worker.load_image({
                             'file': file,
                             'channels': this.store.channels,
                             'data_path': this.store.data_path,
@@ -721,6 +722,9 @@ class ImJoyPlugin {
                             'create_mips': true,
                             'show_status': true,
                             })
+
+      this.store.txt_navbar = 'Loaded image IDENTIFIER :: FOV  :  ' + file.file_ident + ' :: ' + file.fov;
+      this.store.file_loaded = file;
 
       // Assign images to carousel
       mips.map(mip => this.app.showImage({
@@ -835,6 +839,7 @@ class ImJoyPlugin {
     var data = [{
           x: th_tests[0],
           y: th_tests[1],
+          mode: "lines+markers",
           type: 'scatter'
         }],
         layout = {
