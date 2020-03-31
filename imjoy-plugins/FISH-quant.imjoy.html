@@ -653,7 +653,7 @@ class ImJoyPlugin():
         np.savetxt( file_save,
                     np.asarray(spots),
                     fmt='%i',
-                    header="Z;Y;X", delimiter=',', comments='')
+                    header="Z,Y,X", delimiter=',', comments='')
         api.log(f'\nFQ-worker [detection_image]: results saved as {file_save}')
 
         # Save detection plot
@@ -736,7 +736,7 @@ class ImJoyPlugin():
             np.savetxt( file_save,
                         np.asarray(spots),
                         fmt='%i',
-                        header="Z;Y;X", delimiter=',', comments='')
+                        header="Z,Y,X", delimiter=',', comments='')
             api.log(f'\nFQ-worker [detection_batch]: results saved as {file_save}')
 
             #  Save analysis details
