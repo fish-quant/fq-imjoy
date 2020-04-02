@@ -1,965 +1,749 @@
 ﻿<docs lang="markdown">
-Plugin renders the user-interface of FISH-quant.
+Python plugin performing analyze of smFISH images. 
 
-* Image processing is performed with the [**big-fish package**](https://github.com/fish-quant/big-fish)
-
-## BUGS and TODO
-* Verify that relevant parameters are defined (e.g. images) before controls are rendered.
+__DEV NOTE__: with tag "dev" no requirements will be installed. Make sure that you have
+big-fish installed in the env where you run this plugin. Either the stable version from 
+`https://github.com/muellerflorian/big-fish@test-setup` or a local editable installation.
 </docs>
+
+TODO: update install link to fish-quant/big-fish once PR for pip installation is merged.
 
 <config lang="json">
 {
-  "name": "FISH-quant",
-  "type": "window",
-  "tags": [],
+  "name": "FISH-QUANT",
+  "type": "native-python",
+  "version": "0.0.4",
+  "description": "Worker to process smFISH images.",
+  "tags": ["stable","dev"],
   "ui": "",
-  "version": "0.0.2",
   "cover": "",
-  "description": "Analyze smFISH images with big-fish in ImJoy.",
-  "icon": "extension",
   "inputs": null,
   "outputs": null,
+  "flags": ["single-instance", "allow-detach"],
+  "icon": "extension",
   "api_version": "0.1.7",
   "env": "",
-  "requirements": [
-        "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css",
-        "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-exp.min.css",
-        "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-icons.min.css"],
-  "dependencies":  [
-          "fish-quant/fq-imjoy:FQ-worker",
+  "permissions": [],
+  "requirements": { "stable":["pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"],
+                    "dev": [""]},
+    "dependencies":  [
+          "fish-quant/fq-imjoy:FQ-interface",
           "fish-quant/fq-imjoy:FQ-image-viewer",
-          "fish-quant/fq-imjoy:ImageViewer",
-          "oeway/ImJoy-Plugins:Tabbed-Docs"],
-  "defaults": {"w": 30, "h": 20}
+          "fish-quant/fq-imjoy:ImageViewer"],
+  "runnable": true
 }
 </config>
 
-
-<attachment name="nav_bar">
-<header class="navbar">
-  <section class="navbar-section">
-  </section>
-  <section class="navbar-section">
-    <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link">GitHub</a>
-    <a @click="openUrl('https://fish-quant.github.io/fq-imjoy')" class="btn btn-link">Docs</a>
-  </section>
-</header>
-</attachment>
-
-
-<attachment name="overview">
-<h5> Not implemented yet .... will come shortly </h5>
-<div id="map" class="map"></div>
-<form class="form-inline">
-  <label>Geometry type &nbsp;</label>
-  <select id="type">
-    <option value="LineString">LineString</option>
-    <option value="Polygon">Polygon</option>
-    <option value="Circle">Circle</option>
-    <option value="None">None</option>
-  </select>
-</form>
-</attachment>
-
-
-<attachment name="data">
-
-	<!-- Card to specify data -->
-	<div class="card">
-		<div class="card-header">
-			<div class="card-title h5">Specify data</div>
-			<div class="card-subtitle text-gray">Specify images to be loaded and analyzed.</div>
-		</div>
-
-		<div class="card-body">
-
-			<div class="input-group">
-				<!-- Re-activate this button once the file-manager works better
-          <button class="btn btn-primary input-group-btn" @click="btn_specify_folder">Specify folder with data</button> -->
-        <span class="input-group-addon" style="background-color:#eff5fa">Folder with data</span>
-				<input type="text" class="form-input" v-model="data_path" placeholder="paste-path-to-data">
-			</div>
-
-			<div class="input-group" style="margin-top: 5px">
-        <!-- Re-activate this button once the file-manager works better
-				<button class="btn btn-primary input-group-btn" @click="btn_specify_folder_output">Specify folder for results</button>-->
-        <span class="input-group-addon" style="background-color:#eff5fa">Folder to save results</span>
-				<input type="text" class="form-input" v-model="output_path" placeholder="">
-			</div>
-
-			<br>
-			<div class="input-group">
-				<span class="input-group-addon" style="background-color:#eff5fa">Regular expression</span>
-				<input type="text" class="form-input" v-model="reg_exp">
-				<button class="btn btn-primary input-group-btn" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
-			</div>
-
-			<form class="form-horizontal">
-				<div class="form-group">
-					<div class="col-12 col-lg-12">
-						<div class="input-group">
-							<span class="input-group-addon" style="background-color:#eff5fa">Pixel-size XY [nm]</span>
-							<input type="text" class="form-input" v-model="pixel_size_xy" placeholder="Pixel-size in nm">
-							<span class="input-group-addon" style="background-color:#eff5fa" placeholder="Z step-size in nm">Pixel-size Z [nm]</span>
-							<input type="text" class="form-input" v-model="pixel_size_z"  placeholder="Step-size in nm">
-						</div>
-					</div>
-				</div>
-			</form>
-
-
-      <!-- CHANNELS: PANEL -->
-			<div class="panel">
-				<div class="panel-body">
-
-					<!-- FORM: add a new channel -->
-					<form class="form-horizontal">
-						<div class="form-group">
-							<!-- Add button name -->
-							<div class="col-1 col-sm-12">
-								<button class="btn btn-action btn-primary btn-lg s-circle" @click="add_channel" :disabled="ch_name.length==0 && ch_ident.length==0 "><i class="icon icon-plus"></i>
-								</button>
-							</div>
-							<!-- Channel name -->
-							<div class="col-4 col-sm-12">
-								<div class="input-group"> <span class="input-group-addon" style="background-color:#eff5fa">Channel</span>
-									<input type="text" class="form-input" placeholder="Name of channel" v-model="ch_name">
-								</div>
-							</div>
-							<!-- Channel identifier -->
-							<div class="col-1 col-sm-12"></div>
-							<div class="col-4 col-sm-12">
-								<div class="input-group"> <span class="input-group-addon" style="background-color:#eff5fa">Identifier</span>
-									<input type="text" class="form-input" placeholder="Unique string" v-model="ch_ident">
-								</div>
-							</div>
-						</div>
-					</form>
-					<!-- CHANNELS: end of form to add a new channel -->
-
-					<!-- CHANNELS: render table containing channels to be loaded -->
-					<div style="text-align: center;">
-						<table class="table table-striped table-hover">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th>Identifier</th>
-									<th>Remove?</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="ch in channels" :key="ch.name">
-									<td>{{ch.name}}</td>
-									<td>{{ch.identifier}}</td>
-									<td><button class="btn btn-primary action btn-lg s-circle" @click="remove_channel(ch)"><i class="icon icon-delete"></i></button></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<!-- CHANNELS: END table containing channels to be loaded -->
-
-				</div>
-			</div>
-      <!-- CHANNELS: END of panel -->
-			<br>
-			<button class="btn btn-primary p-centered" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</button>
-
-		</div> <!-- END: card body to specify data-->
-	</div> <!-- END: card to specify data- -->
-	<br>
-
-	<!-- Card to list data -->
-	<div class="card">
-		<div class="card-header">
-			<div class="card-title h5">Data in folder fitting search criteria</div>
-			<div class="card-subtitle text-gray">Select one data-set to specify detection parameters.</div>
-		</div>
-
-		<div class="card-body">
-
-			<!-- carousel to show images -->
-			<div class="carousel" v-if="images.length">
-				<input class="carousel-locator" v-for="(img, i) in images" :id="'slide-'+i" type="radio" name="carousel-radio" hidden="" v-model="current_index" :value="i" checked="">
-
-				<!-- carousel container -->
-				<div class="carousel-container">
-					<!-- carousel item -->
-					<figure class="carousel-item" v-for="(img, i) in images">
-						<img class="img-responsive rounded" v-bind:src="img.url" :alt="img.index" v-on:dblclick="dblclick_show_image_raw(img.index)" :key="img.key">
-					</figure>
-
-				</div>
-
-				<!-- carousel navigation -->
-				<div class="carousel-nav">
-					<label class="nav-item text-hide c-hand"  v-for="(img, i) in images" :for="'slide-'+i">{{img.index}}</label>
-				</div>
-			</div>
-
-			<div style="text-align: center;">
-				<table class="table table-striped table-hover">
-					<thead>
-						<tr>
-							<th>Identifier</th>
-							<th>FOV</th>
-							<th>Load image</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="file in files" :key="file.file_ident">
-							<td>{{file.file_ident}}</td>
-							<td>{{file.fov}}</td>
-							<!--  <td> <span v-for="m in file.channels" :key="m">{{m}}, </span> </td> -->
-							<td>
-								<button class="btn btn-primary action btn-lg s-circle" @click="btn_load_image(file)"><i class="icon icon-download"></i></button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
-
-	</div> <!-- ENDL Card to list data -->
-	<br>
-
-
-</attachment>
-
-
-
-<attachment name="segmentation">
-<h5> Not implemented yet .... will come shortly </h5>
-</attachment>
-
-
-<attachment name="detection">
-
-
-<div class="container">
-  <div class="columns">
-    <div class="column col-6">
-
-        <!-- Select which channel should be processed-->
-        <ul class="menu">
-          <!-- Header -->
-          <li class="divider" data-content="Select channels to be analyzed"></li>
-          <!-- Render channel list -->
-          <li class="menu-item" v-for="channel in channels" v-bind:key="channel.name">
-            <input type="radio" v-bind:value="channel.name" v-model="channel_selected">
-            <label for="{{channel.name}}"></i>{{channel.name}}</label>
-          </li>
-        </ul>
-        <br>
-
-    </div>
-    <div class="column col-6">
-        <button class="btn btn-primary" @click="btn_select_analysis_region">Select smaller region to test analysis</button>
-    </div>
-  </div>
-</div>
-
-
-	<!-- Card to specify FILTER -->
-	<div class="card">
-		<div class="card-header">
-			<div class="card-title h5">Filter image</div>
-			<div class="card-subtitle text-gray">Remove background and enhance spots.</div>
-		</div>
-		<div class="card-body">
-
-      <!-- BUTTON to filter -->
-      <div class="columns">
-        <div class="column col-3">
-			    <button class="btn btn-primary" @click="btn_filter_image">Filter image</button>
-        </div>
-
-    <!-- FORM GROUP FOR SIGMAS -->
-        <div class="column col-6">
-          <div class="input-group">
-            <span class="input-group-addon" style="background-color:#eff5fa">Sigma [XYZ]</span>
-            <input type="text" class="form-input" v-model.number="sigma[2]">
-            <input type="text" class="form-input" v-model.number="sigma[1]">
-            <input type="text" class="form-input" v-model.number="sigma[0]">
-          </div>
-        </div>
-
-      <!-- BUTTON to save -->
-        <div class="column col-3">
-          <button class="btn btn-primary" @click="btn_show_image_filtered">Show</button>
-          <button class="btn btn-primary" @click="btn_save_image_filtered">Save</button>
-        </div>
-      </div>
-      <br>
-
-			<img v-if="img_filt" class="img-responsive rounded img-embed" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
-		</div> <!-- END: card body for filtering -->
-	</div> <!-- END: card for filtering -->
-
-	<!-- Card to specify DETECTION -->
-	<div class="card" style="margin-top: 5px">
-		<div class="card-header">
-			<div class="card-title h5">Detect RNAs</div>
-			<div class="card-subtitle text-gray">Detect RNAS in filtered images.</div>
-		</div>
-		<div class="card-body">
-
-      <!-- Test thresholds -->
-      <div class="columns">
-        <div class="column col-3">
-          <button class="btn btn-primary" @click="btn_detection_test_thresholds">Test tresholds</button>
-        </div>
-
-        <div class="column col-3">
-          <div class="input-group">
-            <span class="input-group-addon" style="background-color:#eff5fa">Min dist</span>
-            <input type="text" class="form-input" v-model.number="minimum_distance">
-          </div>
-        </div>
-
-        <!-- Select parameters for threshold testing -->
-        <div class="column col-6">
-          <div class="accordion">
-            <input type="checkbox" id="accordion-1" name="accordion-checkbox" hidden>
-            <label class="accordion-header" for="accordion-1"> <i class="icon icon-arrow-right mr-1"></i>
-              Specify range of tested tresholds</label>
-            <div class="accordion-body">
-              <ul class="menu">
-                <li class="menu-item">
-
-                  <!-- Min value -->
-                  <form class="form-horizontal">
-                    <div class="form-group">
-
-                      <div class="col-6 col-sm-12"> <!-- <label class="form-label" for="th_range_max">Max value: {{th_range_min}}</label>  -->
-                        <div class="input-group">
-                            <span class="input-group-addon" style="background-color:#eff5fa">Min</span>
-                            <input type="text" class="form-input" v-model.number="th_range_min">
-                        </div>
-                      </div>
-
-                      <div class="col-6 col-sm-12">
-                        <input class="slider" type="range" :min="img_filt_min" :max="img_filt_max" v-model.number="th_range_min">
-                      </div>
-                    </div>
-                  </form>
-
-                  <!-- Max value -->
-                  <form class="form-horizontal" >
-                    <div class="form-group" >
-                      <div class="col-6 col-sm-12">  <!-- <label class="form-label" for="th_range_max">Max value: {{th_range_max}}</label>  -->
-                         <div class="input-group">
-                            <span class="input-group-addon" style="background-color:#eff5fa">Max</span>
-                            <input type="text" class="form-input" v-model.number="th_range_max">
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-12">
-                        <input class="slider" type="range" :min="img_filt_min" :max="img_filt_max" v-model.number="th_range_max">
-                      </div>
-                    </div>
-                  </form>
-
-                  <!-- Bin size -->
-                  <form class="form-horizontal">
-                    <div class="form-group">
-                      <div class="col-6 col-sm-12">  <!-- <label class="form-label" for="th_range_nbins">No of test values: {{th_range_nbins}}</label> -->
-                          <div class="input-group">
-                            <span class="input-group-addon" style="background-color:#eff5fa"># of thresholds</span>
-                            <input type="text" class="form-input" v-model.number="th_range_nbins">
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-12">
-                        <input class="slider" type="range" min="0" max="200" v-model.number="th_range_nbins">
-                      </div>
-                    </div>
-                  </form>
-
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Apply thresholds -->
-			<div class="input-group">
-				<button class="btn btn-primary input-group-btn" @click="btn_detection_apply">Apply detection threshold</button>
-        <input type="text" class="form-input" v-model.number="detection_threshold" placeholder="Set threshold either manually or by clicking on graph below">
-			</div>
-
-      <!-- Plot results -->
-      <div id="graph_detection" v-if="detection_threshold" class="graph_resize" style="margin-top: 5px"></div>
-
-		</div> <!-- END: card body for detection -->
-	</div> <!-- END: card for detection -->
-
-	<!-- Card for batch processing -->
-	<div class="card" style="margin-top: 5px">
-		<div class="card-header">
-			<div class="card-title h5">Process file(s)</div>
-			<div class="card-subtitle text-gray">Specified settings will be used to process selected file or all files in folder.</div>
-		</div>
-		<div class="card-body">
-      <button class="btn btn-primary" @click="btn_detection_file">Analyze current image</button>
-			<button class="btn btn-primary" @click="btn_detection_batch">Launch batch processing</button>
-      <button class="btn btn-primary" @click="btn_save_settings">Save settings</button>
-		</div> <!-- END: card body for GMM -->
-	</div> <!-- END: card for GMM -->
-
-
-</attachment>
-
-
-<script lang="javascript">
-
-class ImJoyPlugin {
-
-  async setup() {
-
-    // Render different tabs with attachments
-    document.getElementById('cont_nav_bar').innerHTML = (await api.getAttachment('nav_bar'));
-    document.getElementById('cont_data').innerHTML =  (await api.getAttachment('data'));
-    document.getElementById('cont_detection').innerHTML = (await api.getAttachment('detection'));
-    //document.getElementById('cont_overview').innerHTML = (await api.getAttachment('overview'));
-    //document.getElementById('cont_segmentation').innerHTML = (await api.getAttachment('segmentation'));
-
-    //
-    const self = this
-    this.fq_worker = await api.getPlugin("FQ-worker")
-    this.fq_viewer = await api.getPlugin("FQ-image-viewer")
-
-    // Get file-manager of FQ plugin
-    const fq_worker_url = await this.fq_worker.get_engine_url()
-    console.log('URL of connected FQ-worker: ' +  fq_worker_url)
-
-    // Get default values (if store already)
-    var reg_exp = await api.getConfig('reg_exp')
-    if(! reg_exp) {
-      reg_exp = '(?P<fov>.*)-(?P<file_ident>Exp.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
-    }
-
-    var data_path = await api.getConfig('data_path')
-    if(! data_path) {
-      data_path = 'paste-path-to-data'
-      data_path = 'D:\Documents\Data\test-data\fish-quant\spot-detection\acquisition'
-    }
-
-    // For vue
-    this.store = {
-          active_tab: 'data',
-          fq_worker: this.fq_worker,
-          fq_worker_url: fq_worker_url,
-          files: [],
-          data_path: data_path, 
-          output_path:"acquisition>>analysis",
-          channels: [],
-          analysis_region: [],
-          ch_name: [],
-          ch_ident: [],
-          reg_exp: reg_exp,
-          pixel_size_xy: await api.getConfig('pixel_size_xy'),
-          pixel_size_z:  await api.getConfig('pixel_size_z'),
-          img_filt: null,
-          images: [],
-          current_index: 0,
-          channel_selected:'',
-          sigma: [1,0.75,0.75],  // ZYX
-          minimum_distance: 2,
-          detection_threshold :null,
-          img_filt_load : null,
-          img_filt_min:0,
-          img_filt_max:0,
-          th_range_min:0,
-          th_range_max:5000,
-          th_range_nbins:50,
-
-    }
-
-    this.app = new Vue({
-      el: '#app',
-      data: this.store,
-      methods: {
-
-        openUrl(url){
-            api.utils.openUrl(url)
-        },
-
-        showImageFilt(obj){
-                this.img_filt = obj
-            },
-
-        showImage(obj){
-            this.images.push(obj)
-            if(this.images.length>5){
-                this.images.shift()
-            }
-            this.current_index = this.images.length -1
-        },
-
-        setThreshold(threshold){
-                this.detection_threshold = threshold
-        },
-
-        // Data: remove channel
-        remove_channel: function(ch) {
-          this.channels.splice(this.channels.indexOf(ch), 1);
-        },
-
-        // Data: add channel
-        add_channel: function() {
-           this.channels.push({name: this.ch_name,identifier: this.ch_ident})
-            // Reset fields
-            this.ch_name = []
-            this.ch_ident = []
-        },
-
-        // Specify data path
-        btn_specify_folder: async function() {
-          console.log(this.fq_worker_url)
-          const ret = await api.showFileDialog({type:'directory', uri_type: 'path', engine: this.fq_worker_url})
-          if(ret){
-            await api.alert("Selected folder " + ret.path + "\non file-manager " + ret.file_manager)
-            console.log(ret)
-            this.data_path = ret.path
-          }
-        },
-
-        // Specify data path
-        btn_specify_folder_output: async function() {
-          const ret = await api.showFileDialog({type:'directory',root: this.data_path, uri_type: 'path'})
-          if(ret){
-            await api.alert("Selected output folder " + ret.path + ", on engine " + ret.engine)
-            this.output_path = ret.path
-          }
-        },
-
-        // Scan data directory
-        btn_scan_folder: async function() {
-          var config = {channels: this.channels,
-                        reg_exp: this.reg_exp,
-                        data_path: this.data_path}
-          var file_list  = await this.fq_worker.scan_folder(config)
-
-          // Get all channel names
-          var ch_names = this.channels.map(channel => channel['name'])
-
-          // Replace file list
-          this.files = []
-          file_list.map(update_files.bind(this))
-          console.log(file_list)
-
-          function update_files(file){
-
-            var file_info = {
-                  file_ident: file['file_ident'],
-                  fov: file['fov'],
-                  img_ext: file['img_ext']
-            }
-
-            // Assign all channel names
-            ch_names.map(function(ch_name){
-              file_info[ch_name] = file[ch_name]
+<script lang="python">
+from imjoy import api
+
+import asyncio
+import sys
+import os
+from pathlib import Path
+import json
+import re
+import base64
+from datetime import datetime
+
+import numpy as np
+from skimage import io
+import pandas as pd
+from skimage.exposure import rescale_intensity
+
+# For MAC
+if sys.platform == "darwin":
+    import matplotlib
+    matplotlib.use('PS')
+
+from bigfish import stack, plot, detection
+
+def create_folder(path_new):
+    """
+    Check if path `path_new` exisist. If not, create it.
+    """
+    if not path_new.is_dir():
+        path_new.mkdir(parents=True)
+
+
+def create_output_path(data_path, output_path):
+    """
+    Function to determine correct output path.
+
+    If the string output_path contains characters '>>' it will not
+    be interpreted as a path name but as an indicator for a string
+    replacement operation for the data_path: old_str>>new_str
+    """
+    
+    # Make sure they are strings
+    data_path = str(data_path)
+    output_path = str(output_path)
+
+    if (re.search(">>", output_path)):
+      str_orig = re.search(r'^(.*)>>(.*)$', output_path).group(1)
+      str_rep = re.search(r'^(.*)>>(.*)$', output_path).group(2)
+
+      print(f'Replacement parameters found: original string: {str_orig}, replacement string: {str_rep}')
+
+      output_path_return = data_path.replace(str_orig,str_rep)
+      print(f'Output path: {output_path_return}')
+
+    else:
+      print("No match")
+      output_path_return = output_path
+
+    # Convert back to Path
+    output_path_return = Path(output_path_return)
+    create_folder(output_path_return)
+
+    return output_path_return
+
+
+async def image_mip(img, name_save, file_manager, create_url=False, rescale=True):
+    """
+    Provide a base64 encoded URL of a MIP.
+    """
+    img_mip = stack.maximum_projection(img)
+
+    #await api.showDialog(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": img_mip})
+
+    # Create URL for image to be shown in interface
+    if create_url:
+
+        # Rescale image (only required when creating url)
+        if rescale:
+            pa, pb = np.percentile(img_mip, (0.1,99.9))
+            img_mip_save = rescale_intensity(img_mip, in_range=(pa, pb),out_range=np.uint8).astype('uint8')
+        else:
+            img_mip_save = np.copy(img_mip)
+
+        stack.save_image(img_mip_save, name_save)
+        api.log(name_save)
+
+        # Preferred solution, but doesn't work yet. 
+        # Bug in Jupyter: returned content-Type is "text/html" but should be "image/png"
+        # Causes CORB error in Chrome.
+
+        """
+        img_url = await file_manager.getFileUrl({'path': name_save})
+        api.log(file_url)
+        return img_mip, img_mip.shape, file_url
+        """
+    
+        # Workaround until content type is fixed
+        with open(name_save, 'rb') as f:
+            data = f.read()
+            result = base64.b64encode(data).decode('ascii')
+            img_url = 'data:image/png;base64,' + result
+    
+    else:
+        img_url = None
+    
+    return img_mip, img_mip.shape, img_url
+    
+
+class ImJoyPlugin():
+
+    # 
+    async def setup(self):
+        api.log('FQ-worker plugin initialized.')
+        self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
+        self.cwd = Path.cwd() 
+        self.analysis_details = {
+                'date': '',
+                'data_specs': {},
+                'image_properties': {},
+                'spot_detection': {'counts': {},
+                                  'settings' :{}
+                                   }
+        }
+                
+    async def run(self, ctx):
+        self.FQ_interface = await api.createWindow(type="FQ-interface",name='FISH-quant')
+
+    def get_engine_url(self):
+        return api.ENGINE_URL
+
+    async def show_image(self, config):
+        """
+        Show filtered image
+        """
+        # Parameters
+        api.log('\nFQ-worker [show_image]: received data:')
+        api.log(config)
+
+        channel_selected = config['channel_selected']
+        image_type = config['image_type']
+        image_dim = config['image_dim']
+        display_type = config['display_type']
+
+        # Check if channel was selected
+        if len(channel_selected) == 0:
+            api.alert('Please select which channel should be processed!')
+            return
+
+        # Get index of selected channel
+        #api.log(self.image_names[channel_selected])
+        channel_index = self.image_names[channel_selected]["index"]
+        api.log(f'channel_index: {channel_index}; image_type: {image_type}; image_dim: {image_dim};')
+        
+        # Get image to be shown
+        if image_type == 'raw':
+            if image_dim == 'orig':
+                image_array = self.image[0, channel_index, :, :, :]
+            
+            elif image_dim == 'mip':
+                image_array = self.image_mips[channel_index, :, :]
+
+        elif image_type == 'filtered':
+            if image_dim == 'orig':
+                image_array = self.image_filt
+
+            elif image_dim == 'mip':
+                image_array = self.image_filt_mip
+
+        #api.log(image_array.size())
+
+        # Show image
+        if display_type == 'window':
+            p = await api.createWindow(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
+        elif display_type == 'dialog':
+            p = await api.showDialog (type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
+  
+
+    async def save_analysis_details(self, name_save):
+        """
+        Save settings as json file.
+        """
+        # Parameters
+        api.log('\nFQ-worker [save_analysis_details]')
+
+        # Add more fields
+        now = datetime.now() # current date and time
+        self.analysis_details['date'] = now.strftime("%d/%m/%Y__%H:%M:%S")
+
+        # Save as json
+        with open(name_save, 'w') as json_file:
+            json.dump(self.analysis_details, json_file,indent=4, separators=(',', ': '))
+
+        api.log(f'Analysis details saved as {name_save}')
+
+
+    def scan_folder(self, config):
+        """
+        Scan folder for images to be analyzed.
+        """
+
+        api.showStatus('Scanning folder for images with specified configuration ... ')
+
+        # Parameters
+        api.log('\nFQ-worker [scan_folder]: received data:')
+        api.log(config)
+        channels  = config['channels']
+        reg_exp   = config['reg_exp']
+        path_data_full = Path(config['data_path'])
+
+        # Get channels as dict
+        ch_dict = {channel['identifier']: channel['name'] for channel in channels}
+        ch_identifier = list(ch_dict.keys())
+
+        # Scan all files create data-frame for files that match the regular expression
+        api.log(f'FQ-worker [scan_folder]: {str(path_data_full)}')
+        api.log(f'channels: {ch_dict}')
+        api.log(f'reg_exp: {reg_exp}')
+
+        df_regexp = pd.DataFrame()
+        for file in os.listdir(str(path_data_full)):
+            match = re.search(reg_exp, file)
+
+            if match:
+                match_dict = match.groupdict()
+                match_dict.update({'file_name': file})
+                df_regexp = df_regexp.append(match_dict, ignore_index=True)
+
+        print(df_regexp.size)
+        if df_regexp.size == 0:
+            api.alert('No images with these specifications found.')
+            return
+
+        # Get unique positions (ignore channels)
+        df_pos_unique = df_regexp.drop_duplicates(['file_ident', 'fov'])
+        df_pos_unique = df_pos_unique.drop(columns=['channel', 'file_name'])
+
+        # Iterate over the Dataframe rows as named tuples
+        df_scan = pd.DataFrame()
+        for pos_unique in df_pos_unique.itertuples(index=False):
+            file_ident_loop = getattr(pos_unique, 'file_ident')
+            fov_loop = getattr(pos_unique, 'fov')
+            img_ext_loop = getattr(pos_unique, 'img_ext')
+
+            # Find all channels of unique positions
+            df_loop = df_regexp.query('(file_ident == @file_ident_loop) and (fov == @fov_loop)')
+            channels_loop = df_loop['channel'].values.tolist()
+
+            # Verify if all channels are present
+            if set(ch_identifier) <= set(channels_loop):
+
+                data_dict = pos_unique._asdict()
+
+                # Find file-names for each channel and add to dictionary
+                for ch_query in ch_identifier:
+                    image_name = df_loop.query('channel == @ch_query')['file_name'].values[0]
+                    data_dict.update({ch_dict[ch_query]: image_name})
+
+                df_scan = df_scan.append(data_dict, ignore_index=True)
+
+        self.path_data_full = path_data_full
+        scan_results = df_scan.to_dict('records')
+        api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
+        api.log('\nFQ-worker [scan_folder]: scan results:')
+        api.log(scan_results)
+        
+        # Save analysis details
+        self.analysis_details['data_specs']['data_path'] = str(path_data_full)
+        self.analysis_details['data_specs']['channels'] = channels
+        self.analysis_details['data_specs']['reg_exp'] = reg_exp
+
+        return scan_results
+
+
+    async def load_image(self,config):
+        """
+        Function to load image.
+        """
+        
+        # Parameters
+        api.log('\nFQ-worker [load_image]: received data:')
+        api.log(config)
+        show_status = config['show_status']
+        if show_status: api.showStatus('Loading images. Please wait .... ')
+
+        # Folder containing data
+        path_data_full = self.path_data_full
+
+        # Get channel names
+        channels = config['channels']
+        channel_identifiers = [channel['identifier'] for channel in channels]
+        channel_names = [channel['name'] for channel in channels]
+        ch_dict = {channel['name']: channel['identifier'] for channel in channels}
+
+        # MIPs: create folder to store images
+        if config['create_mips']:
+            mips = []
+            path_save = create_output_path(path_data_full, config['output_path']) / 'imjoy-tmp' / 'mips'
+            create_folder(path_save)
+            api.log(f'Folder for MIPs: {path_save}')
+
+        # Loop over channels and build 5D tensor (starfish)
+        tensors_3d = []
+        tensors_4d = []
+
+        mip_tensors = []
+
+        #image = []
+        image_names = {}
+
+        for index, channel_name in enumerate(channel_names):
+            image_name = config['file'][channel_name]
+            image_name_full = str(path_data_full / image_name)
+            api.log(f'Reading image: {image_name_full}')
+
+            tensor_3d = io.imread(image_name_full)
+            tensors_3d.append(tensor_3d)
+
+            image_names.update({ channel_name :  {
+                                    'index': index,
+                                    'image_name': image_name,
+                                    'identifier': ch_dict[channel_name]
+                                }
             })
 
-            this.files.push(file_info)
-          }
+            if config['create_mips']:
+                name_save = str(path_save / f'img_mip_dum__{channel_name}.png')
+                img_mip, shape, url = await image_mip(tensor_3d, name_save, self.file_manager, create_url=True, rescale=True)
 
-        },
+                mip_tensors.append(img_mip)
+                mips.append({'url':url,'shape':shape,'channel':channel_name,'image_name':image_name})
 
+        # stack 3-d tensors in 4-d
+        tensor_4d = np.stack(tensors_3d, axis=0)
+        tensors_4d.append(tensor_4d)
 
-        // Load image
-        btn_load_image: async function(file){
-          self.load_image(file)
-        },
+        # stack 4-d tensors in 5-d
+        image = np.stack(tensors_4d, axis=0)
+        api.log(f'FQ-worker [load_image]: loaded image: Shape: {image.shape}, dtype: {image.dtype}')
 
+        self.image = image
+        self.image_names = image_names
+        #self.image_size = image.shape
 
-        // Select region for analysis
-        btn_select_analysis_region: async function(file){
-          self.select_analysis_region(file)
-        },
+        self.image_filt = []
+        self.mask_lm = []
 
+        self.channel_identifiers = channel_identifiers
+        self.channel_names = channel_name
 
-        // Callback to save settings
-        btn_save_settings: async function(){
-          self.save_settings()
-        },
+        if show_status: api.showStatus('Image loaded!')
 
-        // Callback to save filtered image
-        dblclick_show_image_raw: async function(channel_selected){
-          console.log(channel_selected)
-          this.fq_worker.show_image({
-                      'channel_selected': channel_selected,
-                      'image_type': 'raw',
-                      'image_dim': 'mip',
-                      'display_type': 'dialog'
-                      })
-        },
+        # Save some image properties
+        self.analysis_details['data_specs']['output_path'] = config['output_path']
+        self.analysis_details['image_properties']['image_names'] = image_names
+        self.analysis_details['image_properties']['size'] = image.shape
 
-        // Callback to filter image
-        btn_filter_image: async function(){
-          self.filter_image()
-        },
-
-        // Callback to show filtered image: as resizable window
-        btn_show_image_filtered: async function(){
-          this.fq_worker.show_image({
-                      'channel_selected': this.channel_selected,
-                      'image_type': 'filtered',
-                      'image_dim': 'mip',
-                      'display_type': 'window'
-                      })
-        },
-
-        // Callback to show filtered image: as dialog
-        dblclick_show_image_filtered: async function(){
-          this.fq_worker.show_image({
-                      'channel_selected': this.channel_selected,
-                      'image_type': 'filtered',
-                      'image_dim': 'mip',
-                      'display_type': 'dialog'
-                      })
-        },
-
-        // Callback to save filtered image
-        btn_save_image_filtered: async function(){
-          self.save_image_filtered()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_test_thresholds: async function(){
-          self.detection_test_thresholds()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_apply: async function(){
-          self.detection_apply()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_GMM: async function(){
-          console.log('to be implemented')
-        },
-
-        // Callback to plot detections detection
-        btn_detection_batch: async function(){
-          self.detection_batch()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_file: async function(){
-          self.detection_file()
-        },
-
-      }
-    })
-    api.log('initialized')
-  }
-
-  // Load images
-  async load_image(file) {
-
-      console.log(file)
-      console.log(this.store.channels)
-
-      var mips = await this.fq_worker.load_image({
-                            'file': file,
-                            'channels': this.store.channels,
-                            'data_path': this.store.data_path,
-                            'output_path': this.store.output_path,
-                            'create_mips': true,
-                            'show_status': true,
-                            })
-
-      // Assign images to carousel
-      this.store.images = []
-      mips.map(mip => this.app.showImage({
-                            'url': mip.url,
-                            'index': mip.channel,
-                            'key': Date.now(),
-                            'channel': mip.channel,
-                            'shape': mip.shape,
-                            })
-      )
-
-      // Store parameters for next launch
-      api.setConfig('data_path', this.store.data_path)
-      api.setConfig('reg_exp', this.store.reg_exp)
-      api.setConfig('pixel_size_xy', this.store.pixel_size_xy)
-      api.setConfig('pixel_size_z', this.store.pixel_size_z)
-  }
-
-
-  // Select a region for analysis
-  async set_analysis_region(coords) {
-    console.log('[FISH-quant] Obtained coordinates:' + coords)
-    this.store.analysis_region = coords
-  }
-
-  async select_analysis_region() {
-
-    // Get image corresponding to selected channel
-    var img_selected = this.store.images.find(obj => {
-      return obj.channel === this.store.channel_selected
-    })
-
-    if (img_selected === undefined){
-      api.alert('Select a channel first')
-      return
-    }
-    console.log('[FQ] sending data to viewer.')
+        # Return MIPs
+        if config['create_mips']:
+            self.image_mips = np.stack(mip_tensors, axis=0)
+            return mips
     
-    await this.fq_viewer.run({'data':{
-                              'url': img_selected['url'],
-                              'shape':img_selected['shape'],
-                              'callback_return_region': this.set_analysis_region}
-                              })
 
-  }
+    async def filter_image(self,config):
+        """
+        Filter selected image
+        """
 
-  // Filter image
-  async filter_image() {
+        # Parameters
+        api.log('\nFQ-worker [filter_image]: received data:')
+        api.log(config)
 
-      this.store.img_filt_load = await this.fq_worker.filter_image({
-                            'sigma': this.store.sigma,
-                            'channel_selected': this.store.channel_selected,
-                            'data_path': this.store.data_path,
-                            'output_path': this.store.output_path,
-                            'create_mips': true,
-                            'show_status': true,
-                            'selected_region': this.store.analysis_region,
-                            })
+        sigma = config['sigma']
+        channel_selected = config['channel_selected']
+        show_status = config['show_status']
+        path_data_full = self.path_data_full
+        image_names = self.image_names
 
-      this.app.showImageFilt({
-                    'url': this.store.img_filt_load['url'],
-                    'meta': 'loaded image'
-                    })
+        if show_status: api.showStatus('Filtering image ....')
 
-      this.store.img_filt_min = this.store.img_filt_load['min']
-      this.store.img_filt_max = this.store.img_filt_load['max']
+        # Is a sub-region selected?
+        if 'selected_region' in config:
+            selected_region = config['selected_region']
+        else:
+            selected_region = []
 
-  }
+        # Check if channel was selected
+        if len(channel_selected) == 0:
+            api.alert('Please select which channel should be processed!')
+            return
 
+        # Get index of channel that will be analyzed
+        channel_index = image_names[channel_selected]["index"]
+        api.log(f'FQ-worker [filter_image]: filter channel {channel_selected} with index {channel_index}')
 
-  // Save filtered image
-  async save_image_filtered() {
+        # Crop image if specified
+        x_min = None
 
-      this.fq_worker.save_image_filtered({
-                            'data_path': this.store.data_path,
-                            'output_path': this.store.output_path,
-                            'channel_selected': this.store.channel_selected,
-                            })
-  }
+        if selected_region:
+            numbers = np.fromstring(selected_region,dtype=float, sep=',').astype('int')
+            n_y = self.image.shape[3]-1
+            n_x = self.image.shape[4]-1
 
+            x_min = numbers[0]
+            x_max = numbers[2]
+            y_min = n_y-numbers[3]
+            y_max = n_y-numbers[1]
 
-  // Test thresholds for detection
-  async detection_test_thresholds() {
+            if (x_min<0): x_min = 0
+            if (x_max>n_x): x_max = n_x
+            if (y_min<0): x_min = 0
+            if (y_max>n_y): y_max = n_y
 
-    this.store.detection_threshold = this.store.th_range_max
+        # Select image and filter
+        if x_min:
+            img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
+            self.filter_full = False
+        else:
+            img = self.image[0, channel_index, :, :, :]
+            self.filter_full = True
 
-    var th_tests = await this.fq_worker.detect_test_thresholds({
-                              'threshold_range': [this.store.th_range_min,
-                                                  this.store.th_range_max,
-                                                  this.store.th_range_nbins],
-                              'sigma': this.store.sigma,
-                              'minimum_distance': this.store.minimum_distance,
-                              'show_status': true
-                              })
+        img_filt = stack.log_filter(img, sigma)
 
-    var graph_detection = document.getElementById('graph_detection')
-    var data = [{
-          x: th_tests[0],
-          y: th_tests[1],
-          type: 'scatter'
-        }],
-        layout = {
-                    hovermode:'closest',
-                    xaxis: { title: { text: 'Intensity threshold'}},
-                    yaxis: { title: { text: '# detected spots'}},
+        self.image_filt = img_filt
+        self.mask_lm = []
+        self.channel_selected = channel_selected
+        self.channel_index = channel_index
+
+        # Save settings of spot detection
+        self.analysis_details['spot_detection']['settings']['filter'] = {
+            'method' : 'LoG',
+            'sigma': sigma
         }
 
-    Plotly.newPlot('graph_detection', data,layout,{responsive: true});
+        # Save some image properties
+        self.analysis_details['image_properties']['channel_selected'] = channel_selected
+        self.analysis_details['image_properties']['intensity'] = {
+            'raw_mean': np.mean(img),
+            'raw_median': np.median(img),
+            'raw_std': np.std(img),
+            'filt_mean': np.mean(img_filt),
+            'filt_median': np.median(img_filt),
+            'filt_std': np.std(img_filt),
+        }
 
-    graph_detection.on('plotly_click', async (data) => {
-          var txt = '',
-              th = [],
-              n_spots = []
-          for(var i=0; i < data.points.length; i++){
-            th = data.points[i].x,
-            n_spots = data.points[i].y
-            txt = 'Threshold = '+ th +'\nN_spots = '+ n_spots + '\n\n';
-          }
-          this.app.setThreshold(th)
-    });
-    // Extend traces - didnt work: Plotly.extendTraces(graph_detection, { y:[[th_tests[1]]] },[0])
-  }
+        # Create MIP and provide base64 encoded strings
+        if config['create_mips']:
+            path_save = create_output_path(path_data_full, config['output_path']) / 'imjoy-tmp' / 'mips'
+            create_folder(path_save)
+            
+            name_save = str(path_save / f'img_filt_mip_dum_c{channel_index}.png')
+            #url,shape = await image_mip_url(img_filt, name_save, self.file_manager, rescale = True)
+            img_mip, shape, url = await image_mip(img_filt, name_save, self.file_manager, create_url=True, rescale=True)
 
-
-  // Test thresholds for detection
-  async detection_apply() {
-
-    var spots = await this.fq_worker.detect_apply({
-                              'detection_threshold': this.store.detection_threshold,
-                              'sigma': this.store.sigma,
-                              'show_status': true
-                              })
-
-    this.fq_viewer.run({'data':{
-                              'url': this.store.img_filt_load['url'],
-                              'shape':this.store.img_filt_load['shape'],
-                              'points':spots}
-                              })
-
-  }
-
-  // Detect current file
-  async detection_file() {
-
-    this.fq_worker.detection_file({
-
-                      // To scan folder and store results
-                      'channels': this.store.channels,
-                      'channel_selected': this.store.channel_selected,
-                      'reg_exp': this.store.reg_exp,
-                      'data_path': this.store.data_path,
-                      'output_path': this.store.output_path,
-                      'channel_selected': this.store.channel_selected,
-
-                      // Filter & detection
-                      'sigma': this.store.sigma,
-                      'minimum_distance': this.store.minimum_distance,
-                      'detection_threshold': this.store.detection_threshold,
-                      })
-  }
+            self.image_filt_mip = img_mip
+            if show_status: api.showStatus('Filtering finished!')
+            return {'url':url,'shape':shape,'min':img_filt.min().item(),'max':img_filt.max().item()}  # .item() to convert to number
 
 
-  // Batch detection
-  async detection_batch() {
+    def save_image_filtered(self,config):
+        '''
+        Save filtered image.
+        '''
 
-    this.fq_worker.detection_batch({
-      
-                      // To scan folder and store results
-                      'channels': this.store.channels,
-                      'reg_exp': this.store.reg_exp,
-                      'data_path': this.store.data_path,
-                      'output_path': this.store.output_path,
-                      'channel_selected': this.store.channel_selected,
+        # Parameters
+        api.log('\nFQ-worker [save_image_filtered]: received data:')
+        api.log(config)
 
-                      // Filter & detection
-                      'sigma': this.store.sigma,
-                      'minimum_distance': this.store.minimum_distance,
-                      'detection_threshold': this.store.detection_threshold,
-                      })
-  }
-
-
+        channel_selected = config['channel_selected']
+        channel_name = self.image_names[channel_selected]["image_name"]
+        
+        path_save = create_output_path(self.path_data_full, config['output_path']) / 'images_filtered'
+        create_folder(path_save)
+        
+        # Save image under original name in dedicated folder
+        stack.save_image(self.image_filt, str(path_save / channel_name))
+        api.alert(f'Filtered image saved as {channel_name}, \nin folder: {str(path_save)}')
 
 
-  // Write settings to json file
-  async save_settings() {
+    async def calc_local_max(self,config):
+        '''
+        Calculate local maximum image from filtered image.
+        '''
 
-    this.fq_worker.save_settings({
+        # Input parameters
+        api.log('\nFQ-worker [calc_local_max]: received data:')
+        api.log(config)
+        minimum_distance = config['minimum_distance']
 
-                        // General information about the files to be processed
-                        'data_path': this.store.data_path,
-                        'output_path': this.store.output_path,
-                        'pixel_size_xy': this.store.pixel_size_xy,
-                        'pixel_size_z':this.store.pixel_size_z,
-                        'reg_exp':this.store.reg_exp,
-                        'channels':this.store.channels,
-                        'channel_selected': this.store.channel_selected,
+        # Local maximum detection
+        self.mask_lm = detection.local_maximum_detection(self.image_filt, minimum_distance = minimum_distance)
 
-                        // Filter & detection
-                        'sigma': this.store.sigma,
-                        'minimum_distance': this.store.minimum_distance,
-                        'detection_threshold': this.store.detection_threshold,
+        # Settings
+        self.analysis_details['spot_detection']['settings']['detection'] = {
+            'method': 'localmax',
+            'mind_dist': minimum_distance
+        }
+
+    async def detect_test_thresholds(self,config):
+        '''
+        Perform detection
+
+        TODO:
+        * Re-use stored mask_lm if appropriate (same file, same settings, ...)
+          Requires a bunch of checks ... same image, same min distance, ...
+        '''
+
+        # Parameters
+        api.log('\nFQ-worker [filter_image]: received data:')
+        api.log(config)
+        sigma = config['sigma']
+        threshold_range = config['threshold_range']
+        show_status = config['show_status']
+
+        if show_status: api.showStatus('Performing predection ... calculate local maximum image')
+
+        # Calculate local maximum
+        #if len(self.mask_lm)==0:
+        await self.calc_local_max({ 'minimum_distance': config['minimum_distance']})
+
+        # Loop over thresholds
+        if show_status: api.showStatus('Performing predection ... testing thresholds')
+        self.FQ_interface.emit('create_detection_plot',[])
+        thresholds_spot = np.around(np.linspace(threshold_range[0], threshold_range[1],threshold_range[2] ))
+
+        n_thresholds = threshold_range[2]
+        n_detections = np.zeros(n_thresholds,dtype='int')
+
+        for i in range(n_thresholds):
+            api.showProgress((i+1)/n_thresholds)
+            threshold = thresholds_spot[i]
+            spots, radius, _ = detection.spots_thresholding(self.image_filt, tuple(sigma), self.mask_lm, threshold)
+            n_detections[i] = spots.shape[0]
+            api.log(f'Testing threshold {i}/{n_thresholds}: {threshold}  ... {n_detections[i]} spots detected.')
+
+            # TODO: replace this with an extend trace
+            #self.FQ_interface.emit('update_detection', [thresholds_spot[0:i].tolist(), n_detections[0:i].tolist()])
+            self.FQ_interface.emit('extend_detection_plot', [thresholds_spot[i].tolist(), n_detections[i].tolist()])
+
+        if show_status: api.showStatus('Performing predection ... finished!')
+
+        return [thresholds_spot.tolist(), n_detections.tolist()]
+
+
+    async def detect_apply(self,config):
+        '''
+        Apply spot detection.
+        Returns spots as a nested list [[Z0,Y0,X0],[Z1,Y1,X1], .... ]. 
+        Why return? Can then be used to display in calling plugin
+        '''
+        # Get parameters
+        threshold = config['detection_threshold']
+        sigma = config['sigma']
+        show_status = config['show_status']
+        
+        # Save detection plot
+        if 'detection_plot' in config:
+            self.detetection_plot = config['detection_plot']
+
+        spots, radius, _ = detection.spots_thresholding(self.image_filt, tuple(sigma), self.mask_lm, threshold)
+
+        # Save analysis details
+        self.analysis_details['spot_detection']['settings']['detection']['threshold'] = threshold
+        self.analysis_details['spot_detection']['counts'] = {
+            'spots': len(spots)
+        }
+
+        api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
+
+        return spots.tolist()
+
+    async def detection_file(self,config):
+        '''
+        Process all files with specified settings.
+        '''
+
+        # Parameters
+        api.log('\nFQ-worker [detection_image]: received data:')
+        api.log(config)
+        channel_selected = config['channel_selected']
+        channels = config['channels']
+
+        # Path to save results
+        path_save = create_output_path(self.path_data_full, config['output_path']) / 'spot_detection' 
+        create_folder(path_save)
+        
+        # Check if full size image has been processed already - if yes, filtering and local max can be reused
+        if not self.filter_full:
+
+            # Filter
+            api.showStatus(f'Processing file: filtering image')
+            await self.filter_image({
+                            'sigma': tuple(config['sigma']),
+                            'channel_selected': channel_selected,
+                            'create_mips': False,
+                            'show_status': False
+                            })
+
+            # Detection
+            api.showStatus(f'Processing file: spot detection')
+            await self.calc_local_max({
+                            'minimum_distance': config['minimum_distance'],
+                            'show_status': False
+                            })
+
+        # Apply spot detection
+        spots = await self.detect_apply({
+                        'detection_threshold': config['detection_threshold'],
+                        'sigma': tuple(config['sigma']),
+                        'show_status': False
                         })
-  }
 
-  async run(ctx) {
+        # Save results
+        image_name = self.image_names[channel_selected]["image_name"]
+        name_base, file_extension = os.path.splitext(image_name)
+        file_save = path_save / f'{name_base}__spots.csv'
 
-  } // End of run
+        np.savetxt( file_save,
+                    np.asarray(spots),
+                    fmt='%i',
+                    header="Z,Y,X", delimiter=',', comments='')
+        api.log(f'\nFQ-worker [detection_image]: results saved as {file_save}')
 
-}  // End of class
+        # Save detection plot
+        if hasattr(self, 'detetection_plot'): 
+            file_save = path_save / f'{name_base}__detection_tests.png'
+            header, img_encoded = self.detetection_plot.split(",", 1)
+            img_decoded = base64.b64decode(img_encoded)
+            with open(file_save, 'wb') as f:
+                f.write(img_decoded)
+            api.log(f'\nFQ-worker [detection_image]: detection tests saved as {file_save}')
 
-api.export(new ImJoyPlugin())
+        # Save analysis details
+        name_save = os.path.join(path_save, name_base + '__analysis_details.json')
+        await self.save_analysis_details(name_save)
+
+        # Update status
+        api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
+
+
+    async def detection_batch(self,config):
+        '''
+        Process all files with specified settings.
+        '''
+
+        # Parameters
+        api.log('\nFQ-worker [detection_batch]: received data:')
+        api.log(config)
+        channel_selected = config['channel_selected']
+        channels = config['channels']
+
+        # Some preparation
+        path_save = create_output_path(self.path_data_full, config['output_path']) / 'spot_detection' 
+        create_folder(path_save)
+        ch_dict = {channel['name']: channel['identifier'] for channel in channels}
+
+        # Scan folder
+        files_process = self.scan_folder(config)
+
+        # Loop over all files
+        for idx, file_process in enumerate(files_process):
+
+            # Load image
+            api.showProgress((idx+1)/len(files_process))
+            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: loading image')
+            await self.load_image({
+                            'file': file_process,
+                            'channels': config['channels'],
+                            'data_path': config['data_path'],
+                            'output_path': config['output_path'],
+                            'create_mips': False,
+                            'show_status': False
+                            })
+            # Filter
+            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: filtering image')
+            await self.filter_image({
+                            'sigma': tuple(config['sigma']),
+                            'channel_selected': channel_selected,
+                            'create_mips': False,
+                            'show_status': False
+                            })
+
+            # Detection
+            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: spot detection')
+            await self.calc_local_max({
+                            'minimum_distance': config['minimum_distance'],
+                            'show_status': False
+                            })
+
+            spots = await self.detect_apply({
+                            'detection_threshold': config['detection_threshold'],
+                            'sigma': tuple(config['sigma']),
+                            'show_status': False
+                            })
+
+            # Save results
+            image_name = self.image_names[channel_selected]["image_name"]
+            name_base, file_extension = os.path.splitext(image_name)
+            file_save = path_save / f'{name_base}__spots.csv'
+
+            np.savetxt( file_save,
+                        np.asarray(spots),
+                        fmt='%i',
+                        header="Z,Y,X", delimiter=',', comments='')
+            api.log(f'\nFQ-worker [detection_batch]: results saved as {file_save}')
+
+            #  Save analysis details
+            name_save = os.path.join(path_save, name_base + '__analysis_details.json')
+            await self.save_analysis_details(name_save)
+
+        api.showStatus('Batch processing finished!')
+
+api.export(ImJoyPlugin())
 </script>
-
-<window lang="html">
-  <div id="app">
-
-<!-- Navbar -->
-<div id="cont_nav_bar"> </div>
-
-    <!-- Tabs navigation -->
-    <ul class="tab tab-block">
-      <!-- <li class="tab-item" v-bind:class="{ active: active_tab=='overview' }">
-        <a href="#" @click="active_tab='overview'">Overview</a>
-      </li> -->
-      <li class="tab-item" v-bind:class="{active: active_tab=='data'}"  >
-        <a href="#" @click="active_tab='data'">Data specifications</a>
-      </li>
-      <!-- <li class="tab-item" v-bind:class="{ active: active_tab=='segmentation' }">
-        <a href="#" @click="active_tab='segmentation'">Segmentation</a>
-      </li> -->
-      <li class="tab-item" v-bind:class="{ active : active_tab=='detection' }">
-        <a href="#" @click="active_tab='detection'">Detection</a>
-      </li>
-    </ul>
-
-    <!-- Tabs content -->
-    <!--  <div v-show="active_tab=='overview'" class="tab-content" id="cont_overview"> </div>  -->
-    <div v-show="active_tab=='data'" class="tab-content" id="cont_data"></div>
-    <!--  <div v-show="active_tab=='segmentation'" class="tab-content" id="cont_segmentation"></div>  -->
-    <div v-show="active_tab=='detection'" class="tab-content" id="cont_detection"></div>
-
-  </div> <!-- END: VUE APP -->
-</window>
-
-
-<style lang="css">
-
-/* Overwrite css defaults
-/* https://css-tricks.com/when-using-important-is-the-right-choice/ */
-/* body {font-size: 13px !important;} */
-
-.tab-content{
-  padding: 10px;
-}
-
-.active-tab-css{
-  background-color: #000000;
-}
-
-.center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-}
-
-.graph_resize {
-  height: 100vh;
-  width: 100vw;
-}
-
-
-.carousel{
-    margin: 5px;
-}
-
-.img-embed{
-  margin: 5px;
-}
-
-</style>
-
-
-<attachment name="docs_data">
-Here we provide answer to frequenty asked questions and encountered problems.
-
-### Example training data is not available on the remote engine
-In case the example data is not available anymore, you can either train with data by specyfing the URL or
-download the data and upload to the remote engine again.
-
-</attachment>

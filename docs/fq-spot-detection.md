@@ -25,6 +25,7 @@ In this tab, the user will specify
    * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate [section](imjoy-imageviewer.md) for more details on how to use the image viewer.
    * To show the image in a interface that can be resized and kept open, press the button button `Show`.
    * You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
+   * The filter size will be stored and reused when you launch ImJoy the next time.
 
 4. **Establish detection thresholds**. This will be performed on the filtered image. 
    
@@ -52,7 +53,9 @@ In this tab, the user will specify
         ![fq-inspect-spots.gif](img/fq-inspect-spots.gif){: style="width:350px"}
 
     3. You can then analyze either
-        * The **currently selected image** with the button `Analyze current image`
+        * The **currently selected image** with the button `Analyze current image`. If filtering was performed was on the full size image, the image will not be filtered again. 
+        
+        This will also automatically save the plot with the tested thresholds in addition to the results files with the suffix `__detection_tests.png`.
         * All **images in the folder** with the button `Launch batch processing`
         For each analysed images, results files will be created in the specified results folder. 
         More details on the results files can be found below. 
@@ -60,6 +63,6 @@ In this tab, the user will specify
 ## Results
 For each analyzed image, two files will be created and stored under the orginal image name with a suffix
 
-* `**__settings.json`: file with all analysis settings. 
-* `**__settings.json`: csv file wiht the detected location of all RNAs (in pixel). 
+* `**__analysis_details`: file with details about the analysis: all settings, and some basic image properties.
+* `**___spots.csv`: csv file with the position of all detected spots (in pixel). 
 
