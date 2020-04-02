@@ -5,35 +5,40 @@
  "version": "0.2.0",
  "plugins": [
   {
-   "name": "FISH-quant",
-   "type": "window",
-   "tags": [],
+   "name": "FISH-QUANT",
+   "type": "native-python",
+   "version": "0.0.4",
+   "description": "Worker to process smFISH images.",
+   "tags": [
+    "stable",
+    "dev"
+   ],
    "ui": "",
-   "version": "0.0.3",
    "cover": "",
-   "description": "Analyze smFISH images with big-fish in ImJoy.",
-   "icon": "extension",
    "inputs": null,
    "outputs": null,
+   "flags": [
+    "single-instance",
+    "allow-detach"
+   ],
+   "icon": "extension",
    "api_version": "0.1.7",
    "env": "",
-   "requirements": [
-    "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css",
-    "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-exp.min.css",
-    "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-icons.min.css"
-   ],
-   "dependencies": [
-    "fish-quant/fq-imjoy:FQ-worker",
-    "fish-quant/fq-imjoy:FQ-image-viewer",
-    "fish-quant/fq-imjoy:ImageViewer",
-    "oeway/ImJoy-Plugins:Tabbed-Docs"
-   ],
-   "defaults": {
-    "w": 30,
-    "h": 20
+   "permissions": [],
+   "requirements": {
+    "stable": [
+     "pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"
+    ],
+    "dev": [
+     ""
+    ]
    },
+   "dependencies": [
+    "fish-quant/fq-imjoy:FQ-interface",
+    "fish-quant/fq-imjoy:FQ-image-viewer",
+    "fish-quant/fq-imjoy:ImageViewer"
+   ],
+   "runnable": true,
    "uri": "imjoy-plugins\\FISH-quant.imjoy.html"
   },
   {
@@ -69,37 +74,32 @@
    "uri": "imjoy-plugins\\FQ-image-viewer.imjoy.html"
   },
   {
-   "name": "FQ-worker",
-   "type": "native-python",
-   "version": "0.0.3",
-   "description": "Worker to process smFISH images.",
-   "tags": [
-    "stable",
-    "dev"
-   ],
+   "name": "FQ-interface",
+   "type": "window",
+   "tags": [],
    "ui": "",
+   "version": "0.0.1",
    "cover": "",
+   "description": "Analyze smFISH images with big-fish in ImJoy.",
+   "icon": "extension",
    "inputs": null,
    "outputs": null,
-   "flags": [
-    "single-instance",
-    "allow-detach"
-   ],
-   "icon": "extension",
    "api_version": "0.1.7",
    "env": "",
-   "permissions": [],
-   "requirements": {
-    "stable": [
-     "pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"
-    ],
-    "dev": [
-     ""
-    ]
-   },
+   "requirements": [
+    "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-exp.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-icons.min.css"
+   ],
    "dependencies": [],
+   "defaults": {
+    "w": 30,
+    "h": 20
+   },
    "runnable": false,
-   "uri": "imjoy-plugins\\FQ-worker.imjoy.html"
+   "uri": "imjoy-plugins\\FQ-interface.imjoy.html"
   },
   {
    "name": "ImageViewer",
