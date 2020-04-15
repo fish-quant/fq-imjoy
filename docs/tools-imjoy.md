@@ -93,7 +93,7 @@ registered engines by pressing on the rocket symbol.
 
 
 ## Install Jupyter engine for ImJoy
-We recommend installing an [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
+We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
 choose Python 3.7 and your operating system. You  can then use the annoconda prompt to excecute the different commands listed below. 
 
 We further recommend creating a **dedicated environment** to run code in this analysis package. 
