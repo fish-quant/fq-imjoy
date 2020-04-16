@@ -18,9 +18,9 @@
   "env": "",
   "permissions": [],
     "requirements": [
+                      "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css",
                       "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js",
                       "https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css",
-                      "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css",
                       "https://unpkg.com/buefy/dist/buefy.min.js",
                       "https://unpkg.com/buefy/dist/buefy.min.css"
                       ],
@@ -37,7 +37,9 @@ class ImJoyPlugin {
 
     // Render different tabs with attachments
     document.getElementById('cont_data').innerHTML = (await api.getAttachment('data'));
-   
+    document.getElementById('cont_detection').innerHTML = (await api.getAttachment('detection'));
+    document.getElementById('cont_postprocessing').innerHTML = (await api.getAttachment('postprocessing'));
+
     // Get plugins from workspace
     this.fq_worker = await api.getPlugin("FISH-QUANT")
     console.log('FQ-worker: ' +  this.fq_worker)
@@ -95,6 +97,7 @@ class ImJoyPlugin {
           th_range_min:0,
           th_range_max:5000,
           th_range_nbins:50,
+          show_filtered: true,
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
@@ -118,6 +121,11 @@ class ImJoyPlugin {
           // Open URL in external window
           openUrl(url){
               api.utils.openUrl(url)
+          },
+
+          // Open docs
+          openDocs(section){
+            api.showDialog({type: "external", src: "https://fish-quant.github.io/fq-imjoy"+section, passive: true})
           },
 
           // Data: remove channel
@@ -512,6 +520,7 @@ api.export(new ImJoyPlugin())
 </script>
 
 <attachment name="data">
+
   <!-- Card to specify data -->
   <div class="card">
     <div class="card-content">
@@ -534,6 +543,9 @@ api.export(new ImJoyPlugin())
         </b-field>
         <b-field horizontal label="RESULTS folder">
           <b-input v-model="output_path" placeholder=""></b-input>
+          <p class="control">
+              <b-button rounded type="is-primary" icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
+            </p>
         </b-field>
 
         <!-- Specify regular expression -->
@@ -541,7 +553,7 @@ api.export(new ImJoyPlugin())
           <b-field label="Regular expression" horizontal grouped>
             <b-input v-model="reg_exp" expanded></b-input>
             <p class="control">
-              <b-button class="button is-primary" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
+              <b-button type="is-primary" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
             </p>
           </b-field>
         </section>
@@ -553,29 +565,25 @@ api.export(new ImJoyPlugin())
         <b-field horizontal label="Z step-size in nm">
           <b-input v-model="pixel_size_z" expanded></b-input>
         </b-field>
+        <br>
 
         <!--Specify channels -->
-         <br>
         <section>
-          <div class="columns">
-            <div class="column">
-              <b-field label="Name" label-position="on-border">
-                <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
-              </b-field>
-            </div>
-            <div class="column">
-              <b-field label="Identifier" label-position="on-border">
-                <b-input placeholder="Unique string" v-model="ch_ident"></b-input>
-              </b-field>
-            </div>
-            <div class="column">
+          <b-field label="Channels" horizontal grouped>
+            <b-field label="Name" label-position="on-border">
+              <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
+            </b-field>
+            <b-field label="Identifier" label-position="on-border">
+              <b-input placeholder="Unique string" v-model="ch_ident"></b-input>
+            </b-field>
+            <p class="control">
               <b-button icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
-            </div>
-          </div>
+            </p>
+          </b-field>
         </section> <!-- END: Specify channels -->
 
         <!-- CHANNELS: render table containing channels to be loaded -->
-       
+        <br>
         <div style="text-align: center;">
           <table class="table is-striped is-hoverable is-narrow">
             <thead>
@@ -597,12 +605,10 @@ api.export(new ImJoyPlugin())
           </table>
         </div> <!-- END: CHANNELS: table containing channels to be loaded -->
 
-        <br>
-        <b-button expanded type="is-primary" :disabled="channels.length==0" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</b-button>
-
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
+  <br>
 
   <!-- Card to specify data -->
   <div class="card">
@@ -619,6 +625,9 @@ api.export(new ImJoyPlugin())
 
       <!-- Actual content -->
       <div class="content">
+
+        <b-button expanded type="is-primary" :disabled="channels.length==0" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</b-button>
+        <br>
 
         <div class="columns is-desktop">
 
@@ -663,13 +672,107 @@ api.export(new ImJoyPlugin())
           </div>
         </div>
 
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
 
+</attachment>
 
+<attachment name="detection">
 
+  <!-- Card to specify channel -->
+  <div class="card">
+    <div class="card-content">
 
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Select channel</p>
+          <p class="subtitle is-7">Select channel, and [optional] region to be used for testing. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <div class="columns is-desktop">
         
+          <div class="column">
+            <!-- Select which channel should be processed-->
+            <aside class="menu">
+              <p class="menu-label">Select channel to be analyzed</p>
+                <ul class="menu-list"v-for="channel in channels" v-bind:key="channel.name">
+                    <b-radio v-bind:native-value="channel.name" v-model="channel_selected">{{channel.name}}</b-radio>
+                  </li>
+                </ul>
+            </aside>
+          </div>
+
+          <div class="column">
+            <section>
+            <b-button type="is-primary" @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
+            </section>
+          </div>
+        </div>
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
 
 
+  <!-- Card to specify Filter -->
+  <br>
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Filter image</p>
+          <p class="subtitle is-7">Remove background and enhance spots.</p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <!--Specify filters -->
+        <section>
+          <b-field label="Filter" horizontal grouped>
+            <b-field label="sigma-x" label-position="on-border">
+              <b-input placeholder="Name of channel" v-model.number="sigma[2]"></b-input>
+            </b-field>
+            <b-field label="sigma-y" label-position="on-border">
+              <b-input placeholder="Name of channel" v-model.number="sigma[1]"></b-input>
+            </b-field>
+            <b-field label="sigma-z" label-position="on-border">
+              <b-input placeholder="Unique string" v-model.number="sigma[0]"></b-input>
+            </b-field>
+          </b-field>
+        </section> <!-- END: Specify channels -->
+
+        <br>
+        <div class="columns is-desktop">
+          <div class="column">
+		        <b-button type="is-primary" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
+          </div> 
+          <div class="column">
+            <b-checkbox  v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
+          </div> 
+         <div class="column">
+            <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Open filtered image for inspection</b-button>
+          </div>
+          <div class="column">
+            <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_save_image_filtered">Save filtered image</b-button>
+          </div>
+        </div>
+
+      <img v-if="img_filt" v-show="show_filtered" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
+
+<template>
+
+</template>
 
 
 
@@ -677,10 +780,35 @@ api.export(new ImJoyPlugin())
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
 
+
 </attachment>
 
-<!--  <b-menu-item icon="help-circle" label="Documentation"  @click="openUrl('https://fish-quant.github.io/fq-imjoy')"></b-menu-item> -->
-<!--   <b-menu-item icon="github-circle" label="Github" @click="openUrl('https://github.com/fish-quant/fq-imjoy')"></b-menu-item> -->
+
+<attachment name="postprocessing">
+
+  <!-- Card to specify channel -->
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Postprocessing</p>
+          <p class="subtitle is-7">coming soon. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+</attachment>
 
 <window lang="html">
   <div>
@@ -699,7 +827,7 @@ api.export(new ImJoyPlugin())
                   <b-navbar-item tag="router-link" :to="{ path: '/' }">
                       <img
                           src="https://raw.githubusercontent.com/fish-quant/fq-imjoy/master/docs/img/fish-quant-logo_200x200.png"
-                          alt="Lightweight UI components for Vue.js based on Bulma"
+                          alt="FISH-quant"
                       >
                   </b-navbar-item>
                   <b-navbar-item href="#">
@@ -718,12 +846,14 @@ api.export(new ImJoyPlugin())
 
       <!-- Tabs -->
       <b-tabs type="is-toggle" position="is-centered">
-        <b-tab-item label="1. Data specifications" icon="google-photos">
+        <b-tab-item label="1. Data specifications" icon="download">
           <div id="cont_data"></div>
         </b-tab-item>
-        <b-tab-item label="2. Spot detection" icon="library-music">
+        <b-tab-item label="2. Spot detection" icon="file-find">
+          <div id="cont_detection"></div>
         </b-tab-item>
-        <b-tab-item label="3.Postprocessing" icon="video">
+        <b-tab-item label="3. Postprocessing" icon="washing-machine">
+          <div id="cont_postprocessing"></div>
         </b-tab-item>
       </b-tabs>
 
