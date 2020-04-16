@@ -98,18 +98,14 @@ class ImJoyPlugin {
           th_range_max:5000,
           th_range_nbins:50,
           show_filtered: true,
+          running_load: false,
+          running_filter: false,
+          running_detect: false,
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
           status_thresholds_tested: false,
           status_detection_applied: false,
-          carousels: [
-                { text: 'Slide 1', color: 'primary' },
-                { text: 'Slide 2', color: 'info' },
-                { text: 'Slide 3', color: 'success' },
-                { text: 'Slide 4', color: 'warning' },
-                { text: 'Slide 5', color: 'danger' }
-            ],
     },
 
     this.app = new Vue({
@@ -294,6 +290,7 @@ class ImJoyPlugin {
       };
 
       // Load image
+      this.store.running_load=true
       let mips = await this.fq_worker.load_image({
                             'file': file,
                             'channels': this.store.channels,
@@ -305,6 +302,7 @@ class ImJoyPlugin {
 
       this.store.txt_navbar = 'Loaded image IDENTIFIER :: FOV  :  ' + file.file_ident + ' :: ' + file.fov;
       this.store.file_loaded = file;
+      this.store.running_load=false
 
       // Assign images to carousel
       mips.map(mip => this.app.showImage({
@@ -356,6 +354,7 @@ class ImJoyPlugin {
 
       this.store.img_filt = []
 
+      this.store.running_filter=true
       this.store.img_filt_load = await this.fq_worker.filter_image({
                             'sigma': this.store.sigma,
                             'channel_selected': this.store.channel_selected,
@@ -365,7 +364,7 @@ class ImJoyPlugin {
                             'show_status': true,
                             'selected_region': this.store.analysis_region,
                             })
-
+      this.store.running_filter=false
       this.app.showImageFilt({
                     'url': this.store.img_filt_load['url'],
                     'meta': 'loaded image'
@@ -646,7 +645,7 @@ api.export(new ImJoyPlugin())
                   <td>{{file.file_ident}}</td>
                   <td>{{file.fov}}</td>
                   <td>
-                    <b-button icon-left="upload" @click="btn_load_image(file)"></b-button>
+                    <b-button icon-left="upload" :loading="running_load"  @click="btn_load_image(file)"></b-button>
                   </td>
                 </tr>
               </tbody>
@@ -755,7 +754,7 @@ api.export(new ImJoyPlugin())
         <br>
         <div class="columns is-desktop">
           <div class="column">
-		        <b-button type="is-primary" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
+		        <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
           </div> 
           <div class="column">
             <b-checkbox  v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
