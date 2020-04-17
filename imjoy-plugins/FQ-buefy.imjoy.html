@@ -21,6 +21,7 @@
                       "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css",
                       "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js",
                       "https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css",
+                      "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
                       "https://unpkg.com/buefy/dist/buefy.min.js",
                       "https://unpkg.com/buefy/dist/buefy.min.css"
                       ],
@@ -34,6 +35,40 @@ class ImJoyPlugin {
   async setup() {
 
     const self = this
+
+    // For interaction with plot to show detection tests
+    api.on('create_detection_plot', ()=>{
+
+      // Create plotly plot
+      let graph_detection = document.getElementById('graph_detection');
+    
+      let data = [{
+          x: [],
+          y: [],
+          mode: "lines+markers",
+          type: 'scatter'
+        }],
+
+        layout = {
+                    hovermode:'closest',
+                    xaxis: { title: { text: 'Intensity threshold'}},
+                    yaxis: { title: { text: '# detected spots'}},
+        }
+
+     Plotly.newPlot('graph_detection', data, layout, {responsive: true});
+    
+    });
+
+    api.on('extend_detection_plot', (th_tests)=>{
+      let graph_detection = document.getElementById('graph_detection');
+      console.log(th_tests)
+      let value_x = th_tests[0];
+      let value_y = th_tests[1];
+
+      console.log(value_y)
+      Plotly.extendTraces(graph_detection, { x:[[value_x]], y:[[value_y]]  },[0])
+
+    })
 
     // Render different tabs with attachments
     document.getElementById('cont_data').innerHTML = (await api.getAttachment('data'));
@@ -98,9 +133,13 @@ class ImJoyPlugin {
           th_range_max:5000,
           th_range_nbins:50,
           show_filtered: true,
+          show_detection: true,
           running_load: false,
           running_filter: false,
-          running_detect: false,
+          running_detect_test: false,
+          running_detect_apply: false,
+          running_detect_image: false,
+          running_detect_batch: false,
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
@@ -353,7 +392,7 @@ class ImJoyPlugin {
   async filter_image() {
 
       this.store.img_filt = []
-
+ 
       this.store.running_filter=true
       this.store.img_filt_load = await this.fq_worker.filter_image({
                             'sigma': this.store.sigma,
@@ -400,7 +439,7 @@ class ImJoyPlugin {
   async detection_test_thresholds() {
 
     this.store.status_thresholds_tested = true
-
+    this.store.running_detect_test=true
     var th_tests = await this.fq_worker.detect_test_thresholds({
                               'threshold_range': [this.store.th_range_min,
                                                   this.store.th_range_max,
@@ -409,7 +448,7 @@ class ImJoyPlugin {
                               'minimum_distance': this.store.minimum_distance,
                               'show_status': true,
                               })
-
+    this.store.running_detect_test=false
     this.store.status_thresholds_tested = true
 
     // Create plotly plot
@@ -448,7 +487,7 @@ class ImJoyPlugin {
 
   // Test thresholds for detection
   async detection_apply() {
-
+    this.store.running_detect_apply=true
     if ( this.store.detection_threshold == null){
       api.alert('Please set a numeric value to test the intensity threshold!')
       return
@@ -465,14 +504,14 @@ class ImJoyPlugin {
                               'shape':this.store.img_filt_load['shape'],
                               'points':spots}
                               })
-
+    this.store.running_detect_apply=false
     this.store.status_detection_applied = true
   }
 
   // Detect current file
   async detection_file() {
-
-    this.fq_worker.detection_file({
+    this.store.running_detect_image=true
+    await this.fq_worker.detection_file({
 
                       // To scan folder and store results
                       'channels': this.store.channels,
@@ -488,13 +527,13 @@ class ImJoyPlugin {
                       'detection_threshold': this.store.detection_threshold,
                       });
 
-
+    this.store.running_detect_image=false
   }
 
 
   // Batch detection
   async detection_batch() {
-
+    this.store.running_detect_batch=true
     this.fq_worker.detection_batch({
       
                       // To scan folder and store results
@@ -508,9 +547,10 @@ class ImJoyPlugin {
                       'sigma': this.store.sigma,
                       'minimum_distance': this.store.minimum_distance,
                       'detection_threshold': this.store.detection_threshold,
-                      })
+                      });
+      this.store.running_detect_batch=false
   }
-
+  
   async run(ctx) {
   }
 }
@@ -536,52 +576,64 @@ api.export(new ImJoyPlugin())
       <!-- Actual content -->
       <div class="content">
 
+
+        <!-- Specify data folder -->
+        <b-field label="DATA folder" horizontal grouped expanded>
+          <b-field expanded>
+            <b-input v-model="data_path" placeholder="paste-path-to-data"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify data folder -->
+   
+
         <!-- Specify folders -->
-        <b-field horizontal label="DATA folder">
-          <b-input v-model="data_path" placeholder="paste-path-to-data"></b-input>
-        </b-field>
         <b-field horizontal label="RESULTS folder">
           <b-input v-model="output_path" placeholder=""></b-input>
           <p class="control">
-              <b-button rounded type="is-primary" icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
-            </p>
-        </b-field>
+            <b-button rounded type="is-primary" icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
+          </p>
+        </b-field> <!-- END: specify RESULTS folder -->
+
 
         <!-- Specify regular expression -->
-        <section>
-          <b-field label="Regular expression" horizontal grouped>
+        <b-field label="Regular expression" horizontal grouped>
+          <b-field>
             <b-input v-model="reg_exp" expanded></b-input>
-            <p class="control">
-              <b-button type="is-primary" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
-            </p>
           </b-field>
-        </section>
+          <b-field>
+            <b-button type="is-primary" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
+          </b-field>
+        </b-field> <!-- END: specify regular expression -->
+
 
         <!-- Specify pixel size -->
-        <b-field horizontal label="Pixel-size in nm">
-          <b-input v-model="pixel_size_xy" expanded></b-input>
-        </b-field>
-        <b-field horizontal label="Z step-size in nm">
-          <b-input v-model="pixel_size_z" expanded></b-input>
-        </b-field>
-        <br>
-
-        <!--Specify channels -->
-        <section>
-          <b-field label="Channels" horizontal grouped>
-            <b-field label="Name" label-position="on-border">
-              <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
-            </b-field>
-            <b-field label="Identifier" label-position="on-border">
-              <b-input placeholder="Unique string" v-model="ch_ident"></b-input>
-            </b-field>
-            <p class="control">
-              <b-button icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
-            </p>
+        <b-field label="Pixel size" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">XY [nm]</span></p>
+            <b-input placeholder="107" v-model.number="pixel_size_xy"></b-input>
           </b-field>
-        </section> <!-- END: Specify channels -->
+          <b-field>
+            <p class="control"> <span class="button is-static">z [nm]</span></p>
+            <b-input placeholder="300" v-model.number="pixel_size_z"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify pixel size -->
+ 
+       <!-- Specify channels -->
+        <b-field label="Channels" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Name</span></p>
+            <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Identifier</span></p>
+            <b-input placeholder="Unique string in name" v-model="ch_ident"></b-input>
+          </b-field>
+          <b-field>
+            <b-button type="is-primary" icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
+          </b-field>
+        </b-field> <!-- END: specify channels -->
 
-        <!-- CHANNELS: render table containing channels to be loaded -->
+
+       <!-- CHANNELS: render table containing channels to be loaded -->
         <br>
         <div style="text-align: center;">
           <table class="table is-striped is-hoverable is-narrow">
@@ -645,7 +697,7 @@ api.export(new ImJoyPlugin())
                   <td>{{file.file_ident}}</td>
                   <td>{{file.fov}}</td>
                   <td>
-                    <b-button icon-left="upload" :loading="running_load"  @click="btn_load_image(file)"></b-button>
+                    <b-button icon-left="upload" :loading="running_load" @click="btn_load_image(file)"></b-button>
                   </td>
                 </tr>
               </tbody>
@@ -696,21 +748,21 @@ api.export(new ImJoyPlugin())
       <div class="content">
 
         <div class="columns is-desktop">
-        
+
           <div class="column">
             <!-- Select which channel should be processed-->
             <aside class="menu">
               <p class="menu-label">Select channel to be analyzed</p>
-                <ul class="menu-list"v-for="channel in channels" v-bind:key="channel.name">
-                    <b-radio v-bind:native-value="channel.name" v-model="channel_selected">{{channel.name}}</b-radio>
-                  </li>
-                </ul>
+              <ul class="menu-list" v-for="channel in channels" v-bind:key="channel.name">
+                <b-radio v-bind:native-value="channel.name" v-model="channel_selected">{{channel.name}}</b-radio>
+                </li>
+              </ul>
             </aside>
           </div>
 
           <div class="column">
             <section>
-            <b-button type="is-primary" @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
+              <b-button type="is-primary" @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
             </section>
           </div>
         </div>
@@ -739,27 +791,30 @@ api.export(new ImJoyPlugin())
         <!--Specify filters -->
         <section>
           <b-field label="Filter" horizontal grouped>
-            <b-field label="sigma-x" label-position="on-border">
-              <b-input placeholder="Name of channel" v-model.number="sigma[2]"></b-input>
+            <b-field>
+              <p class="control"> <span class="button is-static">sigma-x</span></p>
+              <b-input placeholder="1" v-model.number="sigma[2]"></b-input>
             </b-field>
-            <b-field label="sigma-y" label-position="on-border">
-              <b-input placeholder="Name of channel" v-model.number="sigma[1]"></b-input>
+            <b-field>
+              <p class="control"> <span class="button is-static">sigma-y</span></p>
+              <b-input placeholder="1" v-model.number="sigma[1]"></b-input>
             </b-field>
-            <b-field label="sigma-z" label-position="on-border">
-              <b-input placeholder="Unique string" v-model.number="sigma[0]"></b-input>
+            <b-field>
+              <p class="control"> <span class="button is-static">sigma-z</span></p>
+              <b-input placeholder="1.25" v-model.number="sigma[0]"></b-input>
             </b-field>
           </b-field>
-        </section> <!-- END: Specify channels -->
+        </section> <!-- END: Specify filters -->
 
         <br>
         <div class="columns is-desktop">
           <div class="column">
-		        <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
-          </div> 
+            <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
+          </div>
           <div class="column">
-            <b-checkbox  v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
-          </div> 
-         <div class="column">
+            <b-checkbox v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
+          </div>
+          <div class="column">
             <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Open filtered image for inspection</b-button>
           </div>
           <div class="column">
@@ -767,12 +822,86 @@ api.export(new ImJoyPlugin())
           </div>
         </div>
 
-      <img v-if="img_filt" v-show="show_filtered" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
+        <img v-if="img_filt" v-show="show_filtered" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta" v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
 
-<template>
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
 
-</template>
 
+  <!-- Card to set up detection -->
+  <br>
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Spot detection</p>
+          <p class="subtitle is-7">Define intensity threshold to perform spot detection. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <b-field grouped>
+          <p class="control">
+            <button class="button is-primary"  :loading="running_detect_test" :disabled="status_image_filtered==false" @click="btn_detection_test_thresholds">
+              Test thresholds
+            </button>
+          </p>
+
+          <b-field>
+            <p class="control"> <span class="button is-static">Min dist</span></p>
+            <b-input placeholder="2" v-model.number="minimum_distance"></b-input>
+          </b-field>
+
+        <b-dropdown aria-role="list" expanded close-on-click=false>
+            <button class="button is-primary" slot="trigger" slot-scope="{ active }">
+                <span>Specify intensity range to test thresholds</span>
+                <b-icon :icon="active ? 'menu-up' : 'menu-down'"></b-icon>
+            </button>
+            <b-dropdown-item aria-role="listitem">
+              <b-field :label="'Min: '+th_range_min">
+                <b-slider v-model.number="th_range_min"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+              </b-field>
+            </b-dropdown-item>  
+            <b-dropdown-item aria-role="listitem">
+              <b-field :label="'Max: '+th_range_max">
+                <b-slider v-model.number="th_range_max"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+              </b-field>
+            </b-dropdown-item>  
+            <b-dropdown-item aria-role="listitem">
+              <b-field :label="'Number of values to test: '+th_range_nbins">
+                <b-slider v-model.number="th_range_nbins"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+              </b-field>
+            </b-dropdown-item>              
+        </b-dropdown>
+        </b-field> <!-- END test thresholds -->
+
+
+        <b-field grouped>
+          <p class="control">
+            <button class="button is-primary" :loading="running_detect_apply" :disabled="status_thresholds_tested==false" @click="btn_detection_apply">
+              Apply detection threshold
+            </button>
+          </p>
+
+          <b-field>
+            <p class="control"> <span class="button is-static">Intensity threshold</span></p>
+            <b-input placeholder="Set threshold either manually or by clicking on graph below" v-model.number="detection_threshold"></b-input>
+          </b-field>
+
+          <b-field>
+            <b-checkbox v-model="show_detection" :disabled="status_thresholds_tested==false"> Show threshold test</b-checkbox>
+          </b-field>
+
+        </b-field> <!-- END specify thresholds -->
+        
+        <!-- Plot results -->
+        <div id="graph_detection" v-show="status_thresholds_tested & show_detection" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
 
 
       </div> <!-- END Class content -->
