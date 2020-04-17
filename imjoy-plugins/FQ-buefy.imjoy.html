@@ -619,45 +619,61 @@ api.export(new ImJoyPlugin())
             <b-input placeholder="300" v-model.number="pixel_size_z"></b-input>
           </b-field>
         </b-field> <!-- END: specify pixel size -->
- 
-       <!-- Specify channels -->
-        <b-field label="Channels" horizontal grouped>
-          <b-field>
-            <p class="control"> <span class="button is-static">Name</span></p>
-            <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
-          </b-field>
-          <b-field>
-            <p class="control"> <span class="button is-static">Identifier</span></p>
-            <b-input placeholder="Unique string in name" v-model="ch_ident"></b-input>
-          </b-field>
-          <b-field>
-            <b-button type="is-primary" icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
-          </b-field>
-        </b-field> <!-- END: specify channels -->
+         <hr>
+        <!-- Channels -->
+        <div class="columns is-desktop">
 
+          <!-- Specify channels -->
+          <div class="column">
+            
+            
+            <b-field label="Channels" horizontal grouped>
+              <b-field>
+                <p class="control"> <span class="button is-static">Name</span></p>
+                <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
+              </b-field>
+            </b-field>
 
-       <!-- CHANNELS: render table containing channels to be loaded -->
-        <br>
-        <div style="text-align: center;">
-          <table class="table is-striped is-hoverable is-narrow">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Identifier</th>
-                <th>Remove?</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="ch in channels" :key="ch.name">
-                <td>{{ch.name}}</td>
-                <td>{{ch.identifier}}</td>
-                <td>
-                  <b-button class="b-button" icon-left="delete" @click="remove_channel(ch)"> </b-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div> <!-- END: CHANNELS: table containing channels to be loaded -->
+            <b-field horizontal grouped><!-- Label left empty for spacing -->
+              <b-field>
+                <p class="control"> <span class="button is-static">Identifier</span></p>
+                <b-input placeholder="Unique string in name" v-model="ch_ident"></b-input>
+              </b-field>
+            </b-field>
+
+            <b-field horizontal grouped><!-- Label left empty for spacing -->
+              <b-field>
+                <b-button type="is-primary" icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
+              </b-field>
+            </b-field>
+
+          </div> <!-- END: Specify channels -->
+          <!-- SHOW channels -->
+          <div class="column">
+
+            <div style="text-align: center;">
+              <table class="table is-striped is-hoverable is-narrow">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Identifier</th>
+                    <th>Remove?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="ch in channels" :key="ch.name">
+                    <td>{{ch.name}}</td>
+                    <td>{{ch.identifier}}</td>
+                    <td>
+                      <b-button class="b-button" icon-left="delete" @click="remove_channel(ch)"> </b-button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>       
+          </div> <!-- END: SHOW channels --> 
+        </div>  <!-- END: channels --> 
+
 
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
