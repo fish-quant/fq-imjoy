@@ -278,7 +278,9 @@ class ImJoyPlugin {
 
           // Callback to plot detections detection
           btn_detection_test_thresholds: async function(){
-            self.detection_test_thresholds()
+            this.running_detect_test = true
+            await self.detection_test_thresholds()
+            this.running_detect_test = false
           },
 
           // Callback to plot detections detection
@@ -439,7 +441,7 @@ class ImJoyPlugin {
   async detection_test_thresholds() {
 
     this.store.status_thresholds_tested = true
-    this.store.running_detect_test=true
+    //this.store.running_detect_test=true
     var th_tests = await this.fq_worker.detect_test_thresholds({
                               'threshold_range': [this.store.th_range_min,
                                                   this.store.th_range_max,
@@ -448,7 +450,7 @@ class ImJoyPlugin {
                               'minimum_distance': this.store.minimum_distance,
                               'show_status': true,
                               })
-    this.store.running_detect_test=false
+    //this.store.running_detect_test=false
     this.store.status_thresholds_tested = true
 
     // Create plotly plot
@@ -487,24 +489,25 @@ class ImJoyPlugin {
 
   // Test thresholds for detection
   async detection_apply() {
-    this.store.running_detect_apply=true
+    
     if ( this.store.detection_threshold == null){
       api.alert('Please set a numeric value to test the intensity threshold!')
       return
     }
+    this.store.running_detect_apply=true
     var spots = await this.fq_worker.detect_apply({
                               'detection_threshold': this.store.detection_threshold,
                               'sigma': this.store.sigma,
                               'show_status': true,
                               'detection_plot': this.store.detetection_plot
                               })
-
+    this.store.running_detect_apply=false
     this.fq_viewer.run({'data':{
                               'url': this.store.img_filt_load['url'],
                               'shape':this.store.img_filt_load['shape'],
                               'points':spots}
                               })
-    this.store.running_detect_apply=false
+    
     this.store.status_detection_applied = true
   }
 
@@ -534,7 +537,7 @@ class ImJoyPlugin {
   // Batch detection
   async detection_batch() {
     this.store.running_detect_batch=true
-    this.fq_worker.detection_batch({
+    await this.fq_worker.detection_batch({
       
                       // To scan folder and store results
                       'channels': this.store.channels,
@@ -548,7 +551,7 @@ class ImJoyPlugin {
                       'minimum_distance': this.store.minimum_distance,
                       'detection_threshold': this.store.detection_threshold,
                       });
-      this.store.running_detect_batch=false
+    this.store.running_detect_batch=false
   }
   
   async run(ctx) {
@@ -902,6 +905,38 @@ api.export(new ImJoyPlugin())
         
         <!-- Plot results -->
         <div id="graph_detection" v-show="status_thresholds_tested & show_detection" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
+
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+  <!-- Card to analyze image -->
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Process file(s)</p>
+          <p class="subtitle is-7">Specified settings will be used to process selected file or all files in folder. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <div class="columns is-desktop">
+          <div class="column">
+            <b-button type="is-primary" :loading="running_detect_image" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</b-button>
+          </div>
+          <div class="column">
+            <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+          </div>
+        </div>
+
 
 
       </div> <!-- END Class content -->
