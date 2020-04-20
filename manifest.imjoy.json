@@ -136,7 +136,7 @@
    "type": "window",
    "tags": [],
    "ui": "",
-   "version": "0.4.5",
+   "version": "0.4.6",
    "cover": "",
    "description": "Image viewer powered by OpenLayers and itk-vtk-viewer",
    "icon": "extension",

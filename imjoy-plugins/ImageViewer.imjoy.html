@@ -9,7 +9,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "cover": "",
   "description": "Image viewer powered by OpenLayers and itk-vtk-viewer",
   "icon": "extension",
@@ -140,7 +140,7 @@ function convertVtkImage(data){
         name: 'Image',
         origin: [0,0],
         spacing: [1,1],
-        direction: {data: [1,0,0,1]},
+        direction: {data: [1,0,0,-1]},
         size: [dshape[1], dshape[0]],
         data: new dtype.arrayType(data.__value__.buffer)
       })
@@ -482,7 +482,7 @@ const app = new Vue({
         name: 'test image',
         origin: [0,0],
         spacing: [1,1],
-        direction:{data: [1,0,0,1]},
+        direction:{data: [1,0,0,-1]},
         size: size,
         data: imgArray
       })
