@@ -7,7 +7,7 @@
   {
    "name": "FISH-QUANT",
    "type": "native-python",
-   "version": "0.0.4",
+   "version": "0.0.1",
    "description": "Worker to process smFISH images.",
    "tags": [
     "stable",
@@ -22,7 +22,7 @@
     "allow-detach"
    ],
    "icon": "extension",
-   "api_version": "0.1.7",
+   "api_version": "0.1.8",
    "env": "",
    "permissions": [],
    "requirements": {
@@ -74,7 +74,7 @@
    "uri": "imjoy-plugins\\FQ-image-viewer.imjoy.html"
   },
   {
-   "name": "FQ-interface",
+   "name": "FQ-interface-spectre",
    "type": "window",
    "tags": [],
    "ui": "",
@@ -99,6 +99,36 @@
     "h": 20
    },
    "runnable": false,
+   "uri": "imjoy-plugins\\FQ-interface-spectre.imjoy.html"
+  },
+  {
+   "name": "FQ-interface",
+   "type": "window",
+   "tags": [],
+   "ui": "",
+   "version": "0.0.1",
+   "cover": "",
+   "description": "[TODO: describe this plugin with one sentence.]",
+   "icon": "extension",
+   "inputs": null,
+   "outputs": null,
+   "api_version": "0.1.8",
+   "env": "",
+   "permissions": [],
+   "requirements": [
+    "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js",
+    "https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
+    "https://unpkg.com/buefy/dist/buefy.min.js",
+    "https://unpkg.com/buefy/dist/buefy.min.css"
+   ],
+   "dependencies": [],
+   "runnable": false,
+   "defaults": {
+    "w": 20,
+    "h": 10
+   },
    "uri": "imjoy-plugins\\FQ-interface.imjoy.html"
   },
   {

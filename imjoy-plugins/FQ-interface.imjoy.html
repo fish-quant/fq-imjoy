@@ -1,10 +1,5 @@
 ﻿<docs lang="markdown">
-Plugin renders the user-interface of FISH-quant.
-
-* Image processing is performed with the [**big-fish package**](https://github.com/fish-quant/big-fish)
-
-## BUGS and TODO
-* Verify that relevant parameters are defined (e.g. images) before controls are rendered.
+[TODO: write documentation for this plugin.]
 </docs>
 
 <config lang="json">
@@ -15,404 +10,34 @@ Plugin renders the user-interface of FISH-quant.
   "ui": "",
   "version": "0.0.1",
   "cover": "",
-  "description": "Analyze smFISH images with big-fish in ImJoy.",
+  "description": "[TODO: describe this plugin with one sentence.]",
   "icon": "extension",
   "inputs": null,
   "outputs": null,
-  "api_version": "0.1.7",
+  "api_version": "0.1.8",
   "env": "",
-  "requirements": [
-        "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css",
-        "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-exp.min.css",
-        "https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre-icons.min.css"],
-  "dependencies":  [],
-  "defaults": {"w": 30, "h": 20},
-  "runnable": false
+  "permissions": [],
+    "requirements": [
+                      "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css",
+                      "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js",
+                      "https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css",
+                      "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.51.1/plotly.min.js",
+                      "https://unpkg.com/buefy/dist/buefy.min.js",
+                      "https://unpkg.com/buefy/dist/buefy.min.css"
+                      ],
+  "dependencies": [],
+  "runnable": false,
+  "defaults": {"w": 20, "h": 10}
 }
 </config>
 
-
-<attachment name="nav_bar">
-<header class="navbar">
-  <section class="navbar-section">
-    <span> {{ txt_navbar }}</span>
-  </section>
-  <section class="navbar-section">
-    <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link">GitHub</a>
-    <a @click="openUrl('https://fish-quant.github.io/fq-imjoy')" class="btn btn-link">Docs</a>
-  </section>
-</header>
-</attachment>
-
-
-<attachment name="overview">
-<h5> Not implemented yet .... will come shortly </h5>
-<div id="map" class="map"></div>
-<form class="form-inline">
-  <label>Geometry type &nbsp;</label>
-  <select id="type">
-    <option value="LineString">LineString</option>
-    <option value="Polygon">Polygon</option>
-    <option value="Circle">Circle</option>
-    <option value="None">None</option>
-  </select>
-</form>
-</attachment>
-
-
-<attachment name="data">
-
-	<!-- Card to specify data -->
-	<div class="card">
-		<div class="card-header">
-			<div class="card-title h5">Specify data</div>
-			<div class="card-subtitle text-gray">Specify images to be loaded and analyzed.</div>
-		</div>
-
-		<div class="card-body">
-
-			<div class="input-group">
-				<!-- Re-activate this button once the file-manager works better
-          <button class="btn btn-primary input-group-btn" @click="btn_specify_folder">Specify folder with data</button> -->
-        <span class="input-group-addon" style="background-color:#eff5fa">Folder with data</span>
-				<input type="text" class="form-input" v-model="data_path" placeholder="paste-path-to-data">
-			</div>
-
-			<div class="input-group" style="margin-top: 5px">
-        <!-- Re-activate this button once the file-manager works better
-				<button class="btn btn-primary input-group-btn" @click="btn_specify_folder_output">Specify folder for results</button>-->
-        <span class="input-group-addon" style="background-color:#eff5fa">Folder to save results</span>
-				<input type="text" class="form-input" v-model="output_path" placeholder="">
-			</div>
-
-			<br>
-			<div class="input-group">
-				<span class="input-group-addon" style="background-color:#eff5fa">Regular expression</span>
-				<input type="text" class="form-input" v-model="reg_exp">
-				<button class="btn btn-primary input-group-btn" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
-			</div>
-
-			<form class="form-horizontal">
-				<div class="form-group">
-					<div class="col-12 col-lg-12">
-						<div class="input-group">
-							<span class="input-group-addon" style="background-color:#eff5fa">Pixel-size XY [nm]</span>
-							<input type="text" class="form-input" v-model="pixel_size_xy" placeholder="Pixel-size in nm">
-							<span class="input-group-addon" style="background-color:#eff5fa" placeholder="Z step-size in nm">Pixel-size Z [nm]</span>
-							<input type="text" class="form-input" v-model="pixel_size_z"  placeholder="Step-size in nm">
-						</div>
-					</div>
-				</div>
-			</form>
-
-
-      <!-- CHANNELS: PANEL -->
-			<div class="panel">
-				<div class="panel-body">
-
-					<!-- FORM: add a new channel -->
-					<form class="form-horizontal">
-						<div class="form-group">
-							<!-- Add button name -->
-							<div class="col-1 col-sm-12">
-								<button class="btn btn-action btn-primary btn-lg s-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0"><i class="icon icon-plus"></i>
-								</button>
-							</div>
-							<!-- Channel name -->
-							<div class="col-4 col-sm-12">
-								<div class="input-group"> <span class="input-group-addon" style="background-color:#eff5fa">Channel</span>
-									<input type="text" class="form-input" placeholder="Name of channel" v-model="ch_name">
-								</div>
-							</div>
-							<!-- Channel identifier -->
-							<div class="col-1 col-sm-12"></div>
-							<div class="col-4 col-sm-12">
-								<div class="input-group"> <span class="input-group-addon" style="background-color:#eff5fa">Identifier</span>
-									<input type="text" class="form-input" placeholder="Unique string" v-model="ch_ident">
-								</div>
-							</div>
-						</div>
-					</form>
-					<!-- CHANNELS: end of form to add a new channel -->
-
-					<!-- CHANNELS: render table containing channels to be loaded -->
-					<div style="text-align: center;">
-						<table class="table table-striped table-hover">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th>Identifier</th>
-									<th>Remove?</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="ch in channels" :key="ch.name">
-									<td>{{ch.name}}</td>
-									<td>{{ch.identifier}}</td>
-									<td><button class="btn btn-primary action btn-lg s-circle" @click="remove_channel(ch)"><i class="icon icon-delete"></i></button></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<!-- CHANNELS: END table containing channels to be loaded -->
-
-				</div>
-			</div>
-      <!-- CHANNELS: END of panel -->
-			<br>
-			<button class="btn btn-primary p-centered" :disabled="channels.length==0" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</button>
-
-		</div> <!-- END: card body to specify data-->
-	</div> <!-- END: card to specify data- -->
-	<br>
-
-	<!-- Card to list data -->
-	<div class="card">
-		<div class="card-header">
-			<div class="card-title h5">Data in folder fitting search criteria</div>
-			<div class="card-subtitle text-gray">Select one data-set for further processing.</div>
-		</div>
-
-		<div class="card-body">
-
-			<!-- carousel to show images -->
-			<div class="carousel" v-if="images.length">
-				<input class="carousel-locator" v-for="(img, i) in images" :id="'slide-'+i" type="radio" name="carousel-radio" hidden="" v-model="current_index" :value="i" checked="">
-
-				<!-- carousel container -->
-				<div class="carousel-container">
-					<!-- carousel item -->
-					<figure class="carousel-item" v-for="(img, i) in images">
-						<img class="img-responsive rounded" style="margin-top: 5px; max-height: 600px;" v-bind:src="img.url" :alt="img.index" v-on:dblclick="dblclick_show_image_raw(img.index)" :key="img.key">
-					</figure>
-
-				</div>
-
-				<!-- carousel navigation -->
-				<div class="carousel-nav">
-					<label class="nav-item text-hide c-hand"  v-for="(img, i) in images" :for="'slide-'+i">{{img.index}}</label>
-				</div>
-			</div>
-
-			<div style="text-align: center;">
-				<table class="table table-hover">
-					<thead>
-						<tr>
-							<th>Identifier</th>
-							<th>FOV</th>
-							<th>Load image</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="file in files" :key="file.file_ident" v-bind:class="{'active':(file === file_loaded)}">
-							<td>{{file.file_ident}}</td>
-							<td>{{file.fov}}</td>
-							<td><button class="btn btn-primary action btn-lg s-circle" @click="btn_load_image(file)"><i class="icon icon-download"></i></button></td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
-
-	</div> <!-- ENDL Card to list data -->
-	<br>
-
-</attachment>
-
-
-
-<!-- RNA DETECTION -->
-<attachment name="detection">
-
-<div class="container">
-  <div class="columns">
-    <div class="column col-6">
-
-        <!-- Select which channel should be processed-->
-        <ul class="menu">
-          <!-- Header -->
-          <li class="divider" data-content="Select channels to be analyzed"></li>
-          <!-- Render channel list -->
-          <li class="menu-item" v-for="channel in channels" v-bind:key="channel.name">
-            <input type="radio" v-bind:value="channel.name" v-model="channel_selected">
-            <label for="{{channel.name}}"></i>{{channel.name}}</label>
-          </li>
-        </ul>
-        <br>
-
-    </div>
-    <div class="column col-6">
-        <button class="btn btn-primary" @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region to test analysis</button>
-    </div>
-  </div>
-</div>
-
-
-	<!-- Card to specify FILTER -->
-	<div class="card">
-		<div class="card-header">
-			<div class="card-title h5">Filter image</div>
-			<div class="card-subtitle text-gray">Remove background and enhance spots.</div>
-		</div>
-		<div class="card-body">
-
-      <!-- BUTTON to filter -->
-      <div class="columns">
-        <div class="column col-3">
-			    <button class="btn btn-primary" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</button>
-        </div>
-
-    <!-- FORM GROUP FOR SIGMAS -->
-        <div class="column col-6">
-          <div class="input-group">
-            <span class="input-group-addon" style="background-color:#eff5fa">Sigma [XYZ]</span>
-            <input type="text" class="form-input" v-model.number="sigma[2]">
-            <input type="text" class="form-input" v-model.number="sigma[1]">
-            <input type="text" class="form-input" v-model.number="sigma[0]">
-          </div>
-        </div>
-
-      <!-- BUTTON to save -->
-        <div class="column col-3">
-          <button class="btn btn-primary" :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Show</button>
-          <button class="btn btn-primary" :disabled="status_image_filtered==false" @click="btn_save_image_filtered">Save</button>
-        </div>
-      </div>
-      <br>
-
-			<img v-if="img_filt" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta"  v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
-		</div> <!-- END: card body for filtering -->
-	</div> <!-- END: card for filtering -->
-
-	<!-- Card to specify DETECTION -->
-	<div class="card" style="margin-top: 5px">
-		<div class="card-header">
-			<div class="card-title h5">Detect RNAs</div>
-			<div class="card-subtitle text-gray">Detect RNAS in filtered images.</div>
-		</div>
-		<div class="card-body">
-
-      <!-- Test thresholds -->
-      <div class="columns">
-        <div class="column col-3">
-          <button class="btn btn-primary" :disabled="status_image_filtered==false" @click="btn_detection_test_thresholds">Test different thresholds</button>
-        </div>
-
-        <div class="column col-3">
-          <div class="input-group">
-            <span class="input-group-addon" style="background-color:#eff5fa">Min dist</span>
-            <input type="text" class="form-input" v-model.number="minimum_distance">
-          </div>
-        </div>
-
-        <!-- Select parameters for threshold testing -->
-        <div class="column col-6">
-          <div class="accordion">
-            <input type="checkbox" id="accordion-1" name="accordion-checkbox" hidden>
-            <label class="accordion-header" for="accordion-1"> <i class="icon icon-arrow-right mr-1"></i>
-              Specify range of tested tresholds</label>
-            <div class="accordion-body">
-              <ul class="menu">
-                <li class="menu-item">
-
-                  <!-- Min value -->
-                  <form class="form-horizontal">
-                    <div class="form-group">
-
-                      <div class="col-6 col-sm-12"> <!-- <label class="form-label" for="th_range_max">Max value: {{th_range_min}}</label>  -->
-                        <div class="input-group">
-                            <span class="input-group-addon" style="background-color:#eff5fa">Min</span>
-                            <input type="text" class="form-input" v-model.number="th_range_min">
-                        </div>
-                      </div>
-
-                      <div class="col-6 col-sm-12">
-                        <input class="slider" type="range" :min="img_filt_min" :max="img_filt_max" v-model.number="th_range_min">
-                      </div>
-                    </div>
-                  </form>
-
-                  <!-- Max value -->
-                  <form class="form-horizontal" >
-                    <div class="form-group" >
-                      <div class="col-6 col-sm-12">  <!-- <label class="form-label" for="th_range_max">Max value: {{th_range_max}}</label>  -->
-                         <div class="input-group">
-                            <span class="input-group-addon" style="background-color:#eff5fa">Max</span>
-                            <input type="text" class="form-input" v-model.number="th_range_max">
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-12">
-                        <input class="slider" type="range" :min="img_filt_min" :max="img_filt_max" v-model.number="th_range_max">
-                      </div>
-                    </div>
-                  </form>
-
-                  <!-- Bin size -->
-                  <form class="form-horizontal">
-                    <div class="form-group">
-                      <div class="col-6 col-sm-12">  <!-- <label class="form-label" for="th_range_nbins">No of test values: {{th_range_nbins}}</label> -->
-                          <div class="input-group">
-                            <span class="input-group-addon" style="background-color:#eff5fa"># of thresholds</span>
-                            <input type="text" class="form-input" v-model.number="th_range_nbins">
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-12">
-                        <input class="slider" type="range" min="0" max="200" v-model.number="th_range_nbins">
-                      </div>
-                    </div>
-                  </form>
-
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Apply thresholds -->
-			<div class="input-group">
-				<button class="btn btn-primary input-group-btn" :disabled="status_thresholds_tested==false" @click="btn_detection_apply">Apply detection threshold</button>
-        <input type="text" class="form-input" v-model.number="detection_threshold" placeholder="Set threshold either manually or by clicking on graph below">
-			</div>
-
-      <!-- Plot results -->
-      <div id="graph_detection" v-show="status_thresholds_tested" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
-
-		</div> <!-- END: card body for detection -->
-	</div> <!-- END: card for detection -->
-
-	<!-- Card for batch processing -->
-	<div class="card" style="margin-top: 5px">
-		<div class="card-header">
-			<div class="card-title h5">Process file(s)</div>
-			<div class="card-subtitle text-gray">Specified settings will be used to process selected file or all files in folder.</div>
-		</div>
-		<div class="card-body">
-      <button class="btn btn-primary" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</button>
-			<button class="btn btn-primary" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</button>
-		</div> <!-- END: card body for GMM -->
-	</div> <!-- END: card for GMM -->
-
-
-</attachment>
-
-
-
-<attachment name="segmentation">
-<h5> Not implemented yet .... will come shortly </h5>
-</attachment>
-
-
 <script lang="javascript">
-
 class ImJoyPlugin {
-
-
-
   async setup() {
 
+    const self = this
+
+    // For interaction with plot to show detection tests
     api.on('create_detection_plot', ()=>{
 
       // Create plotly plot
@@ -447,15 +72,13 @@ class ImJoyPlugin {
     })
 
     // Render different tabs with attachments
-    document.getElementById('cont_nav_bar').innerHTML = (await api.getAttachment('nav_bar'));
-    document.getElementById('cont_data').innerHTML =  (await api.getAttachment('data'));
+    document.getElementById('cont_data').innerHTML = (await api.getAttachment('data'));
     document.getElementById('cont_detection').innerHTML = (await api.getAttachment('detection'));
-    //document.getElementById('cont_overview').innerHTML = (await api.getAttachment('overview'));
-    //document.getElementById('cont_segmentation').innerHTML = (await api.getAttachment('segmentation'));
+    document.getElementById('cont_postprocessing').innerHTML = (await api.getAttachment('postprocessing'));
 
-    //
-    const self = this
+    // Get plugins from workspace
     this.fq_worker = await api.getPlugin("FISH-QUANT")
+    console.log('FQ-worker: ' +  this.fq_worker)
     this.fq_viewer = await api.getPlugin("FQ-image-viewer")
 
     // Get file-manager of FQ plugin
@@ -480,16 +103,15 @@ class ImJoyPlugin {
     var sigma_z = parseFloat(await api.getConfig('sigma_z'));
     if(! sigma_z) {sigma_z = 1}
 
-
-    // For vue
     this.store = {
           active_tab: 'data',
-          txt_navbar: 'Specify and open image for processing',
+          txt_navbar: 'No image loaded',
+          txt_navbar_details: '',
           fq_worker: this.fq_worker,
           fq_worker_url: fq_worker_url,
           files: [],
           file_loaded: '',
-          data_path: data_path, 
+          data_path: 'S:\\Documents\\Data\\test-data\\fish-quant\\spot-detection\\acquisition', //data_path, 
           output_path:"acquisition>>analysis",
           channels: [],
           analysis_region: [],
@@ -512,187 +134,184 @@ class ImJoyPlugin {
           th_range_min:0,
           th_range_max:5000,
           th_range_nbins:50,
+          show_filtered: true,
+          show_detection: true,
+          running_load: false,
+          running_filter: false,
+          running_detect_test: false,
+          running_detect_apply: false,
+          running_detect_image: false,
+          running_detect_batch: false,
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
           status_thresholds_tested: false,
-          status_detection_applied: false
-    }
+          status_detection_applied: false,
+    },
 
     this.app = new Vue({
       el: '#app',
       data: this.store,
+
       methods: {
+          
+          // Open URL in external window
+          openUrl(url){
+              api.utils.openUrl(url)
+          },
 
-        openUrl(url){
-            api.utils.openUrl(url)
-        },
+          // Open docs
+          openDocs(section){
+            api.showDialog({type: "external", src: "https://fish-quant.github.io/fq-imjoy"+section, passive: true})
+          },
 
-        showImageFilt(obj){
-                this.img_filt = obj
-            },
+          // Data: remove channel
+          remove_channel: function(ch) {
+            this.channels.splice(this.channels.indexOf(ch), 1);
+          },
 
-        showImage(obj){
-            this.images.push(obj)
-            if(this.images.length>5){
-                this.images.shift()
-            }
-            this.current_index = this.images.length -1
-        },
-
-        setThreshold(threshold){
-                this.detection_threshold = threshold
-        },
-
-        // Data: remove channel
-        remove_channel: function(ch) {
-          this.channels.splice(this.channels.indexOf(ch), 1);
-        },
-
-        // Data: add channel
-        add_channel: function() {
-           this.channels.push({name: this.ch_name,identifier: this.ch_ident})
+          // Data: add channel
+          add_channel: function() {
+            this.channels.push({name: this.ch_name,identifier: this.ch_ident})
             // Reset fields
             this.ch_name = []
             this.ch_ident = []
-        },
+          },
 
-        // Specify data path
-        btn_specify_folder: async function() {
-          console.log(this.fq_worker_url)
-          const ret = await api.showFileDialog({type:'directory', uri_type: 'path', engine: this.fq_worker_url})
-          if(ret){
-            await api.alert("Selected folder " + ret.path + "\non file-manager " + ret.file_manager)
-            console.log(ret)
-            this.data_path = ret.path
-          }
-        },
+          // Scan data directory
+          btn_scan_folder: async function() {
+            let config = {channels: this.channels,
+                          reg_exp: this.reg_exp,
+                          data_path: this.data_path}
+            let file_list  = await this.fq_worker.scan_folder(config)
 
-        // Specify data path
-        btn_specify_folder_output: async function() {
-          const ret = await api.showFileDialog({type:'directory',root: this.data_path, uri_type: 'path'})
-          if(ret){
-            await api.alert("Selected output folder " + ret.path + ", on engine " + ret.engine)
-            this.output_path = ret.path
-          }
-        },
+            // Get all channel names
+            let ch_names = this.channels.map(channel => channel['name'])
 
-        // Scan data directory
-        btn_scan_folder: async function() {
-          let config = {channels: this.channels,
-                        reg_exp: this.reg_exp,
-                        data_path: this.data_path}
-          let file_list  = await this.fq_worker.scan_folder(config)
+            // Replace file list
+            this.files = []
+            file_list.map(update_files.bind(this))
+            console.log(file_list)
 
-          // Get all channel names
-          let ch_names = this.channels.map(channel => channel['name'])
+            function update_files(file){
+              let file_info = {
+                    file_ident: file['file_ident'],
+                    fov: file['fov'],
+                    img_ext: file['img_ext']
+              }
 
-          // Replace file list
-          this.files = []
-          file_list.map(update_files.bind(this))
-          console.log(file_list)
+              // Assign all channel names
+              ch_names.map(function(ch_name){
+                file_info[ch_name] = file[ch_name]
+              })
 
-          function update_files(file){
-
-            let file_info = {
-                  file_ident: file['file_ident'],
-                  fov: file['fov'],
-                  img_ext: file['img_ext']
+              this.files.push(file_info)
             }
+          },
 
-            // Assign all channel names
-            ch_names.map(function(ch_name){
-              file_info[ch_name] = file[ch_name]
-            })
+          // Load image
+          btn_load_image: async function(file){
+            self.load_image(file)
+          },
 
-            this.files.push(file_info)
-          }
+          showImageFilt(obj){
+                  this.img_filt = obj
+              },
 
-        },
+          showImage(obj){
+              this.images.push(obj)
+              if(this.images.length>5){
+                  this.images.shift()
+              }
+              this.current_index = this.images.length -1
+          },
+
+          setThreshold(threshold){
+                  this.detection_threshold = threshold
+          },
 
 
-        // Load image
-        btn_load_image: async function(file){
-          self.load_image(file)
-        },
+          // Select region for analysis
+          btn_select_analysis_region: async function(file){
+            self.select_analysis_region(file)
+          },
 
 
-        // Select region for analysis
-        btn_select_analysis_region: async function(file){
-          self.select_analysis_region(file)
-        },
+          // Callback to save filtered image
+          dblclick_show_image_raw: async function(channel_selected){
+            console.log(channel_selected)
+            this.fq_worker.show_image({
+                        'channel_selected': channel_selected,
+                        'image_type': 'raw',
+                        'image_dim': 'mip',
+                        'display_type': 'dialog'
+                        })
+          },
+
+          // Callback to filter image
+          btn_filter_image: async function(){
+            self.filter_image()
+          },
+
+          // Callback to show filtered image: as resizable window
+          btn_show_image_filtered: async function(){
+            this.fq_worker.show_image({
+                        'channel_selected': this.channel_selected,
+                        'image_type': 'filtered',
+                        'image_dim': 'mip',
+                        'display_type': 'window'
+                        })
+          },
+
+          // Callback to show filtered image: as dialog
+          dblclick_show_image_filtered: async function(){
+            this.fq_worker.show_image({
+                        'channel_selected': this.channel_selected,
+                        'image_type': 'filtered',
+                        'image_dim': 'mip',
+                        'display_type': 'dialog'
+                        })
+          },
+
+          // Callback to save filtered image
+          btn_save_image_filtered: async function(){
+            self.save_image_filtered()
+          },
+
+          // Callback to plot detections detection
+          btn_detection_test_thresholds: async function(){
+            this.running_detect_test = true
+            await self.detection_test_thresholds()
+            this.running_detect_test = false
+          },
+
+          // Callback to plot detections detection
+          btn_detection_apply: async function(){
+            self.detection_apply()
+          },
+
+          // Callback to plot detections detection
+          btn_detection_GMM: async function(){
+            console.log('to be implemented')
+          },
+
+          // Callback to plot detections detection
+          btn_detection_batch: async function(){
+            self.detection_batch()
+          },
+
+          // Callback to plot detections detection
+          btn_detection_file: async function(){
+            self.detection_file()
+          },
 
 
-        // Callback to save filtered image
-        dblclick_show_image_raw: async function(channel_selected){
-          console.log(channel_selected)
-          this.fq_worker.show_image({
-                      'channel_selected': channel_selected,
-                      'image_type': 'raw',
-                      'image_dim': 'mip',
-                      'display_type': 'dialog'
-                      })
-        },
 
-        // Callback to filter image
-        btn_filter_image: async function(){
-          self.filter_image()
-        },
 
-        // Callback to show filtered image: as resizable window
-        btn_show_image_filtered: async function(){
-          this.fq_worker.show_image({
-                      'channel_selected': this.channel_selected,
-                      'image_type': 'filtered',
-                      'image_dim': 'mip',
-                      'display_type': 'window'
-                      })
-        },
+      } // END methods vue
+    }) // END vue
+  } // END SETUP
 
-        // Callback to show filtered image: as dialog
-        dblclick_show_image_filtered: async function(){
-          this.fq_worker.show_image({
-                      'channel_selected': this.channel_selected,
-                      'image_type': 'filtered',
-                      'image_dim': 'mip',
-                      'display_type': 'dialog'
-                      })
-        },
-
-        // Callback to save filtered image
-        btn_save_image_filtered: async function(){
-          self.save_image_filtered()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_test_thresholds: async function(){
-          self.detection_test_thresholds()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_apply: async function(){
-          self.detection_apply()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_GMM: async function(){
-          console.log('to be implemented')
-        },
-
-        // Callback to plot detections detection
-        btn_detection_batch: async function(){
-          self.detection_batch()
-        },
-
-        // Callback to plot detections detection
-        btn_detection_file: async function(){
-          self.detection_file()
-        },
-
-      }
-    })
-    api.log('initialized')
-  }
 
   // Load images
   async load_image(file) {
@@ -714,6 +333,7 @@ class ImJoyPlugin {
       };
 
       // Load image
+      this.store.running_load=true
       let mips = await this.fq_worker.load_image({
                             'file': file,
                             'channels': this.store.channels,
@@ -725,6 +345,7 @@ class ImJoyPlugin {
 
       this.store.txt_navbar = 'Loaded image IDENTIFIER :: FOV  :  ' + file.file_ident + ' :: ' + file.fov;
       this.store.file_loaded = file;
+      this.store.running_load=false
 
       // Assign images to carousel
       mips.map(mip => this.app.showImage({
@@ -775,7 +396,8 @@ class ImJoyPlugin {
   async filter_image() {
 
       this.store.img_filt = []
-
+ 
+      this.store.running_filter=true
       this.store.img_filt_load = await this.fq_worker.filter_image({
                             'sigma': this.store.sigma,
                             'channel_selected': this.store.channel_selected,
@@ -785,7 +407,7 @@ class ImJoyPlugin {
                             'show_status': true,
                             'selected_region': this.store.analysis_region,
                             })
-
+      this.store.running_filter=false
       this.app.showImageFilt({
                     'url': this.store.img_filt_load['url'],
                     'meta': 'loaded image'
@@ -821,7 +443,7 @@ class ImJoyPlugin {
   async detection_test_thresholds() {
 
     this.store.status_thresholds_tested = true
-
+    //this.store.running_detect_test=true
     var th_tests = await this.fq_worker.detect_test_thresholds({
                               'threshold_range': [this.store.th_range_min,
                                                   this.store.th_range_max,
@@ -830,7 +452,7 @@ class ImJoyPlugin {
                               'minimum_distance': this.store.minimum_distance,
                               'show_status': true,
                               })
-
+    //this.store.running_detect_test=false
     this.store.status_thresholds_tested = true
 
     // Create plotly plot
@@ -869,31 +491,32 @@ class ImJoyPlugin {
 
   // Test thresholds for detection
   async detection_apply() {
-
+    
     if ( this.store.detection_threshold == null){
       api.alert('Please set a numeric value to test the intensity threshold!')
       return
     }
+    this.store.running_detect_apply=true
     var spots = await this.fq_worker.detect_apply({
                               'detection_threshold': this.store.detection_threshold,
                               'sigma': this.store.sigma,
                               'show_status': true,
                               'detection_plot': this.store.detetection_plot
                               })
-
+    this.store.running_detect_apply=false
     this.fq_viewer.run({'data':{
                               'url': this.store.img_filt_load['url'],
                               'shape':this.store.img_filt_load['shape'],
                               'points':spots}
                               })
-
+    
     this.store.status_detection_applied = true
   }
 
   // Detect current file
   async detection_file() {
-
-    this.fq_worker.detection_file({
+    this.store.running_detect_image=true
+    await this.fq_worker.detection_file({
 
                       // To scan folder and store results
                       'channels': this.store.channels,
@@ -909,14 +532,14 @@ class ImJoyPlugin {
                       'detection_threshold': this.store.detection_threshold,
                       });
 
-
+    this.store.running_detect_image=false
   }
 
 
   // Batch detection
   async detection_batch() {
-
-    this.fq_worker.detection_batch({
+    this.store.running_detect_batch=true
+    await this.fq_worker.detection_batch({
       
                       // To scan folder and store results
                       'channels': this.store.channels,
@@ -929,95 +552,519 @@ class ImJoyPlugin {
                       'sigma': this.store.sigma,
                       'minimum_distance': this.store.minimum_distance,
                       'detection_threshold': this.store.detection_threshold,
-                      })
+                      });
+    this.store.running_detect_batch=false
   }
-
-
-
+  
   async run(ctx) {
-
-  } // End of run
-
-}  // End of class
+  }
+}
 
 api.export(new ImJoyPlugin())
 </script>
 
-<window lang="html">
-  <div id="app">
+<attachment name="data">
 
-<!-- Navbar -->
-<div id="cont_nav_bar"> </div>
+  <!-- Card to specify data -->
+  <div class="card">
+    <div class="card-content">
 
-    <!-- Tabs navigation -->
-    <ul class="tab tab-block">
-      <!-- <li class="tab-item" v-bind:class="{ active: active_tab=='overview' }">
-        <a href="#" @click="active_tab='overview'">Overview</a>
-      </li> -->
-      <li class="tab-item" v-bind:class="{active: active_tab=='data'}"  >
-        <a href="#" @click="active_tab='data'">Data specifications</a>
-      </li>
-      <!-- <li class="tab-item" v-bind:class="{ active: active_tab=='segmentation' }">
-        <a href="#" @click="active_tab='segmentation'">Segmentation</a>
-      </li> -->
-      <li class="tab-item" v-bind:class="{ active : active_tab=='detection' }">
-        <a href="#" @click="active_tab='detection'">Detection</a>
-      </li>
-    </ul>
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Specify data</p>
+          <p class="subtitle is-7">Specify images to be loaded and analyzed. </p>
+        </div>
+      </div>
+      <br>
 
-    <!-- Tabs content -->
-    <!--  <div v-show="active_tab=='overview'" class="tab-content" id="cont_overview"> </div>  -->
-    <div v-show="active_tab=='data'" class="tab-content" id="cont_data"></div>
-    <!--  <div v-show="active_tab=='segmentation'" class="tab-content" id="cont_segmentation"></div>  -->
-    <div v-show="active_tab=='detection'" class="tab-content" id="cont_detection"></div>
-
-  </div> <!-- END: VUE APP -->
-</window>
+      <!-- Actual content -->
+      <div class="content">
 
 
-<style lang="css">
+        <!-- Specify data folder -->
+        <b-field label="DATA folder" horizontal grouped expanded>
+          <b-field expanded>
+            <b-input v-model="data_path" placeholder="paste-path-to-data"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify data folder -->
+   
 
-/* Overwrite css defaults
-/* https://css-tricks.com/when-using-important-is-the-right-choice/ */
-/* body {font-size: 13px !important;} */
-
-.tab-content{
-  padding: 10px;
-}
-
-.active-tab-css{
-  background-color: #000000;
-}
-
-.center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-}
-
-.graph_resize {
-  height: 100vh;
-  width: 100vw;
-}
+        <!-- Specify folders -->
+        <b-field horizontal label="RESULTS folder">
+          <b-input v-model="output_path" placeholder=""></b-input>
+          <p class="control">
+            <b-button rounded type="is-primary" outlined icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
+          </p>
+        </b-field> <!-- END: specify RESULTS folder -->
 
 
-.carousel{
-    margin: 5px;
-}
+        <!-- Specify regular expression -->
+        <b-field label="Regular expression" horizontal grouped>
+          <b-field>
+            <b-input v-model="reg_exp" expanded></b-input>
+          </b-field>
+          <b-field>
+            <b-button type="is-primary" outlined @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
+          </b-field>
+        </b-field> <!-- END: specify regular expression -->
 
-.img-embed{
-  margin: 5px;
-}
 
-</style>
+        <!-- Specify pixel size -->
+        <b-field label="Pixel size" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">XY [nm]</span></p>
+            <b-input placeholder="107" v-model.number="pixel_size_xy"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">z [nm]</span></p>
+            <b-input placeholder="300" v-model.number="pixel_size_z"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify pixel size -->
+         <hr>
+        <!-- Channels -->
+        <div class="columns is-desktop">
+
+          <!-- Specify channels -->
+          <div class="column">
+            
+            
+            <b-field label="Channels" horizontal grouped>
+              <b-field>
+                <p class="control"> <span class="button is-static">Name</span></p>
+                <b-input placeholder="Name of channel" v-model="ch_name"></b-input>
+              </b-field>
+            </b-field>
+
+            <b-field horizontal grouped><!-- Label left empty for spacing -->
+              <b-field>
+                <p class="control"> <span class="button is-static">Identifier</span></p>
+                <b-input placeholder="Unique string in name" v-model="ch_ident"></b-input>
+              </b-field>
+            </b-field>
+
+            <b-field horizontal grouped><!-- Label left empty for spacing -->
+              <b-field>
+                <b-button type="is-primary" icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
+              </b-field>
+            </b-field>
+
+          </div> <!-- END: Specify channels -->
+          <!-- SHOW channels -->
+          <div class="column">
+
+            <div style="text-align: center;">
+              <table class="table is-striped is-hoverable is-narrow">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Identifier</th>
+                    <th>Remove?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="ch in channels" :key="ch.name">
+                    <td>{{ch.name}}</td>
+                    <td>{{ch.identifier}}</td>
+                    <td>
+                      <b-button class="b-button" icon-left="delete" @click="remove_channel(ch)"> </b-button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>       
+          </div> <!-- END: SHOW channels --> 
+        </div>  <!-- END: channels --> 
 
 
-<attachment name="docs_data">
-Here we provide answer to frequenty asked questions and encountered problems.
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+  <br>
 
-### Example training data is not available on the remote engine
-In case the example data is not available anymore, you can either train with data by specyfing the URL or
-download the data and upload to the remote engine again.
+  <!-- Card to specify data -->
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Data in folder fitting search criteria</p>
+          <p class="subtitle is-7">Load one dataset for analysis. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <b-button expanded type="is-primary" :disabled="channels.length==0" @click="btn_scan_folder">Scan folder for all files fitting the search criteria</b-button>
+        <br>
+
+        <div class="columns is-desktop">
+
+          <!-- Table with files that can be loaded -->
+          <div class="column">
+            <table class="table is-striped is-hoverable is-narrow">
+              <thead>
+                <tr>
+                  <th>Identifier</th>
+                  <th>FOV</th>
+                  <th>Load image</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="file in files" :key="file.file_ident" v-bind:class="{'is-selected':(file === file_loaded)}">
+                  <td>{{file.file_ident}}</td>
+                  <td>{{file.fov}}</td>
+                  <td>
+                    <b-button icon-left="upload" :loading="running_load" @click="btn_load_image(file)"></b-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Image carousel with loaded images-->
+          <div class="column">
+            <div>
+              <b-carousel autoplay=false v-if="images.length" :indicator-inside="false">
+                <b-carousel-item v-for="(img, i) in images" :key="i">
+                  <img class="img-responsive rounded" style="margin-top: 5px; max-height: 600px;" v-bind:src="img.url" :alt="img.index" v-on:dblclick="dblclick_show_image_raw(img.index)">
+                </b-carousel-item>
+                <template slot="indicators" slot-scope="props">
+                  <span class="al image">
+                    <!-- <img :src="images[props.i" :title="props.i"> -->
+                    <!--<p v-bind="channels[props.i].name" expanded>asdfasd</p> -->
+                    <span> {{ channels[props.i].name }}</span>
+                  </span>
+                </template>
+              </b-carousel>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
 
 </attachment>
+
+<attachment name="detection">
+
+  <!-- Card to specify channel -->
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Select channel</p>
+          <p class="subtitle is-7">Select channel, and [optional] region to be used for testing. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <div class="columns is-desktop">
+
+          <div class="column">
+            <!-- Select which channel should be processed-->
+            <aside class="menu">
+              <p class="menu-label">Select channel to be analyzed</p>
+              <ul class="menu-list" v-for="channel in channels" v-bind:key="channel.name">
+                <b-radio v-bind:native-value="channel.name" v-model="channel_selected">{{channel.name}}</b-radio>
+                </li>
+              </ul>
+            </aside>
+          </div>
+
+          <div class="column">
+            <section>
+              <b-button type="is-primary" outlined  @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
+            </section>
+          </div>
+        </div>
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+  <!-- Card to specify Filter -->
+  <br>
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+
+
+        <div class="summary-content">
+          <p class="title is-4">Filter image</p>
+
+        <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
+            <p>
+            <p class="subtitle is-6">Remove background and enhance spots.  </p>
+
+        </b-field>
+
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <!--Specify filters -->
+        <section>
+          <b-field label="Filter" horizontal grouped>
+            <b-field>
+              <p class="control"> <span class="button is-static">sigma-x</span></p>
+              <b-input placeholder="1" v-model.number="sigma[2]"></b-input>
+            </b-field>
+            <b-field>
+              <p class="control"> <span class="button is-static">sigma-y</span></p>
+              <b-input placeholder="1" v-model.number="sigma[1]"></b-input>
+            </b-field>
+            <b-field>
+              <p class="control"> <span class="button is-static">sigma-z</span></p>
+              <b-input placeholder="1.25" v-model.number="sigma[0]"></b-input>
+            </b-field>
+
+          </b-field>
+        </section> <!-- END: Specify filters -->
+
+        <br>
+        <div class="columns is-desktop">
+          <div class="column">
+            <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
+          </div>
+          <div class="column">
+            <b-checkbox v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
+          </div>
+          <div class="column">
+            <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Open filtered image for inspection</b-button>
+          </div>
+          <div class="column">
+            <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_save_image_filtered">Save filtered image</b-button>
+          </div>
+        </div>
+
+        <img v-if="img_filt" v-show="show_filtered" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta" v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+  <!-- Card to set up detection -->
+  <br>
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Spot detection</p>
+          <p class="subtitle is-7">Define intensity threshold to perform spot detection. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+        <b-field grouped>
+          <p class="control">
+            <button class="button is-primary"  :loading="running_detect_test" :disabled="status_image_filtered==false" @click="btn_detection_test_thresholds">
+              Test thresholds
+            </button>
+          </p>
+
+          <b-field>
+            <p class="control"> <span class="button is-static">Min dist</span></p>
+            <b-input placeholder="2" v-model.number="minimum_distance"></b-input>
+          </b-field>
+
+
+        <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_image_filtered==false">
+            <b-button
+                class="button is-primary"
+                :disabled="status_image_filtered==false"
+                slot="trigger"
+                icon-left="arrow-down-drop-circle"
+                aria-controls="contentIdForA11y1">Specify intensity range to test thresholds</b-button>
+            <div class="notification">
+
+              <b-field :label="'Min: '+th_range_min">
+                <b-slider v-model.number="th_range_min"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+              </b-field>
+
+              <b-field :label="'Max: '+th_range_max">
+                <b-slider v-model.number="th_range_max"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+              </b-field>
+
+              <b-field :label="'Number of values to test: '+th_range_nbins">
+                <b-slider v-model.number="th_range_nbins"  min=2 max=300></b-slider>
+              </b-field>
+  
+            </div>
+        </b-collapse>
+
+        </b-field> <!-- END test thresholds -->
+
+
+        <b-field grouped>
+          <p class="control">
+            <button class="button is-primary" :loading="running_detect_apply" :disabled="status_thresholds_tested==false" @click="btn_detection_apply">
+              Apply detection threshold
+            </button>
+          </p>
+
+          <b-field>
+            <p class="control"> <span class="button is-static">Intensity threshold</span></p>
+            <b-input placeholder="Set threshold either manually or by clicking on graph below" v-model.number="detection_threshold"></b-input>
+          </b-field>
+
+          <b-field>
+            <b-checkbox v-model="show_detection" :disabled="status_thresholds_tested==false"> Show threshold test</b-checkbox>
+          </b-field>
+
+        </b-field> <!-- END specify thresholds -->
+        
+        <!-- Plot results -->
+        <div id="graph_detection" v-show="status_thresholds_tested & show_detection" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
+
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+  <!-- Card to analyze image -->
+  <br>
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Process file(s)</p>
+          <p class="subtitle is-7">Specified settings will be used to process selected file or all files in folder. </p>
+        </div>
+      </div>
+  
+      <!-- Actual content -->
+      <br>
+      <div class="content">
+
+        <div class="columns is-desktop">
+          <div class="column">
+            <b-button type="is-primary" :loading="running_detect_image" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</b-button>
+          </div>
+          <div class="column">
+            <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+          </div>
+        </div>
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+</attachment>
+
+
+<attachment name="postprocessing">
+
+  <!-- Card to specify channel -->
+  <div class="card">
+    <div class="card-content">
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">Postprocessing</p>
+          <p class="subtitle is-7">coming soon. </p>
+        </div>
+      </div>
+      <br>
+
+      <!-- Actual content -->
+      <div class="content">
+
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+</attachment>
+
+<window lang="html">
+  <div>
+
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <div id="app">
+
+      <!-- Navbar -->
+      <template>
+          <b-navbar>
+              <template slot="brand">
+                  <b-navbar-item href="#">
+                      <a @click="openUrl('https://fish-quant.github.io/fq-imjoy')" class="btn btn-link">
+                      <b-icon icon="help-circle" size="is-small"></b-icon> Documentation</a>
+                  </b-navbar-item>
+                  <b-navbar-dropdown label="Analysis Info">
+                    <b-navbar-item href="#">
+                        <span> {{ txt_navbar }}</span>
+                    </b-navbar-item>
+                    <b-navbar-item href="#">
+                        <span> {{ txt_navbar_details }}</span>
+                    </b-navbar-item>
+                </b-navbar-dropdown>
+              </template>
+              <template slot="end">
+                  <b-navbar-item href="#">
+                      <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link"> 
+                      <b-icon icon="github-circle" size="is-small"></b-icon> GitHub</a>
+                  </b-navbar-item>
+              </template>
+
+           </b-navbar>
+      </template>
+
+
+      <!-- Tabs -->
+      <b-tabs type="is-toggle" position="is-centered">
+        <b-tab-item label="1. Data specifications" icon="download">
+          <div id="cont_data"></div>
+        </b-tab-item>
+        <b-tab-item label="2. Spot detection" icon="file-find">
+          <div id="cont_detection"></div>
+        </b-tab-item>
+        <b-tab-item label="3. Postprocessing" icon="washing-machine">
+          <div id="cont_postprocessing"></div>
+        </b-tab-item>
+      </b-tabs>
+
+    </div> <!-- END div APP -->
+  </div> <!-- END of master div -->
+</window> <!-- END Class card -->
+
+<style lang="css">
+.is-active .al img {
+    font-weight: bold;
+}
+.al img {
+    font-weight: bold;
+}
+</style>

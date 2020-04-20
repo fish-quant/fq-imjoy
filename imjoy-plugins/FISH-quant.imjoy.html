@@ -12,7 +12,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.4",
+  "version": "0.0.1",
   "description": "Worker to process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -21,7 +21,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
   "outputs": null,
   "flags": ["single-instance", "allow-detach"],
   "icon": "extension",
-  "api_version": "0.1.7",
+  "api_version": "0.1.8",
   "env": "",
   "permissions": [],
   "requirements": { "stable":["pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"],
@@ -144,7 +144,7 @@ async def image_mip(img, name_save, file_manager, create_url=False, rescale=True
 
 class ImJoyPlugin():
 
-    # 
+ 
     async def setup(self):
         api.log('FQ-worker plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
@@ -159,7 +159,8 @@ class ImJoyPlugin():
         }
                 
     async def run(self, ctx):
-        self.FQ_interface = await api.createWindow(type="FQ-interface",name='FISH-quant')
+        self.FQ_interface = await api.createWindow(type="FQ-interface",name='FISH-quant',data={'file_manager': api.FILE_MANAGER_URL,'engine_url': api.ENGINE_URL})
+        #self.FQ_interface = await api.createWindow(type="FQ-buefy",name='FISH-quant')
 
     def get_engine_url(self):
         return api.ENGINE_URL
@@ -670,6 +671,7 @@ class ImJoyPlugin():
         await self.save_analysis_details(name_save)
 
         # Update status
+        api.alert(f'Processing of loaded file finished: {len(spots)} spots detected')
         api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
 
 
@@ -743,6 +745,7 @@ class ImJoyPlugin():
             name_save = os.path.join(path_save, name_base + '__analysis_details.json')
             await self.save_analysis_details(name_save)
 
+        api.alert('Batch processing finished!')
         api.showStatus('Batch processing finished!')
 
 api.export(ImJoyPlugin())

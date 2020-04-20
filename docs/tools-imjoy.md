@@ -81,8 +81,8 @@ to which ImJoy can connect.
 
    ![imjoy-connect-jupyter.gif](img/imjoy-connect-jupyter.gif)
 
-
 ### Managing plugin engines
+
 ImJoy remembers the plugin engines it connected to (including the token). You can obtain the list of all
 registered engines by pressing on the rocket symbol. 
 
@@ -91,25 +91,27 @@ registered engines by pressing on the rocket symbol.
 * **Connected engines** will be shown with their name in black, and a red cross next to the name. Pressing the cross will disconnect ImJoy from the engine, but it will remain in the list. 
 * **Known engines** (but not connected) will be shown with their name in gray, with a little trash symbol next to them. Pressing on the trash symbol will remove the engine. 
 
-
 ## Install Jupyter engine for ImJoy
-We recommend installing an [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
+
+We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
 choose Python 3.7 and your operating system. You  can then use the annoconda prompt to excecute the different commands listed below. 
 
 We further recommend creating a **dedicated environment** to run code in this analysis package. 
 This guarantess that only necessary code is installed. 
-To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`): 
+To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`):
 
 ```
 conda create --name fq-imjoy python=3.7
 ```
 
 **Activate the environment**:
+
 ```
 conda activate fq-imjoy
 ```
 
 **Install code Jupyter optimized for ImJoy**:
+
 ```
 pip install -U imjoy
 ```

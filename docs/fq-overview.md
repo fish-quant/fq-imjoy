@@ -21,21 +21,25 @@ In the ImJoy app, you have **main plugin** `FISH-QUANT`, as wells as several hel
 ## General use
 
 ### Start FISH-QUANT
+
 After connecting ImJoy to a Jupyter engine, press on the FISH-QUANT plugin name. This will open an interface with different tabs, that 
 allow to control the main workflows. Controls will only be enabled, when all necessary parameters
 are defined.
 
-1. **Data specifications**: allows to specify how the data should be read, and to load images for analysis.
-2. **Detection**: perform RNA detection on individual images, and batch analysis images in one folder.
+![fq-detection-thresholds.png](img/fq-ui-banner.png){: style="width:400px"}
 
+1. **Data specifications**: allows to specify how the data should be read, and to load images for analysis.
+2. **Spot Detection**: perform spot detection on individual images, and batch analysis images in one folder.
+3. **Postprocessing**: analyze spot detection results, e.g. assign spots counts to cell segmentation results.
 
 ### Maximize ImJoy
+
 To maximize the available space in the ImJoy window, you can do two things:
 
-1. Start ImJoy as a **Chrome App**. This will detach ImJoy from Chrome and show it as a separate application with its own icon in the taskbar 
+1. Start ImJoy as a **Chrome App**. This will detach ImJoy from Chrome and show it as a separate application with its own icon in the taskbar
    
     ![imjoy-open-as-app.gif](img/imjoy-open-as-app.gif){: style="width:300px"}
 
-2. **Minimize the plugin side-bar** once you launched FISH-quant. 
+2. **Minimize the plugin side-bar** once you launched FISH-quant.
    
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
