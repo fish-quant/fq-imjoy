@@ -594,7 +594,7 @@ api.export(new ImJoyPlugin())
         <b-field horizontal label="RESULTS folder">
           <b-input v-model="output_path" placeholder=""></b-input>
           <p class="control">
-            <b-button rounded type="is-primary" icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
+            <b-button rounded type="is-primary" outlined icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
           </p>
         </b-field> <!-- END: specify RESULTS folder -->
 
@@ -605,7 +605,7 @@ api.export(new ImJoyPlugin())
             <b-input v-model="reg_exp" expanded></b-input>
           </b-field>
           <b-field>
-            <b-button type="is-primary" @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
+            <b-button type="is-primary" outlined @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
           </b-field>
         </b-field> <!-- END: specify regular expression -->
 
@@ -783,7 +783,7 @@ api.export(new ImJoyPlugin())
 
           <div class="column">
             <section>
-              <b-button type="is-primary" @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
+              <b-button type="is-primary" outlined  @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
             </section>
           </div>
         </div>
@@ -799,9 +799,19 @@ api.export(new ImJoyPlugin())
 
       <!-- Summary -->
       <div class="summary">
+
+
         <div class="summary-content">
           <p class="title is-4">Filter image</p>
-          <p class="subtitle is-7">Remove background and enhance spots.</p>
+
+        <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
+            <p>
+            <p class="subtitle is-6">Remove background and enhance spots.  </p>
+
+        </b-field>
+
         </div>
       </div>
       <br>
@@ -824,6 +834,7 @@ api.export(new ImJoyPlugin())
               <p class="control"> <span class="button is-static">sigma-z</span></p>
               <b-input placeholder="1.25" v-model.number="sigma[0]"></b-input>
             </b-field>
+
           </b-field>
         </section> <!-- END: Specify filters -->
 
