@@ -22,7 +22,7 @@ In this tab, the user will specify
 3. **Filter image**. Here you can change the paramaters of the LoG (Laplacian of Gaussian filter). 
    More details about the LoG filter can be found in the background section below.
    
-   * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate [section](imjoy-imageviewer.md) for more details on how to use the image viewer.
+   * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate for more details on how to use the  [**image viewer**](fq-overview.md#image-viewer).
    * To show the image in a interface that can be resized and kept open, press the button button `Show`.
    * You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
    * The filter size will be stored and reused when you launch ImJoy the next time.
@@ -32,8 +32,10 @@ In this tab, the user will specify
     1. You can specify a minimum distance two spots have to be separate in order to be considered separate spots (default 2 pixels)
     2. You can specify a range of detection tresholdsthat will be test to help establishing a good threshold. In the pull-down menu you can set how many intensity values will be tested between the specified  minimum, maximum value. 
     To properly set this range, it can be useful to inspect the filtered image and 
-    establish the typical intensity range of spots that should be detected. We recommend using a min value a value close to background, and as max a value
-    brighter than the brightest spot.
+    establish the typical intensity range of spots that should be detected. We recommend using 
+
+    * a **minimum value** somewhat dimmer than the dimmest spot, and brighter than the typical background.  
+    * a **maximum value** brighter than the brightest spot.
 
         ![fq-detection-thresholds.png](img/fq-detection-thresholds.png){: style="width:350px"}
 
@@ -72,7 +74,7 @@ For each analyzed image, two files will be created and stored under the orginal 
 
 !!! abstract "Why a LoG filter? How to set the sigma?"
     The LoG filter allows to easier detec the spots by enhancing their signal. The sigmas are the
-    **scale of the filter** and should be set to the typical size of spots in the image. 
+    **scale of the filter** and should be set to the typical size of spots in the image.
 
 A LoG filter is a standard filter that is routinely used to **detect rapid change (edges) in images**. 
 

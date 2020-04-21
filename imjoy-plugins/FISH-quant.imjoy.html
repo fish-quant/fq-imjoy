@@ -12,7 +12,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Worker to process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -35,8 +35,8 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
 </config>
 
 <script lang="python">
-from imjoy import api
 
+from imjoy import api
 import asyncio
 import sys
 import os
@@ -45,7 +45,6 @@ import json
 import re
 import base64
 from datetime import datetime
-
 import numpy as np
 from skimage import io
 import pandas as pd
@@ -148,7 +147,6 @@ class ImJoyPlugin():
     async def setup(self):
         api.log('FQ-worker plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
-        self.cwd = Path.cwd() 
         self.analysis_details = {
                 'date': '',
                 'data_specs': {},
@@ -159,8 +157,11 @@ class ImJoyPlugin():
         }
                 
     async def run(self, ctx):
-        self.FQ_interface = await api.createWindow(type="FQ-interface",name='FISH-quant',data={'file_manager': api.FILE_MANAGER_URL,'engine_url': api.ENGINE_URL})
-        #self.FQ_interface = await api.createWindow(type="FQ-buefy",name='FISH-quant')
+        self.FQ_interface = await api.createWindow(type="FQ-interface",
+                                                   name='FISH-quant',
+                                                   data={'file_manager': api.FILE_MANAGER_URL,
+                                                         'engine_url': api.ENGINE_URL,
+                                                         'version': await api.getConfig('_version')})
 
     def get_engine_url(self):
         return api.ENGINE_URL
@@ -243,6 +244,10 @@ class ImJoyPlugin():
         channels  = config['channels']
         reg_exp   = config['reg_exp']
         path_data_full = Path(config['data_path'])
+
+        if not path_data_full.is_dir():
+            api.alert('Specified data path does not EXIST. No images found.')
+            return
 
         # Get channels as dict
         ch_dict = {channel['identifier']: channel['name'] for channel in channels}

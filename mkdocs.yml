@@ -58,10 +58,10 @@ markdown_extensions:
 nav:
     - Overview: index.md   # Needed for material theme but not for others
     - ImJoy: tools-imjoy.md  
-    - Data: data.md
+    
     - FISH-quant:
       - Overview: fq-overview.md
-      - Image viewer: imjoy-imageviewer.md
+      - Data: data.md
       - Loading data: fq-load-data.md
       - Spot detection: fq-spot-detection.md
     - Support workflows:

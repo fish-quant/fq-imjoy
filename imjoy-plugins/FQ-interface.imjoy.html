@@ -77,15 +77,15 @@ class ImJoyPlugin {
     document.getElementById('cont_postprocessing').innerHTML = (await api.getAttachment('postprocessing'));
 
     // Get plugins from workspace
+    // TODO: maybe we can change this and provide this as an input to allow for remote calls?
     this.fq_worker = await api.getPlugin("FISH-QUANT")
-    console.log('FQ-worker: ' +  this.fq_worker)
     this.fq_viewer = await api.getPlugin("FQ-image-viewer")
 
     // Get file-manager of FQ plugin
     const fq_worker_url = await this.fq_worker.get_engine_url()
     console.log('URL of connected FQ-worker: ' +  fq_worker_url)
 
-    // Get default values (if store already)
+    // Get last used values (if present)
     var reg_exp = await api.getConfig('reg_exp')
     if(! reg_exp) {
       reg_exp = '(?P<fov>.*)-(?P<file_ident>Exp.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
@@ -94,7 +94,6 @@ class ImJoyPlugin {
     var data_path = await api.getConfig('data_path')
     if(! data_path) {
       data_path = 'paste-path-to-data'
-      data_path = 'D:\Documents\Data\test-data\fish-quant\spot-detection\acquisition'
     }
 
     var sigma_xy =  parseFloat(await api.getConfig('sigma_xy'));
@@ -103,7 +102,10 @@ class ImJoyPlugin {
     var sigma_z = parseFloat(await api.getConfig('sigma_z'));
     if(! sigma_z) {sigma_z = 1}
 
+    // Initialize parameters
     this.store = {
+          version_FQ: await api.getConfig('_version'),
+          version_interface: '',
           active_tab: 'data',
           txt_navbar: 'No image loaded',
           txt_navbar_details: '',
@@ -111,7 +113,7 @@ class ImJoyPlugin {
           fq_worker_url: fq_worker_url,
           files: [],
           file_loaded: '',
-          data_path: 'S:\\Documents\\Data\\test-data\\fish-quant\\spot-detection\\acquisition', //data_path, 
+          data_path: data_path, 
           output_path:"acquisition>>analysis",
           channels: [],
           analysis_region: [],
@@ -149,6 +151,7 @@ class ImJoyPlugin {
           status_detection_applied: false,
     },
 
+    // Initialize vue app
     this.app = new Vue({
       el: '#app',
       data: this.store,
@@ -557,6 +560,11 @@ class ImJoyPlugin {
   }
   
   async run(ctx) {
+
+    if(ctx.data){
+      console.log(ctx.data)
+      this.store.version_interface = ctx.data['version']
+    }
   }
 }
 
@@ -573,7 +581,14 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Specify data</p>
-          <p class="subtitle is-7">Specify images to be loaded and analyzed. </p>
+
+          <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/data')"></button>
+            <p>
+            <p class="subtitle is-6">Specify images to be loaded and analyzed. </p>
+          </b-field>
+
         </div>
       </div>
       <br>
@@ -581,34 +596,35 @@ api.export(new ImJoyPlugin())
       <!-- Actual content -->
       <div class="content">
 
-
         <!-- Specify data folder -->
         <b-field label="DATA folder" horizontal grouped expanded>
           <b-field expanded>
             <b-input v-model="data_path" placeholder="paste-path-to-data"></b-input>
           </b-field>
         </b-field> <!-- END: specify data folder -->
-   
 
-        <!-- Specify folders -->
-        <b-field horizontal label="RESULTS folder">
-          <b-input v-model="output_path" placeholder=""></b-input>
-          <p class="control">
-            <b-button rounded type="is-primary" outlined icon-left="help-circle" @click="openDocs('/fq-load-data')"></button>
-          </p>
-        </b-field> <!-- END: specify RESULTS folder -->
-
+        <!-- Specify results folder -->
+        <b-field horizontal label="RESULTS folder" >
+          <b-field>
+            <b-input  v-model="output_path" placeholder="" expanded></b-input>
+            <p class="control">
+                <b-button type="is-primary" outlined icon-left="help-circle" @click="openDocs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
+            </p>
+          </b-field>
+        </b-field> <!-- END: specify results folder -->
 
         <!-- Specify regular expression -->
         <b-field label="Regular expression" horizontal grouped>
-          <b-field>
-            <b-input v-model="reg_exp" expanded></b-input>
-          </b-field>
-          <b-field>
-            <b-button type="is-primary" outlined @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test regexp</button>
+          <b-field >
+            <b-input  v-model="reg_exp" expanded></b-input>
+            <p class="control">
+                <b-button type="is-primary"  @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test expression</b-button>
+            </p>
+            <p class="control">
+                <b-button type="is-primary" outlined icon-left="help-circle" @click="openDocs('/data/#naming-convention')"></b-button>
+            </p>
           </b-field>
         </b-field> <!-- END: specify regular expression -->
-
 
         <!-- Specify pixel size -->
         <b-field label="Pixel size" horizontal grouped>
@@ -621,14 +637,16 @@ api.export(new ImJoyPlugin())
             <b-input placeholder="300" v-model.number="pixel_size_z"></b-input>
           </b-field>
         </b-field> <!-- END: specify pixel size -->
-         <hr>
+        
+        
         <!-- Channels -->
+        <hr>
         <div class="columns is-desktop">
 
           <!-- Specify channels -->
           <div class="column">
-            
-            
+
+
             <b-field label="Channels" horizontal grouped>
               <b-field>
                 <p class="control"> <span class="button is-static">Name</span></p>
@@ -636,14 +654,16 @@ api.export(new ImJoyPlugin())
               </b-field>
             </b-field>
 
-            <b-field horizontal grouped><!-- Label left empty for spacing -->
+            <b-field horizontal grouped>
+              <!-- Label left empty for spacing -->
               <b-field>
                 <p class="control"> <span class="button is-static">Identifier</span></p>
                 <b-input placeholder="Unique string in name" v-model="ch_ident"></b-input>
               </b-field>
             </b-field>
 
-            <b-field horizontal grouped><!-- Label left empty for spacing -->
+            <b-field horizontal grouped>
+              <!-- Label left empty for spacing -->
               <b-field>
                 <b-button type="is-primary" icon-left="plus-circle" @click="add_channel" :disabled="ch_name.length==0 || ch_ident.length==0">Add</b-button>
               </b-field>
@@ -672,9 +692,9 @@ api.export(new ImJoyPlugin())
                   </tr>
                 </tbody>
               </table>
-            </div>       
-          </div> <!-- END: SHOW channels --> 
-        </div>  <!-- END: channels --> 
+            </div>
+          </div> <!-- END: SHOW channels -->
+        </div> <!-- END: channels -->
 
 
       </div> <!-- END Class content -->
@@ -773,7 +793,7 @@ api.export(new ImJoyPlugin())
           <div class="column">
             <!-- Select which channel should be processed-->
             <aside class="menu">
-              <p class="menu-label">Select channel to be analyzed</p>
+
               <ul class="menu-list" v-for="channel in channels" v-bind:key="channel.name">
                 <b-radio v-bind:native-value="channel.name" v-model="channel_selected">{{channel.name}}</b-radio>
                 </li>
@@ -783,7 +803,7 @@ api.export(new ImJoyPlugin())
 
           <div class="column">
             <section>
-              <b-button type="is-primary" outlined  @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
+              <b-button type="is-primary" outlined @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
             </section>
           </div>
         </div>
@@ -799,18 +819,15 @@ api.export(new ImJoyPlugin())
 
       <!-- Summary -->
       <div class="summary">
-
-
         <div class="summary-content">
           <p class="title is-4">Filter image</p>
 
-        <b-field grouped>
+          <b-field grouped>
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
             <p>
-            <p class="subtitle is-6">Remove background and enhance spots.  </p>
-
-        </b-field>
+            <p class="subtitle is-6">Remove background and enhance spots. </p>
+          </b-field>
 
         </div>
       </div>
@@ -821,7 +838,10 @@ api.export(new ImJoyPlugin())
 
         <!--Specify filters -->
         <section>
-          <b-field label="Filter" horizontal grouped>
+          <b-field grouped group-multiline>
+            <p class="control">
+              <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
+            </p>
             <b-field>
               <p class="control"> <span class="button is-static">sigma-x</span></p>
               <b-input placeholder="1" v-model.number="sigma[2]"></b-input>
@@ -839,20 +859,19 @@ api.export(new ImJoyPlugin())
         </section> <!-- END: Specify filters -->
 
         <br>
-        <div class="columns is-desktop">
-          <div class="column">
-            <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
-          </div>
-          <div class="column">
-            <b-checkbox v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
-          </div>
-          <div class="column">
-            <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Open filtered image for inspection</b-button>
-          </div>
-          <div class="column">
-            <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_save_image_filtered">Save filtered image</b-button>
-          </div>
-        </div>
+        <section>
+          <b-field grouped group-multiline>
+            <b-field>
+              <b-checkbox v-model="show_filtered" :disabled="status_image_filtered==false"> Show filtered image</b-checkbox>
+            </b-field>
+            <b-field>
+              <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_show_image_filtered">Open filtered image for inspection</b-button>
+            </b-field>
+            <b-field>
+              <b-button type="is-primary" outlined :disabled="status_image_filtered==false" @click="btn_save_image_filtered">Save filtered image</b-button>
+            </b-field>
+          </b-field>
+        </section> <!-- END: Specify filters -->
 
         <img v-if="img_filt" v-show="show_filtered" class="img-responsive rounded img-embed" style="margin-top: 5px; max-height: 600px;" :src="img_filt.url" :alt="img_filt.meta" v-on:dblclick="dblclick_show_image_filtered" id="cont_img_filt"></img>
 
@@ -880,7 +899,7 @@ api.export(new ImJoyPlugin())
 
         <b-field grouped>
           <p class="control">
-            <button class="button is-primary"  :loading="running_detect_test" :disabled="status_image_filtered==false" @click="btn_detection_test_thresholds">
+            <button class="button is-primary" :loading="running_detect_test" :disabled="status_image_filtered==false" @click="btn_detection_test_thresholds">
               Test thresholds
             </button>
           </p>
@@ -891,29 +910,30 @@ api.export(new ImJoyPlugin())
           </b-field>
 
 
-        <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_image_filtered==false">
-            <b-button
-                class="button is-primary"
-                :disabled="status_image_filtered==false"
-                slot="trigger"
-                icon-left="arrow-down-drop-circle"
-                aria-controls="contentIdForA11y1">Specify intensity range to test thresholds</b-button>
+          <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_image_filtered==false">
+            <b-button class="button is-primary" :disabled="status_image_filtered==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForA11y1">Specify intensity range to test thresholds</b-button>
             <div class="notification">
 
-              <b-field :label="'Min: '+th_range_min">
-                <b-slider v-model.number="th_range_min"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+              <b-field label="Minimum">
+                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="th_range_min" :min="img_filt_min" :max="img_filt_max">
+                </b-numberinput>
               </b-field>
 
-              <b-field :label="'Max: '+th_range_max">
-                <b-slider v-model.number="th_range_max"  :min="img_filt_min" :max="img_filt_max"></b-slider>
+
+              <b-field label="Maximum">
+                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="th_range_max" :min="img_filt_min" :max="img_filt_max">
+                </b-numberinput>
               </b-field>
 
-              <b-field :label="'Number of values to test: '+th_range_nbins">
-                <b-slider v-model.number="th_range_nbins"  min=2 max=300></b-slider>
+
+              <b-field label="Number of values">
+                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="th_range_nbins" min=2 max=300>
+                </b-numberinput>
               </b-field>
-  
+
+
             </div>
-        </b-collapse>
+          </b-collapse>
 
         </b-field> <!-- END test thresholds -->
 
@@ -935,7 +955,7 @@ api.export(new ImJoyPlugin())
           </b-field>
 
         </b-field> <!-- END specify thresholds -->
-        
+
         <!-- Plot results -->
         <div id="graph_detection" v-show="status_thresholds_tested & show_detection" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
 
@@ -957,19 +977,21 @@ api.export(new ImJoyPlugin())
           <p class="subtitle is-7">Specified settings will be used to process selected file or all files in folder. </p>
         </div>
       </div>
-  
+
       <!-- Actual content -->
       <br>
       <div class="content">
 
-        <div class="columns is-desktop">
-          <div class="column">
-            <b-button type="is-primary" :loading="running_detect_image" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</b-button>
-          </div>
-          <div class="column">
-            <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
-          </div>
-        </div>
+        <section>
+          <b-field grouped group-multiline>
+            <b-field>
+              <b-button type="is-primary" :loading="running_detect_image" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</b-button>
+            </b-field>
+            <b-field>
+              <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+            </b-field>
+          </b-field>
+        </section>
 
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
@@ -1032,11 +1054,21 @@ api.export(new ImJoyPlugin())
                     </b-navbar-item>
                 </b-navbar-dropdown>
               </template>
+
               <template slot="end">
+                <b-navbar-dropdown  right=true label=""> 
                   <b-navbar-item href="#">
                       <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link"> 
                       <b-icon icon="github-circle" size="is-small"></b-icon> GitHub</a>
                   </b-navbar-item>
+                  <hr class="navbar-divider">
+                  <div class="navbar-item">
+                    <span> FQ: v{{ version_FQ }}</span>
+                  </div>  
+                  <div class="navbar-item">
+                    <span> FQ interface: v{{ version_interface }}</span>
+                  </div>
+                </b-navbar-dropdown>
               </template>
 
            </b-navbar>

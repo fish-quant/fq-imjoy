@@ -1,15 +1,15 @@
-
 ## Installation
+
 * If you use, FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a> 
     
     First time installation can take a few minutes, since several Python libraries are installed.
 
 * Once installed, the plugin will be saved in the  **workspace `fq-main`** as described [here](tools-imjoy.md#opening-a-workspace).  
 
-In the ImJoy app, you have **main plugin** `FISH-QUANT`, as wells as several helper plugins. 
+In the ImJoy app, you have **main plugin** `FISH-QUANT`, as wells as several helper plugins.
 
-!!! info "The most important additionaln plugin that's installed is the `FISH-QUANT`."
-     
+!!! info "The most important additionaln plugin that's installed is  `FISH-QUANT`."
+
     This **Python plugin** performs the actual data analysis and 
     runs on a Juypter engine, as described in the [installation instructions](tools-imjoy.md#connect-jupyter-engine). 
     
@@ -43,3 +43,30 @@ To maximize the available space in the ImJoy window, you can do two things:
 2. **Minimize the plugin side-bar** once you launched FISH-quant.
    
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
+
+
+## Image viewer
+For interactive inspection of the image and the detection results,
+FISH-quant used the ImageViewer of ImJoy. It uses
+
+* [VTK](https://vtk.org/) for image display
+* [Openlayers](https://openlayers.org/) to display spot detection results. 
+
+![imjoy-imageviewer.png](img/imjoy-imageviewer.png){: style="width:500px"}
+
+## Inspection of your image
+Once your image is opend, you can interact with your image. 
+
+__Navigate__:
+
+* When **hoovering** over a pixel you will see relevant information such as its position and importantly intensity value.
+* **Zoom** either with the dedicated buttons, or with the mouse-wheel, or gestures on touch-screens.
+*  **Pan** with pressed mouse button, or corresponding gestures on a touch screen. 
+
+__Appearance__:
+
+Pressing on the vertical bars, will open a Dashboard that allows you (among other things)
+
+* Change the **lookup table**.
+* Change the **contrast of the image**.
+* Take a **snapshot** that will be shown in a new browser tab.
