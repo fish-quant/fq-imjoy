@@ -618,7 +618,7 @@ api.export(new ImJoyPlugin())
           <b-field >
             <b-input  v-model="reg_exp" expanded></b-input>
             <p class="control">
-                <b-button type="is-primary" outlined @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test expression</b-button>
+                <b-button type="is-primary"  @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test expression</b-button>
             </p>
             <p class="control">
                 <b-button type="is-primary" outlined icon-left="help-circle" @click="openDocs('/data/#naming-convention')"></b-button>
