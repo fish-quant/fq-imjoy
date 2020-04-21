@@ -6,10 +6,9 @@ We strongly recommend the following data-organization on which this workflow has
 
 The same data organization is also used in the package to perform [cell and nuclear segmentation](https://github.com/fish-quant/segmentation/). This permits to easily combine these workflows.
 
-
 1. Images are store as single-channel multi-z-stack tif files, e.g on tif per position and channel. If your data are not single-channel, see the section on how to split channels with [Fiji](fiji-split-channels.md).
 2. All raw 3D images are stored in a folder `acquisition`
-3. All analysis results are stored in subfolder `analysis`, where each analysis step has a separate subfolder.
+3. All analysis results are stored in subfolder `analysis`, where each analysis step has a separate subfolder. This folder can be automatically created as explained in the section about data import.
 
 The organization of the provided test data is the following
 
