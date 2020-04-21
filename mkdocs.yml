@@ -62,7 +62,6 @@ nav:
     - FISH-quant:
       - Overview: fq-overview.md
       - Data: data.md
-      - Image viewer: imjoy-imageviewer.md
       - Loading data: fq-load-data.md
       - Spot detection: fq-spot-detection.md
     - Support workflows:

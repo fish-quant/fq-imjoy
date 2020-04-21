@@ -31,7 +31,7 @@ The organization of the provided test data is the following
 ```
 
 # Naming convention
-FISH-quant will extract information directly from the file-names. The names MUST contain an identifier for
+FISH-quant will extract information directly from the file-names with a **regular expression**. The filenames **MUST** contain an identifier for
 
 * experiment (`file_ident`): string specifying an experiment, e.g. what gene was imaged. Has to be shared by (at least) the images corresponding to the different channels.
 * field of view (`fov`): what position was acquired

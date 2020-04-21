@@ -59,4 +59,3 @@ This means that the specified criteria did not provide any positive hits. This c
     where the identified parts of the file-name are listed.
 
     ![ test-regexp.png](img/test-regexp.png){: style="width:500px"}
-   
