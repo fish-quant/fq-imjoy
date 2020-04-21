@@ -78,7 +78,6 @@ class ImJoyPlugin {
 
     // Get plugins from workspace
     this.fq_worker = await api.getPlugin("FISH-QUANT")
-    console.log('FQ-worker: ' +  this.fq_worker)
     this.fq_viewer = await api.getPlugin("FQ-image-viewer")
 
     // Get file-manager of FQ plugin
@@ -104,6 +103,8 @@ class ImJoyPlugin {
     if(! sigma_z) {sigma_z = 1}
 
     this.store = {
+          version_FQ: await api.getConfig('_version'),
+          version_interface: '',
           active_tab: 'data',
           txt_navbar: 'No image loaded',
           txt_navbar_details: '',
@@ -557,6 +558,11 @@ class ImJoyPlugin {
   }
   
   async run(ctx) {
+
+    if(ctx.data){
+      console.log(ctx.data)
+      this.store.version_interface = ctx.data['version']
+    }
   }
 }
 
@@ -1032,11 +1038,23 @@ api.export(new ImJoyPlugin())
                     </b-navbar-item>
                 </b-navbar-dropdown>
               </template>
+
               <template slot="end">
+
+                <b-navbar-dropdown  right=true label=""> 
                   <b-navbar-item href="#">
                       <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link"> 
                       <b-icon icon="github-circle" size="is-small"></b-icon> GitHub</a>
                   </b-navbar-item>
+                  <hr class="navbar-divider">
+                  <div class="navbar-item">
+                    <span> FQ: v{{ version_FQ }}</span>
+                  </div>  
+                  <div class="navbar-item">
+                    <span> FQ interface: v{{ version_interface }}</span>
+                  </div>
+                </b-navbar-dropdown>
+
               </template>
 
            </b-navbar>

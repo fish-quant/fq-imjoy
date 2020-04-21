@@ -32,8 +32,10 @@ In this tab, the user will specify
     1. You can specify a minimum distance two spots have to be separate in order to be considered separate spots (default 2 pixels)
     2. You can specify a range of detection tresholdsthat will be test to help establishing a good threshold. In the pull-down menu you can set how many intensity values will be tested between the specified  minimum, maximum value. 
     To properly set this range, it can be useful to inspect the filtered image and 
-    establish the typical intensity range of spots that should be detected. We recommend using a min value a value close to background, and as max a value
-    brighter than the brightest spot.
+    establish the typical intensity range of spots that should be detected. We recommend using 
+    
+    - a **minimum value** somewhat dimmer than the dimmest spot, and brighter than the typical background.  
+    - a **maximum value** brighter than the brightest spot.
 
         ![fq-detection-thresholds.png](img/fq-detection-thresholds.png){: style="width:350px"}
 
