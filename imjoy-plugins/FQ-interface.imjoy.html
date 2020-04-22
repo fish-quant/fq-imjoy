@@ -8,7 +8,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "cover": "",
   "description": "[TODO: describe this plugin with one sentence.]",
   "icon": "extension",
@@ -957,7 +957,7 @@ api.export(new ImJoyPlugin())
         </b-field> <!-- END specify thresholds -->
 
         <!-- Plot results -->
-        <div id="graph_detection" v-show="status_thresholds_tested & show_detection" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
+        <div id="graph_detection" v-show="status_image_filtered & show_detection" class="graph_resize" style="margin-top: 5px; max-height: 600px;"></div>
 
 
       </div> <!-- END Class content -->
