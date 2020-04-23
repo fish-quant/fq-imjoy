@@ -147,6 +147,7 @@ class ImJoyPlugin():
     async def setup(self):
         api.log('FQ-worker plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
+        self.cwd = Path.cwd() 
         self.analysis_details = {
                 'date': '',
                 'data_specs': {},
@@ -676,7 +677,8 @@ class ImJoyPlugin():
         await self.save_analysis_details(name_save)
 
         # Update status
-        api.alert(f'Processing of loaded file finished: {len(spots)} spots detected')
+        det_th = config['detection_threshold']
+        api.alert(f'Processing of loaded file finished:\n{name_base}\nDetection with threshold {det_th} yields  {len(spots)} spots')
         api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
 
 

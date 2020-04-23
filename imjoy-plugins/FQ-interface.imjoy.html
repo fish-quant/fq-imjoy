@@ -8,7 +8,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "cover": "",
   "description": "[TODO: describe this plugin with one sentence.]",
   "icon": "extension",
@@ -445,7 +445,7 @@ class ImJoyPlugin {
   // Test thresholds for detection
   async detection_test_thresholds() {
 
-    this.store.status_thresholds_tested = true
+    this.store.status_thresholds_tested = false
     //this.store.running_detect_test=true
     var th_tests = await this.fq_worker.detect_test_thresholds({
                               'threshold_range': [this.store.th_range_min,
