@@ -37,13 +37,12 @@ are defined.
 To maximize the available space in the ImJoy window, you can do two things:
 
 1. Start ImJoy as a **Chrome App**. This will detach ImJoy from Chrome and show it as a separate application with its own icon in the taskbar
-   
+
     ![imjoy-open-as-app.gif](img/imjoy-open-as-app.gif){: style="width:300px"}
 
 2. **Minimize the plugin side-bar** once you launched FISH-quant.
-   
-    ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
 
+    ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
 
 ## Image viewer
 For interactive inspection of the image and the detection results,
