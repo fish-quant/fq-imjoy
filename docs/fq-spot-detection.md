@@ -1,8 +1,9 @@
 ## Some background
-Spot detection is performed with a standard spot detection approach on either 2D or 3D images.
+Spot detection is performed with a standard spot detection approach on either 2D or 3D images. For more details and some
+benchmarking, we refer to our paper ([Tsanov et al., NAR, 2016](https://academic.oup.com/nar/article/44/22/e165/2691336)).
 
-1. Images are filtered with a Laplacian of Gaussian (Log) filter. This removes background and enhances local contrast of small spots.
-2. Spots are detected with a local maximum approach. As the name implies, spots are considered if they are above a user-defined threshold and further away from another spot than a user-defined distance.
+1. Images are **filtered** with a Laplacian of Gaussian (Log) filter. This removes background and enhances local contrast of small spots.
+2. Spots are **detected** with a local maximum approach. As the name implies, spots are considered if they are above a user-defined threshold and further away from another spot than a user-defined distance.
 
 In this tab, the user will specify
 
