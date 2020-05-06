@@ -8,7 +8,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "cover": "",
   "description": "[TODO: describe this plugin with one sentence.]",
   "icon": "extension",
@@ -127,6 +127,8 @@ class ImJoyPlugin {
           channel_selected: null,
           sigma: [sigma_z, sigma_xy, sigma_xy],  // ZYX
           minimum_distance: 2,
+          minimum_distance_xy: 2,
+          minimum_distance_z: 2,
           detetection_plot: [],
           detection_threshold: null,
           img_filt: [],
@@ -452,7 +454,8 @@ class ImJoyPlugin {
                                                   this.store.th_range_max,
                                                   this.store.th_range_nbins],
                               'sigma': this.store.sigma,
-                              'minimum_distance': this.store.minimum_distance,
+                              //'minimum_distance': this.store.minimum_distance,
+                              'minimum_distance': [this.store.minimum_distance_z, this.store.minimum_distance_xy, this.store.minimum_distance_xy],
                               'show_status': true,
                               })
     //this.store.running_detect_test=false
@@ -531,7 +534,7 @@ class ImJoyPlugin {
 
                       // Filter & detection
                       'sigma': this.store.sigma,
-                      'minimum_distance': this.store.minimum_distance,
+                      'minimum_distance': [this.store.minimum_distance_z, this.store.minimum_distance_xy, this.store.minimum_distance_xy],
                       'detection_threshold': this.store.detection_threshold,
                       });
 
@@ -553,7 +556,7 @@ class ImJoyPlugin {
 
                       // Filter & detection
                       'sigma': this.store.sigma,
-                      'minimum_distance': this.store.minimum_distance,
+                      'minimum_distance': [this.store.minimum_distance_z, this.store.minimum_distance_xy, this.store.minimum_distance_xy],
                       'detection_threshold': this.store.detection_threshold,
                       });
     this.store.running_detect_batch=false
@@ -843,13 +846,10 @@ api.export(new ImJoyPlugin())
               <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
             </p>
             <b-field>
-              <p class="control"> <span class="button is-static">sigma-x</span></p>
-              <b-input placeholder="1" v-model.number="sigma[2]"></b-input>
-            </b-field>
-            <b-field>
-              <p class="control"> <span class="button is-static">sigma-y</span></p>
+              <p class="control"> <span class="button is-static">sigma-xy</span></p>
               <b-input placeholder="1" v-model.number="sigma[1]"></b-input>
             </b-field>
+
             <b-field>
               <p class="control"> <span class="button is-static">sigma-z</span></p>
               <b-input placeholder="1.25" v-model.number="sigma[0]"></b-input>
@@ -909,6 +909,15 @@ api.export(new ImJoyPlugin())
             <b-input placeholder="2" v-model.number="minimum_distance"></b-input>
           </b-field>
 
+          <b-field>
+            <p class="control"> <span class="button is-static">Min dist XY</span></p>
+            <b-input placeholder="107" v-model.number="minimum_distance_xy"></b-input>
+          </b-field>
+
+          <b-field>
+            <p class="control"> <span class="button is-static">Min dist Z</span></p>
+            <b-input placeholder="107" v-model.number="minimum_distance_z"></b-input>
+          </b-field>
 
           <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_image_filtered==false">
             <b-button class="button is-primary" :disabled="status_image_filtered==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForA11y1">Specify intensity range to test thresholds</b-button>

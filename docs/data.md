@@ -13,17 +13,17 @@ The same data organization is also used in the package to perform [cell and nucl
 The organization of the provided test data is the following
 
 ```
-├─ example_data/
+├─ fq-imjoy-demo/
 │  ├─ acquisition                          # Folder with raw data
 │  │  ├─ test_pos001_cy3.tif
-│  │  ├─ test_pos002_dapi.tif
+│  │  ├─ test_pos001_dapi.tif
 │  │  ├─ test_pos002_cy3.tif
 │  │  ├─ test_pos002_dapi.tif
-│  ├─ analysis                              # Folder with all analysis results
-│  │  ├─ segmentation-results               # Folder with segmentation results 
-│  │  │  ├─ test_pos001_cy3.tif
-│  │  │  ├─ test_pos001_cy3.tif
-│  │  │  ├─ test_pos001_cy3.tif
+│  ├─ analysis                             # Folder with all analysis results
+│  │  ├─ segmentation-input                    # Folder with input for segmentation
+│  │  │  ├─  ....
+│  │  ├─ segmentation-results                  # Folder with segmentation results 
+│  │  │  ├─  ....
 │  │  ├─ spot-detection                         # FQ detection results
 │  │  │  ├─ test_pos001_cy3__settings.json      # Settings files
 │  │  │  ├─ test_pos001_cy3__spots.csv          # Spot detection results 

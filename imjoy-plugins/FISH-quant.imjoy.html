@@ -12,7 +12,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.3",
+  "version": "0.0.2",
   "description": "Worker to process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -503,7 +503,8 @@ class ImJoyPlugin():
         '''
         Save filtered image.
         '''
-
+        # TODO: supported is only png, tif, tiff
+        
         # Parameters
         api.log('\nFQ-worker [save_image_filtered]: received data:')
         api.log(config)
@@ -530,7 +531,8 @@ class ImJoyPlugin():
         minimum_distance = config['minimum_distance']
 
         # Local maximum detection
-        self.mask_lm = detection.local_maximum_detection(self.image_filt, minimum_distance = minimum_distance)
+        self.mask_lm = detection.local_maximum_detection(self.image_filt, 
+                                                         sigma = tuple(minimum_distance))
 
         # Settings
         self.analysis_details['spot_detection']['settings']['detection'] = {
@@ -550,7 +552,7 @@ class ImJoyPlugin():
         # Parameters
         api.log('\nFQ-worker [filter_image]: received data:')
         api.log(config)
-        sigma = config['sigma']
+        #sigma = config['sigma']
         threshold_range = config['threshold_range']
         show_status = config['show_status']
 
@@ -571,12 +573,10 @@ class ImJoyPlugin():
         for i in range(n_thresholds):
             api.showProgress((i+1)/n_thresholds)
             threshold = thresholds_spot[i]
-            spots, radius, _ = detection.spots_thresholding(self.image_filt, tuple(sigma), self.mask_lm, threshold)
+            spots, _ = detection.spots_thresholding(self.image_filt, self.mask_lm, threshold)
             n_detections[i] = spots.shape[0]
             api.log(f'Testing threshold {i}/{n_thresholds}: {threshold}  ... {n_detections[i]} spots detected.')
 
-            # TODO: replace this with an extend trace
-            #self.FQ_interface.emit('update_detection', [thresholds_spot[0:i].tolist(), n_detections[0:i].tolist()])
             self.FQ_interface.emit('extend_detection_plot', [thresholds_spot[i].tolist(), n_detections[i].tolist()])
 
         if show_status: api.showStatus('Performing predection ... finished!')
@@ -592,14 +592,14 @@ class ImJoyPlugin():
         '''
         # Get parameters
         threshold = config['detection_threshold']
-        sigma = config['sigma']
+        #sigma = config['sigma']
         show_status = config['show_status']
         
         # Save detection plot
         if 'detection_plot' in config:
             self.detetection_plot = config['detection_plot']
 
-        spots, radius, _ = detection.spots_thresholding(self.image_filt, tuple(sigma), self.mask_lm, threshold)
+        spots, _ = detection.spots_thresholding(self.image_filt, self.mask_lm, threshold)
 
         # Save analysis details
         self.analysis_details['spot_detection']['settings']['detection']['threshold'] = threshold

@@ -133,23 +133,6 @@ At one point, your conda environment might get corrupted. You can easily remove 
 0. **Activate base environment**: `conda deactivate`
 0. **Remove `fq-imjoy` environment**: `conda env remove --name fq-imjoy`
 
-### Reporting bugs
-
-If you encounter a bug, best is to create a [GitHub issue](https://github.com/fish-quant/fq-imjoy/issues).
-
-In order to more quickly identify the potential reason causing a bug, 
-please provide the following information.
-
-1. Which **browser** and version are you using?
-2. **Version of the FISH-quant plugins**. They can be obtained from within the interface
-
-    ![fq-get-version.gif](img/fq-get-version.gif){: style="width:450px"}
-    
-3. **Plugin log**. Can be obtained by clicking on the `i` next to the FISH-QUANT plugin. Please copy to a text file. 
-4. **Console log**. The console log of the browser provides further details that can help for debugging. To acces the console log in **Chrome**:
-   1. In the ImJoy app mouse-right-click.
-   2. Select `Inspect`. 
-   3. This will open a new interface on the right size of your browser windows. Select the panel `Console` and copy the entire content, and paste it to a file.  
 
 ### Specify your own Jupyter token
 You can specify your own token `yourtoken`
