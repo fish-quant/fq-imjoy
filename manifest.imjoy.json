@@ -7,7 +7,7 @@
   {
    "name": "FISH-QUANT",
    "type": "native-python",
-   "version": "0.0.3",
+   "version": "0.0.2",
    "description": "Worker to process smFISH images.",
    "tags": [
     "stable",
@@ -39,7 +39,7 @@
     "fish-quant/fq-imjoy:ImageViewer"
    ],
    "runnable": true,
-   "uri": "imjoy-plugins\\FISH-quant.imjoy.html"
+   "uri": "imjoy-plugins\\FISH-QUANT.imjoy.html"
   },
   {
    "name": "FQ-image-viewer",
@@ -106,7 +106,7 @@
    "type": "window",
    "tags": [],
    "ui": "",
-   "version": "0.0.2",
+   "version": "0.0.3",
    "cover": "",
    "description": "[TODO: describe this plugin with one sentence.]",
    "icon": "extension",
