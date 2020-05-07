@@ -126,7 +126,6 @@ class ImJoyPlugin {
           current_index: 0,
           channel_selected: null,
           sigma: [sigma_z, sigma_xy, sigma_xy],  // ZYX
-          minimum_distance: 2,
           minimum_distance_xy: 2,
           minimum_distance_z: 2,
           detetection_plot: [],
@@ -454,7 +453,6 @@ class ImJoyPlugin {
                                                   this.store.th_range_max,
                                                   this.store.th_range_nbins],
                               'sigma': this.store.sigma,
-                              //'minimum_distance': this.store.minimum_distance,
                               'minimum_distance': [this.store.minimum_distance_z, this.store.minimum_distance_xy, this.store.minimum_distance_xy],
                               'show_status': true,
                               })
@@ -713,7 +711,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Data in folder fitting search criteria</p>
-          <p class="subtitle is-7">Load one dataset for analysis. </p>
+          <p class="subtitle is-6">Load one dataset for analysis. </p>
         </div>
       </div>
       <br>
@@ -783,7 +781,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Select channel</p>
-          <p class="subtitle is-7">Select channel, and [optional] region to be used for testing. </p>
+          <p class="subtitle is-6">Select channel, and [optional] region to be used for testing. </p>
         </div>
       </div>
       <br>
@@ -889,7 +887,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Spot detection</p>
-          <p class="subtitle is-7">Define intensity threshold to perform spot detection. </p>
+          <p class="subtitle is-6">Define intensity threshold to perform spot detection. </p>
         </div>
       </div>
       <br>
@@ -903,11 +901,6 @@ api.export(new ImJoyPlugin())
               Test thresholds
             </button>
           </p>
-
-          <b-field>
-            <p class="control"> <span class="button is-static">Min dist</span></p>
-            <b-input placeholder="2" v-model.number="minimum_distance"></b-input>
-          </b-field>
 
           <b-field>
             <p class="control"> <span class="button is-static">Min dist XY</span></p>
@@ -955,7 +948,7 @@ api.export(new ImJoyPlugin())
           </p>
 
           <b-field>
-            <p class="control"> <span class="button is-static">Intensity threshold</span></p>
+            <p class="control"> <span class="button is-static">Threshold</span></p>
             <b-input placeholder="Set threshold either manually or by clicking on graph below" v-model.number="detection_threshold"></b-input>
           </b-field>
 
@@ -973,8 +966,48 @@ api.export(new ImJoyPlugin())
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
 
+  <!-- Card to Decompose foci -->
+  <br>
+  <div class="card">
+    <div class="card-content">
 
-  <!-- Card to analyze image -->
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">[Optional] decompose RNA aggregates</p>
+  
+          <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
+            <p>
+            <p class="subtitle is-6">Remove background and enhance spots. </p>
+          </b-field>
+
+
+      </div>
+
+      <!-- Actual content -->
+      <br>
+      <div class="content">
+
+        <section>
+          <b-field grouped group-multiline>
+            <b-field>
+              <b-button type="is-primary" :loading="running_detect_image" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</b-button>
+            </b-field>
+            <b-field>
+              <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+            </b-field>
+          </b-field>
+        </section>
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+
+  <!-- Card to analyze image(s) -->
   <br>
   <div class="card">
     <div class="card-content">
@@ -983,7 +1016,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Process file(s)</p>
-          <p class="subtitle is-7">Specified settings will be used to process selected file or all files in folder. </p>
+          <p class="subtitle is-6">Specified settings will be used to process selected file or all files in folder. </p>
         </div>
       </div>
 
@@ -1020,7 +1053,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Postprocessing</p>
-          <p class="subtitle is-7">coming soon. </p>
+          <p class="subtitle is-6">coming soon. </p>
         </div>
       </div>
       <br>

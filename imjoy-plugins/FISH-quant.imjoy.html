@@ -599,6 +599,13 @@ class ImJoyPlugin():
         if 'detection_plot' in config:
             self.detetection_plot = config['detection_plot']
 
+        # Save detection plot
+        if 'file_save' in config:
+            file_save = config['file_save']
+        else:
+            file_save = None
+
+        # Perform pre-detection
         spots, _ = detection.spots_thresholding(self.image_filt, self.mask_lm, threshold)
 
         # Save analysis details
@@ -606,6 +613,12 @@ class ImJoyPlugin():
         self.analysis_details['spot_detection']['counts'] = {
             'spots': len(spots)
         }
+
+        # Save image
+        if file_save:
+            image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
+            image_contrasted = stack.maximum_projection(image_contrasted)
+            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(10, 8), remove_frame=True,path_output=file_save)
 
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
 
@@ -626,6 +639,10 @@ class ImJoyPlugin():
         path_save = create_output_path(self.path_data_full, config['output_path']) / 'spot_detection' 
         create_folder(path_save)
         
+        # File-name
+        image_name = self.image_names[channel_selected]["image_name"]
+        name_base, file_extension = os.path.splitext(image_name)
+
         # Check if full size image has been processed already - if yes, filtering and local max can be reused
         if not self.filter_full:
 
@@ -649,12 +666,11 @@ class ImJoyPlugin():
         spots = await self.detect_apply({
                         'detection_threshold': config['detection_threshold'],
                         'sigma': tuple(config['sigma']),
-                        'show_status': False
+                        'show_status': False,
+                        'file_save': str(path_save / f'{name_base}__detection.png')
                         })
 
-        # Save results
-        image_name = self.image_names[channel_selected]["image_name"]
-        name_base, file_extension = os.path.splitext(image_name)
+        # Save spot positions as csv file
         file_save = path_save / f'{name_base}__spots.csv'
 
         np.savetxt( file_save,
@@ -704,6 +720,8 @@ class ImJoyPlugin():
         # Loop over all files
         for idx, file_process in enumerate(files_process):
 
+ 
+
             # Load image
             api.showProgress((idx+1)/len(files_process))
             api.showStatus(f'Processing file {idx+1} of {len(files_process)}: loading image')
@@ -715,6 +733,10 @@ class ImJoyPlugin():
                             'create_mips': False,
                             'show_status': False
                             })
+
+            image_name = self.image_names[channel_selected]["image_name"]
+            name_base, file_extension = os.path.splitext(image_name)
+
             # Filter
             api.showStatus(f'Processing file {idx+1} of {len(files_process)}: filtering image')
             await self.filter_image({
@@ -734,12 +756,11 @@ class ImJoyPlugin():
             spots = await self.detect_apply({
                             'detection_threshold': config['detection_threshold'],
                             'sigma': tuple(config['sigma']),
-                            'show_status': False
+                            'show_status': False,
+                            'file_save': str(path_save / f'{name_base}__detection.png')
                             })
 
-            # Save results
-            image_name = self.image_names[channel_selected]["image_name"]
-            name_base, file_extension = os.path.splitext(image_name)
+            # Save results of spot detection
             file_save = path_save / f'{name_base}__spots.csv'
 
             np.savetxt( file_save,
