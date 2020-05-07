@@ -456,6 +456,7 @@ class ImJoyPlugin():
         # Select image and filter
         if x_min:
             img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
+            self.image_raw = img
             self.filter_full = False
         else:
             img = self.image[0, channel_index, :, :, :]
@@ -588,8 +589,12 @@ class ImJoyPlugin():
         '''
         Apply spot detection.
         Returns spots as a nested list [[Z0,Y0,X0],[Z1,Y1,X1], .... ]. 
-        Why return? Can then be used to display in calling plugin
+        Why return? Can then be used to display in calling plugin.
         '''
+        # Parameters
+        api.log('\nFQ-worker [detect_apply]: received data:')
+        api.log(config)
+
         # Get parameters
         threshold = config['detection_threshold']
         #sigma = config['sigma']
@@ -622,7 +627,52 @@ class ImJoyPlugin():
 
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
 
+        self.spots = spots
         return spots.tolist()
+
+    async def detect_clusters(self,config):
+        # Parameters
+        api.log('\nFQ-worker [detect_clusters]: received data:')
+        api.log(config)
+
+        # Relevant parameters
+        channel_selected = config['channel_selected']
+        show_status = config['show_status']
+        voxel_size_z = config['voxel_size_z']
+        voxel_size_yx = config['voxel_size_yx']
+        psf_z = config['psf_z']
+        psf_yx = config['psf_yx']
+
+        image_names = self.image_names
+        channel_index = image_names[channel_selected]["index"]
+        spots = self.spots
+
+        # File-name
+        image_name = image_names[channel_selected]["image_name"]
+        name_base, file_extension = os.path.splitext(image_name)
+
+        # Get images
+        if not self.filter_full:
+            img = self.image_raw 
+        else:
+            img = self.image[0, channel_index, :, :, :]
+        
+        spots_post_decomposition, clusters, reference_spot = detection.decompose_cluster(
+            img, spots, 
+            voxel_size_z, voxel_size_yx, psf_z, psf_yx)
+
+        api.log("detected spots before decomposition")
+        api.log("\r shape: {0}".format(spots.shape))
+        api.log("\r dtype: {0}".format(spots.dtype))
+        api.log("detected spots after decomposition")
+        api.log("\r shape: {0}".format(spots_post_decomposition.shape))
+        api.log("\r dtype: {0}".format(spots_post_decomposition.dtype))
+
+        api.showStatus(f'Cluster decomposition: from {len(spots)} to {len(spots_post_decomposition)} spots.')
+
+        self.spots_post_decomposition = spots_post_decomposition
+
+        return spots_post_decomposition.tolist()
 
     async def detection_file(self,config):
         '''
@@ -719,8 +769,6 @@ class ImJoyPlugin():
 
         # Loop over all files
         for idx, file_process in enumerate(files_process):
-
- 
 
             # Load image
             api.showProgress((idx+1)/len(files_process))

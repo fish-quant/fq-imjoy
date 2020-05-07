@@ -27,7 +27,7 @@
                       ],
   "dependencies": [],
   "runnable": false,
-  "defaults": {"w": 20, "h": 10}
+  "defaults": {"w": 20, "h": 20}
 }
 </config>
 
@@ -102,6 +102,18 @@ class ImJoyPlugin {
     var sigma_z = parseFloat(await api.getConfig('sigma_z'));
     if(! sigma_z) {sigma_z = 1}
 
+    var pixel_size_xy =  parseFloat(await api.getConfig('pixel_size_xy'));
+    if(! pixel_size_xy) {pixel_size_xy = 100}
+
+    var pixel_size_z = parseFloat(await api.getConfig('pixel_size_z'));
+    if(! pixel_size_z) {pixel_size_z = 300}
+
+    var psf_size_xy =  parseFloat(await api.getConfig('psf_size_xy'));
+    if(! psf_size_xy) {psf_size_xy = 200}
+
+    var psf_size_z = parseFloat(await api.getConfig('psf_size_z'));
+    if(! psf_size_z) {psf_size_z = 400}
+
     // Initialize parameters
     this.store = {
           version_FQ: await api.getConfig('_version'),
@@ -120,8 +132,10 @@ class ImJoyPlugin {
           ch_name: [],
           ch_ident: [],
           reg_exp: reg_exp,
-          pixel_size_xy: await api.getConfig('pixel_size_xy'),
-          pixel_size_z:  await api.getConfig('pixel_size_z'),
+          pixel_size_xy: pixel_size_xy,
+          pixel_size_z:  pixel_size_z,
+          psf_size_xy: psf_size_xy,
+          psf_size_z: psf_size_z,
           images: [],
           current_index: 0,
           channel_selected: null,
@@ -137,12 +151,14 @@ class ImJoyPlugin {
           th_range_min:0,
           th_range_max:5000,
           th_range_nbins:50,
+          analyze_cluster: false,
           show_filtered: true,
           show_detection: true,
           running_load: false,
           running_filter: false,
           running_detect_test: false,
           running_detect_apply: false,
+          running_cluster_detetection: false,
           running_detect_image: false,
           running_detect_batch: false,
           status_image_loaded: false,
@@ -295,6 +311,11 @@ class ImJoyPlugin {
           },
 
           // Callback to plot detections detection
+          btn_cluster_analysis: async function(){
+            self.cluster_analysis()
+          },
+
+          // Callback to plot detections detection
           btn_detection_GMM: async function(){
             console.log('to be implemented')
           },
@@ -366,6 +387,7 @@ class ImJoyPlugin {
       api.setConfig('reg_exp', this.store.reg_exp)
       api.setConfig('pixel_size_xy', this.store.pixel_size_xy)
       api.setConfig('pixel_size_z', this.store.pixel_size_z)
+
   }
 
 
@@ -516,6 +538,32 @@ class ImJoyPlugin {
     
     this.store.status_detection_applied = true
   }
+
+  // Cluster analysis
+  async cluster_analysis() {
+    
+    this.store.running_cluster_detetection=true
+    var spots = await this.fq_worker.detect_clusters({
+                              'channel_selected': this.store.channel_selected,
+                              'show_status': true,
+                              'voxel_size_yx': this.store.pixel_size_xy,
+                              'voxel_size_z': this.store.pixel_size_z,
+                              'psf_z': this.store.psf_size_xy,
+                              'psf_yx': this.store.psf_size_z,
+                              })
+    this.store.running_cluster_detetection=false
+
+    this.fq_viewer.run({'data':{
+                              'url': this.store.img_filt_load['url'],
+                              'shape':this.store.img_filt_load['shape'],
+                              'points':spots}
+                              })
+
+    api.setConfig('psf_size_xy', this.store.psf_size_xy)
+    api.setConfig('psf_size_z', this.store.psf_size_z)
+
+  }
+
 
   // Detect current file
   async detection_file() {
@@ -993,13 +1041,30 @@ api.export(new ImJoyPlugin())
         <section>
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_detect_image" :disabled="status_detection_applied==false" @click="btn_detection_file">Analyze current image</b-button>
+              <b-checkbox v-model="analyze_cluster" :disabled="status_detection_applied==false"> Decompose RNA clusters</b-checkbox>
             </b-field>
             <b-field>
-              <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+              <b-button type="is-primary" :loading="running_cluster_detetection" :disabled="status_detection_applied==false" @click="btn_cluster_analysis">Test cluster analysis</b-button>
             </b-field>
           </b-field>
         </section>
+
+
+        <!-- Specify pixel size -->
+        <b-field label="PSF size" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">XY [nm]</span></p>
+            <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">z [nm]</span></p>
+            <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify pixel size -->
+
+
+
+
 
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
