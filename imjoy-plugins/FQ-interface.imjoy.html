@@ -114,6 +114,12 @@ class ImJoyPlugin {
     var psf_size_z = parseFloat(await api.getConfig('psf_size_z'));
     if(! psf_size_z) {psf_size_z = 400}
 
+    var foci_nb_min_spots =  parseFloat(await api.getConfig('foci_nb_min_spots'));
+    if(! foci_nb_min_spots) {foci_nb_min_spots = 4}
+
+    var foci_radius = parseFloat(await api.getConfig('foci_radius'));
+    if(! foci_radius) {foci_radius = 400}
+
     // Initialize parameters
     this.store = {
           version_FQ: await api.getConfig('_version'),
@@ -136,6 +142,8 @@ class ImJoyPlugin {
           pixel_size_z:  pixel_size_z,
           psf_size_xy: psf_size_xy,
           psf_size_z: psf_size_z,
+          foci_radius: 300,
+          foci_nb_min_spots: 4,
           images: [],
           current_index: 0,
           channel_selected: null,
@@ -151,14 +159,15 @@ class ImJoyPlugin {
           th_range_min:0,
           th_range_max:5000,
           th_range_nbins:50,
-          analyze_cluster: false,
+          analyze_clusters: false,
           show_filtered: true,
           show_detection: true,
           running_load: false,
           running_filter: false,
           running_detect_test: false,
           running_detect_apply: false,
-          running_cluster_detetection: false,
+          running_decompose_clusters: false,
+          running_detect_foci: false,
           running_detect_image: false,
           running_detect_batch: false,
           status_image_loaded: false,
@@ -166,6 +175,8 @@ class ImJoyPlugin {
           status_channel_selected: false,
           status_thresholds_tested: false,
           status_detection_applied: false,
+          status_detect_apply: false,
+          status_decompose_clusters: false,
     },
 
     // Initialize vue app
@@ -311,9 +322,15 @@ class ImJoyPlugin {
           },
 
           // Callback to plot detections detection
-          btn_cluster_analysis: async function(){
-            self.cluster_analysis()
+          btn_decompose_clusters: async function(){
+            self.decompose_clusters()
           },
+
+          // Callback to plot detections detection
+          btn_detect_foci: async function(){
+            self.detect_foci()
+          },
+          
 
           // Callback to plot detections detection
           btn_detection_GMM: async function(){
@@ -540,10 +557,10 @@ class ImJoyPlugin {
   }
 
   // Cluster analysis
-  async cluster_analysis() {
+  async decompose_clusters() {
     
-    this.store.running_cluster_detetection=true
-    var spots = await this.fq_worker.detect_clusters({
+    this.store.running_decompose_clusters=true
+    var spots = await this.fq_worker.decompose_clusters({
                               'channel_selected': this.store.channel_selected,
                               'show_status': true,
                               'voxel_size_yx': this.store.pixel_size_xy,
@@ -551,8 +568,8 @@ class ImJoyPlugin {
                               'psf_z': this.store.psf_size_xy,
                               'psf_yx': this.store.psf_size_z,
                               })
-    this.store.running_cluster_detetection=false
-
+    this.store.running_decompose_clusters=false
+    this.store.status_decompose_clusters=true
     this.fq_viewer.run({'data':{
                               'url': this.store.img_filt_load['url'],
                               'shape':this.store.img_filt_load['shape'],
@@ -564,6 +581,26 @@ class ImJoyPlugin {
 
   }
 
+  // Detect foci
+  async detect_foci() {
+    
+    this.store.running_detect_foci=true
+    var spots = await this.fq_worker.detect_foci({
+                              'channel_selected': this.store.channel_selected,
+                              'show_status': true,
+                              'voxel_size_yx': this.store.pixel_size_xy,
+                              'voxel_size_z': this.store.pixel_size_z,
+                              'psf_z': this.store.psf_size_xy,
+                              'psf_yx': this.store.psf_size_z,
+                              'foci_radius': this.store.foci_radius,
+                              'foci_nb_min_spots': this.store.foci_nb_min_spots,                              
+                              })
+    this.store.running_detect_foci=false
+    this.store.status_detect_foci=true
+    api.setConfig('foci_nb_min_spots', this.store.foci_nb_min_spots)
+    api.setConfig('foci_radius', this.store.foci_radius)
+
+  }
 
   // Detect current file
   async detection_file() {
@@ -582,6 +619,7 @@ class ImJoyPlugin {
                       'sigma': this.store.sigma,
                       'minimum_distance': [this.store.minimum_distance_z, this.store.minimum_distance_xy, this.store.minimum_distance_xy],
                       'detection_threshold': this.store.detection_threshold,
+                      'analyze_clusters': this.store.analyze_clusters
                       });
 
     this.store.running_detect_image=false
@@ -604,6 +642,7 @@ class ImJoyPlugin {
                       'sigma': this.store.sigma,
                       'minimum_distance': [this.store.minimum_distance_z, this.store.minimum_distance_xy, this.store.minimum_distance_xy],
                       'detection_threshold': this.store.detection_threshold,
+                      'analyze_clusters': this.store.analyze_clusters
                       });
     this.store.running_detect_batch=false
   }
@@ -1036,34 +1075,54 @@ api.export(new ImJoyPlugin())
 
       <!-- Actual content -->
       <br>
-      <div class="content">
+      <div class="content" :disabled="status_detection_applied==false">
 
-        <section>
+          <b-field grouped>
+            <b-field>
+              <b-checkbox v-model="analyze_clusters" > Decompose RNA clusters</b-checkbox>
+            </b-field>
+          </b-field>
+
+          <!-- Decompose clusters -->
           <b-field grouped group-multiline>
-            <b-field>
-              <b-checkbox v-model="analyze_cluster" :disabled="status_detection_applied==false"> Decompose RNA clusters</b-checkbox>
+              <b-field>
+                <b-button type="is-primary" :loading="running_decompose_clusters" :disabled="status_detection_applied==false" @click="btn_decompose_clusters">Decompose aggregates</b-button>
+              </b-field>
+          
+              <!-- Specify spot size -->
+              <b-field label="Spot size" horizontal grouped>
+                <b-field>
+                  <p class="control"> <span class="button is-static">XY [nm]</span></p>
+                  <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
+                </b-field>
+                <b-field>
+                  <p class="control"> <span class="button is-static">Z [nm]</span></p>
+                  <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
+                </b-field>
+              </b-field> <!-- END: specify spot size -->
+
             </b-field>
-            <b-field>
-              <b-button type="is-primary" :loading="running_cluster_detetection" :disabled="status_detection_applied==false" @click="btn_cluster_analysis">Test cluster analysis</b-button>
+
+
+          <!-- Foci calling -->
+          <b-field grouped group-multiline>
+              <b-field>
+                <b-button type="is-primary" :loading="running_detect_foci" :disabled="status_decompose_clusters==false" @click="btn_detect_foci">Define foci</b-button>
+              </b-field>
+          
+              <!-- Specify pixel size -->
+              <b-field label="" horizontal grouped>
+                <b-field>
+                  <p class="control"> <span class="button is-static">Min nb of spots</span></p>
+                  <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
+                </b-field>
+                <b-field>
+                  <p class="control"> <span class="button is-static">Radius [nm]</span></p>
+                  <b-input placeholder="400" v-model.number="foci_radius"></b-input>
+                </b-field>
+              </b-field> <!-- END: specify pixel size -->
+
             </b-field>
-          </b-field>
-        </section>
-
-
-        <!-- Specify pixel size -->
-        <b-field label="PSF size" horizontal grouped>
-          <b-field>
-            <p class="control"> <span class="button is-static">XY [nm]</span></p>
-            <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
-          </b-field>
-          <b-field>
-            <p class="control"> <span class="button is-static">z [nm]</span></p>
-            <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
-          </b-field>
-        </b-field> <!-- END: specify pixel size -->
-
-
-
 
 
       </div> <!-- END Class content -->
