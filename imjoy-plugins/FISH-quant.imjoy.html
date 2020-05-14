@@ -540,10 +540,10 @@ class ImJoyPlugin():
         api.log('\nFQ-worker [calc_local_max]: received data:')
         api.log(config)
         minimum_distance = config['minimum_distance']
+        sigma = (minimum_distance[1], minimum_distance[0], minimum_distance[0])
 
         # Local maximum detection
-        self.mask_lm = detection.local_maximum_detection(self.image_filt, 
-                                                         sigma = tuple(minimum_distance))
+        self.mask_lm = detection.local_maximum_detection(self.image_filt, sigma)
 
         # Settings
         self.analysis_details['spot_detection']['settings']['detection'] = {
@@ -561,17 +561,17 @@ class ImJoyPlugin():
         '''
 
         # Parameters
-        api.log('\nFQ-worker [filter_image]: received data:')
+        api.log('\nFQ-worker [detect_test_thresholds]: received data:')
         api.log(config)
-        #sigma = config['sigma']
         threshold_range = config['threshold_range']
+        minimum_distance = config['minimum_distance']
         show_status = config['show_status']
 
         if show_status: api.showStatus('Performing predection ... calculate local maximum image')
 
         # Calculate local maximum
         #if len(self.mask_lm)==0:
-        await self.calc_local_max({ 'minimum_distance': config['minimum_distance']})
+        await self.calc_local_max({ 'minimum_distance': minimum_distance})
 
         # Loop over thresholds
         if show_status: api.showStatus('Performing predection ... testing thresholds')
@@ -652,8 +652,8 @@ class ImJoyPlugin():
         show_status = config['show_status']
         voxel_size_z = config['voxel_size_z']
         voxel_size_yx = config['voxel_size_yx']
-        psf_z = config['psf_z']
-        psf_yx = config['psf_yx']
+        psf_size_z = config['psf_size_z']
+        psf_size_xy = config['psf_size_xy']
 
         name_base = self.name_base
         channel_index = self.channel_index
@@ -675,7 +675,7 @@ class ImJoyPlugin():
         
         spots_post_decomposition, clusters, reference_spot = detection.decompose_cluster(
             img, spots, 
-            voxel_size_z, voxel_size_yx, psf_z, psf_yx)
+            voxel_size_z, voxel_size_yx, psf_size_z, psf_size_xy)
 
         api.log(" Detected spots before decomposition")
         api.log("\r shape: {0}".format(spots.shape))
@@ -698,8 +698,8 @@ class ImJoyPlugin():
         nb_min_spots = config['foci_nb_min_spots']
         voxel_size_z = config['voxel_size_z']
         voxel_size_yx = config['voxel_size_yx']
-        psf_z = config['psf_z']
-        psf_yx = config['psf_yx']
+        psf_size_z = config['psf_size_z']
+        psf_size_xy = config['psf_size_xy']
         spots_post_decomposition = self.spots_post_decomposition
         name_base = self.name_base
         # Image name
@@ -753,7 +753,8 @@ class ImJoyPlugin():
         api.log(config)
         channel_selected = config['channel_selected']
         channels = config['channels']
-
+        analyze_clusters = config['analyze_clusters']
+        
         # Path to save results
         path_save = self.path_analysis / 'spot_detection' 
         create_folder(path_save)
@@ -781,6 +782,8 @@ class ImJoyPlugin():
                             'show_status': False
                             })
 
+        # Detection will be performed
+
         # Apply spot detection
         spots = await self.detect_apply({
                         'detection_threshold': config['detection_threshold'],
@@ -788,6 +791,10 @@ class ImJoyPlugin():
                         'show_status': False,
                         'file_save': str(path_save / f'{name_base}__detection.png')
                         })
+
+        # Cluster decomposition
+        if analyze_clusters:
+            api.log('Cluster analysis')
 
         # Save spot positions as csv file
         file_save = path_save / f'{name_base}__spots.csv'
