@@ -7,7 +7,7 @@
   {
    "name": "FISH-QUANT",
    "type": "native-python",
-   "version": "0.0.2",
+   "version": "0.0.4",
    "description": "Worker to process smFISH images.",
    "tags": [
     "stable",
@@ -127,7 +127,7 @@
    "runnable": false,
    "defaults": {
     "w": 20,
-    "h": 10
+    "h": 20
    },
    "uri": "imjoy-plugins\\FQ-interface.imjoy.html"
   },
