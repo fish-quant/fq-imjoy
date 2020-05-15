@@ -232,7 +232,7 @@ class ImJoyPlugin {
           },
 
           setThreshold(threshold){
-                  this.detection_threshold = threshold
+            this.detection_threshold = threshold
           },
 
 
@@ -330,7 +330,8 @@ class ImJoyPlugin {
       this.store.analysis_region = []
 
       this.store.channel_selected = null
-
+      this.store.detection_threshold = null
+      
       this.store.status_image_loaded = false
       this.store.status_image_loaded = false
       this.store.status_image_filtered = false
@@ -579,12 +580,6 @@ class ImJoyPlugin {
    */
   async detection_apply() {
     
-    // Check if threshold was defined
-    if ( this.store.detection_threshold == null){
-      api.alert('Please set a numeric value to test the intensity threshold!')
-      return
-    }
-
     // Perform detection
     this.store.running_detect_apply=true
     let config = await this.params_for_python();
@@ -1056,7 +1051,7 @@ api.export(new ImJoyPlugin())
 
         <b-field grouped>
           <p class="control">
-            <button class="button is-primary" :loading="running_detect_apply" :disabled="status_thresholds_tested==false" @click="btn_detection_apply">
+            <button class="button is-primary" :loading="running_detect_apply" :disabled="status_thresholds_tested==false || detection_threshold == null" @click="btn_detection_apply">
               Apply detection threshold
             </button>
           </p>

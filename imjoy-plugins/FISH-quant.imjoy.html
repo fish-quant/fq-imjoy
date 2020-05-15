@@ -69,6 +69,64 @@ def log_config(fun_name, config):
     api.log(config)
 
 
+def save_spots(spots, type, file_save):
+    """
+    Save results of spot detection.
+    """
+    if type == 'ZYX':
+        header = "Z,Y,X"
+
+    if type == 'ZYXF':
+        header = "Z,Y,n_rna,id"
+
+    np.savetxt( file_save,
+                np.asarray(spots),
+                fmt='%i',
+                header=header, 
+                delimiter=',', 
+                comments='')
+    api.log(f'[FISH-QUANT][save_spots] results ({type} saved as: {file_save}')
+
+
+def save_foci(foci, file_save):
+    """
+    Save results of spot detection.
+    """
+
+    header = "Z,Y,X,FOCI,DD"
+
+    np.savetxt( file_save,
+                np.asarray(foci),
+                fmt='%i',
+                header=header, 
+                delimiter=',', 
+                comments='')
+    api.log(f'[FISH-QUANT][save_foci] results ({type} saved as: {file_save}')
+
+
+def save_encoded_plot(plot, file_save):
+    """
+    Save encoded plot as png.
+    """
+    header, img_encoded = plot.split(",", 1)
+    img_decoded = base64.b64decode(img_encoded)
+    with open(file_save, 'wb') as f:
+        f.write(img_decoded)
+    api.log(f'[FISH-QUANT][save_encoded_plot]: plot saved as {file_save}')
+
+
+def show_png(name_img):
+    """
+    Show png image.
+    """
+    with open(name_img, 'rb') as f:
+        data = f.read()
+        result = base64.b64encode(data).decode('ascii')
+        imgurl = 'data:image/png;base64,' + result
+        #api.createWindow(type='imjoy/image', w=12, h=15, data={"src": imgurl})
+        api.showDialog(type='imjoy/image', w=12, h=15, data={"src": imgurl})
+
+
 def create_folder(path_new):
     """
     Check if path `path_new` exisist. If not, create it.
@@ -241,7 +299,7 @@ class ImJoyPlugin():
         with open(name_save, 'w') as json_file:
             json.dump(self.analysis_details, json_file,indent=4, separators=(',', ': '))
 
-        api.log(f'Analysis details saved as {name_save}')
+        api.log(f'[FISH-QUANT][save_analysis_details] saved as {name_save}')
 
 
     def scan_folder(self, config):
@@ -564,14 +622,13 @@ class ImJoyPlugin():
         # Parameters
         log_config('[FISH-QUANT][detect_test_thresholds]', config)
         threshold_range = config['threshold_range']
-        minimum_distance = config['minimum_distance']
         show_status = config['show_status']
 
         if show_status: api.showStatus('Performing predection ... calculate local maximum image')
 
         # Calculate local maximum
         #if len(self.mask_lm)==0:
-        await self.calc_local_max({ 'minimum_distance': minimum_distance})
+        await self.calc_local_max({ 'minimum_distance': config['minimum_distance']})
 
         # Loop over thresholds
         if show_status: api.showStatus('Performing predection ... testing thresholds')
@@ -681,7 +738,7 @@ class ImJoyPlugin():
         spots_post_decomposition = self.spots_post_decomposition
         name_base = self.name_base
 
-        path_save = self.path_analysis / 'spot_detection' / 'foci'
+        path_save = self.path_analysis / 'spot_detection' 
         create_folder(path_save)
 
         # Detect foci
@@ -711,6 +768,24 @@ class ImJoyPlugin():
                             path_output=name_save)
         api.log(f'[FISH-QUANT][detect_foci] foci plot saved as {name_save}')
 
+        if config['show_status']:
+            show_png(name_save)
+
+        self.analysis_details['spot_detection']['settings']['foci_decomposition'] = {
+            'nb_min_spots': nb_min_spots,
+            'radius': radius,
+            'voxel_size_z': voxel_size_z,
+            'voxel_size_yx': voxel_size_yx,
+            'psf_size_z': psf_size_z,
+            'psf_size_xy': psf_size_xy,
+        }
+
+        self.analysis_details['spot_detection']['counts']['spots_decomposed'] = len(spots_post_decomposition)
+        self.analysis_details['spot_detection']['counts']['foci'] = len(foci)
+
+        return spots_post_clustering.tolist(), foci.tolist()
+
+
     async def detection_file(self,config):
         '''
         Process all files with specified settings.
@@ -718,18 +793,13 @@ class ImJoyPlugin():
 
         # Parameters
         log_config('[FISH-QUANT][detection_file]', config)
-        channel_selected = config['channel_selected']
-        channels = config['channels']
-        analyze_clusters = config['analyze_clusters']
-        
+        name_base = self.name_base
+
         # Path to save results
         path_save = self.path_analysis / 'spot_detection' 
         create_folder(path_save)
-        
-        # File-name
-        image_name = self.image_names[channel_selected]["image_name"]
-        name_base, file_extension = os.path.splitext(image_name)
 
+        # Change parts of the config to process entire file
         config['create_mips'] = False
         config['show_status'] = False
         config['analysis_region'] = []  # Reset analysis region to analyze full size image
@@ -748,42 +818,33 @@ class ImJoyPlugin():
         # >>> SPOT DETECTION
 
         # Apply spot detection
-        config['file_save'] =  str(path_save / f'{name_base}__detection.png')
+        config['file_save'] = str(path_save / f'{name_base}__detection.png')
         spots = await self.detect_apply(config)
+   
+        # Save spot positions
+        save_spots(spots, 'ZYX',  path_save / f'{name_base}__spots.csv')
 
-        # Cluster decomposition
-        if analyze_clusters:
-            spots_decompose = await self.decompose_clusters(config)
-            await self.detect_foci(config)
-
-        # >>> Save results
-
-        # Save spot positions as csv file
-        file_save = path_save / f'{name_base}__spots.csv'
-
-        np.savetxt( file_save,
-                    np.asarray(spots),
-                    fmt='%i',
-                    header="Z,Y,X", delimiter=',', comments='')
-        api.log(f'[FISH-QUANT][detection_image]: results saved as {file_save}')
-
-        # Save detection plot
+        # Save detection plot (if present)
         if hasattr(self, 'detection_plot'): 
-            file_save = path_save / f'{name_base}__detection_tests.png'
-            header, img_encoded = self.detection_plot.split(",", 1)
-            img_decoded = base64.b64decode(img_encoded)
-            with open(file_save, 'wb') as f:
-                f.write(img_decoded)
-            api.log(f'[FISH-QUANT][detection_image]: detection tests saved as {file_save}')
+            save_encoded_plot(self.detection_plot, path_save / f'{name_base}__detection_tests.png')
 
-        # Save analysis details
-        name_save = os.path.join(path_save, name_base + '__analysis_details.json')
-        await self.save_analysis_details(name_save)
+
+        # >>> Cluster decomposition
+        if config['analyze_clusters']:
+            await self.decompose_clusters(config)
+            spots_post_clustering, foci = await self.detect_foci(config)
+            save_spots(spots_post_clustering, 'ZYXF',  path_save / f'{name_base}__spots_foci.csv')
+            save_foci(foci,  path_save / f'{name_base}__foci.csv')
+
+        # >>> Save analysis details
+        await self.save_analysis_details(path_save / f'{name_base}__analysis_details.json')
 
         # Update status
         det_th = config['detection_threshold']
         api.alert(f'Processing of loaded file finished:\n{name_base}\nDetection with threshold {det_th} yields  {len(spots)} spots')
         api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
+
+
 
 
     async def detection_batch(self,config):
@@ -793,13 +854,49 @@ class ImJoyPlugin():
 
         # Parameters
         log_config('[FISH-QUANT][detection_batch]', config)
-        channels = config['channels']
 
         # Some preparation
         path_save = self.path_analysis / 'spot_detection' 
         create_folder(path_save)
-        ch_dict = {channel['name']: channel['identifier'] for channel in channels}
+  
+        # Set some parameters in config for batch processing        
+        config['create_mips'] = False
+        config['show_status'] = False
+        config['analysis_region'] = []  # Reset analysis region to analyze full size image
 
+        # Scan folder
+        files_process = self.scan_folder(config)
+
+        # Loop over all files
+        for idx, file_process in enumerate(files_process):
+
+            # Load image
+            api.showProgress((idx+1)/len(files_process))
+            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: loading image')
+            config['file'] = file_process
+            await self.load_image(config)
+            self.filter_full = False
+            name_base = self.name_base
+
+            # Process file
+            await self.detection_file(config)
+
+        api.alert('Batch processing finished!')
+        api.showStatus('Batch processing finished!')
+
+
+    async def detection_batch_old(self,config):
+        '''
+        Process all files with specified settings.
+        '''
+
+        # Parameters
+        log_config('[FISH-QUANT][detection_batch]', config)
+
+        # Some preparation
+        path_save = self.path_analysis / 'spot_detection' 
+        create_folder(path_save)
+  
         # Set some parameters in config for batch processing        
         config['create_mips'] = False
         config['show_status'] = False
