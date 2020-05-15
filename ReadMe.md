@@ -9,3 +9,10 @@ This repository provides several ImJoy plugins to run analysis workflows for smF
 For more information, please consult the dedicated [**documentation**](https://fish-quant.github.io/fq-imjoy/).
 
 If you encounter a problems, please file an [**issue**](https://github.com/fish-quant/fq-imjoy/issues).
+
+
+# To Do
+
+- [ ] Provide demo data as release in repository.
+- [ ] Assign RNAs/foci/transcription sites to cells/nuclei.
+    - [ ] Describe how segmentations have to be pre-processed to be considered (one nuclei per cell, nuclei completely in the cell.)
