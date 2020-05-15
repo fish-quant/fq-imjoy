@@ -57,6 +57,18 @@ if sys.platform == "darwin":
 
 from bigfish import stack, plot, detection
 
+def log_config(fun_name, config):
+    """
+    log the config file, and remove larger elements to not clog the log
+    """
+    api.log(f'{fun_name} received data::')
+    if 'detection_plot' in config:
+        api.log('Detection plot present, but removed for display')
+        del config['detection_plot']
+
+    api.log(config)
+
+
 def create_folder(path_new):
     """
     Check if path `path_new` exisist. If not, create it.
@@ -117,7 +129,7 @@ async def image_mip(img, name_save, file_manager, create_url=False, rescale=True
             img_mip_save = np.copy(img_mip)
 
         stack.save_image(img_mip_save, name_save)
-        api.log(name_save)
+        api.log(f'[FISH-QUANT][image_mip] mip saved as: {name_save}')
 
         # Preferred solution, but doesn't work yet. 
         # Bug in Jupyter: returned content-Type is "text/html" but should be "image/png"
@@ -145,7 +157,7 @@ class ImJoyPlugin():
 
  
     async def setup(self):
-        api.log('FQ-worker plugin initialized.')
+        api.log('[FISH-QUANT] plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
         self.cwd = Path.cwd() 
         self.analysis_details = {
@@ -172,10 +184,9 @@ class ImJoyPlugin():
         """
         Show filtered image
         """
-        # Parameters
-        api.log('\nFQ-worker [show_image]: received data:')
-        api.log(config)
 
+        # Parameters
+        log_config('[FISH-QUANT][show_image]', config)
         channel_selected = config['channel_selected']
         image_type = config['image_type']
         image_dim = config['image_dim']
@@ -220,7 +231,7 @@ class ImJoyPlugin():
         Save settings as json file.
         """
         # Parameters
-        api.log('\nFQ-worker [save_analysis_details]')
+        api.log('[FISH-QUANT][save_analysis_details]')
 
         # Add more fields
         now = datetime.now() # current date and time
@@ -241,8 +252,7 @@ class ImJoyPlugin():
         api.showStatus('Scanning folder for images with specified configuration ... ')
 
         # Parameters
-        api.log('\nFQ-worker [scan_folder]: received data:')
-        api.log(config)
+        log_config('[FISH-QUANT][scan_folder]', config)
         channels  = config['channels']
         reg_exp   = config['reg_exp']
         path_data_full = Path(config['data_path'])
@@ -254,12 +264,9 @@ class ImJoyPlugin():
         # Get channels as dict
         ch_dict = {channel['identifier']: channel['name'] for channel in channels}
         ch_identifier = list(ch_dict.keys())
+        api.log(f'[FISH-QUANT][scan_folder] channel dictionary: {ch_dict}')
 
         # Scan all files create data-frame for files that match the regular expression
-        api.log(f'FQ-worker [scan_folder]: {str(path_data_full)}')
-        api.log(f'channels: {ch_dict}')
-        api.log(f'reg_exp: {reg_exp}')
-
         df_regexp = pd.DataFrame()
         for file in os.listdir(str(path_data_full)):
             match = re.search(reg_exp, file)
@@ -304,7 +311,7 @@ class ImJoyPlugin():
         self.path_data_full = path_data_full
         scan_results = df_scan.to_dict('records')
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
-        api.log('\nFQ-worker [scan_folder]: scan results:')
+        api.log('[FISH-QUANT][scan_folder] scan results:')
         api.log(scan_results)
         
         # Save analysis details
@@ -320,9 +327,8 @@ class ImJoyPlugin():
         Function to load image.
         """
         
-        # Parameters
-        api.log('\nFQ-worker [load_image]: received data:')
-        api.log(config)
+        log_config('[FISH-QUANT][load_image]', config)
+
         show_status = config['show_status']
         if show_status: api.showStatus('Loading images. Please wait .... ')
 
@@ -344,7 +350,7 @@ class ImJoyPlugin():
             mips = []
             path_save = self.path_analysis / 'imjoy-tmp' / 'mips'
             create_folder(path_save)
-            api.log(f'Folder for MIPs: {path_save}')
+            api.log(f'[FISH-QUANT][load_image] path for MIPs: {path_save}')
 
         # Loop over channels and build 5D tensor (starfish)
         tensors_3d = []
@@ -358,7 +364,7 @@ class ImJoyPlugin():
         for index, channel_name in enumerate(channel_names):
             image_name = config['file'][channel_name]
             image_name_full = str(path_data_full / image_name)
-            api.log(f'Reading image: {image_name_full}')
+            api.log(f'[FISH-QUANT][load_image] reading image: {image_name_full}')
 
             tensor_3d = io.imread(image_name_full)
             tensors_3d.append(tensor_3d)
@@ -383,7 +389,7 @@ class ImJoyPlugin():
 
         # stack 4-d tensors in 5-d
         image = np.stack(tensors_4d, axis=0)
-        api.log(f'FQ-worker [load_image]: loaded image: Shape: {image.shape}, dtype: {image.dtype}')
+        api.log(f'[FISH-QUANT][load_image] loaded image: shape: {image.shape}, dtype: {image.dtype}')
 
         self.image = image
         self.image_names = image_names
@@ -414,9 +420,7 @@ class ImJoyPlugin():
         """
 
         # Parameters
-        api.log('\nFQ-worker [filter_image]: received data:')
-        api.log(config)
-
+        log_config('[FISH-QUANT][filter_image]', config)
         sigma = config['sigma']
         channel_selected = config['channel_selected']
         show_status = config['show_status']
@@ -438,7 +442,7 @@ class ImJoyPlugin():
 
         # Get index of channel that will be analyzed
         channel_index = image_names[channel_selected]["index"]
-        api.log(f'FQ-worker [filter_image]: filter channel {channel_selected} with index {channel_index}')
+        api.log(f'[FISH-QUANT][filter_image] filtering channel {channel_selected} with index {channel_index}')
 
         # Crop image if specified
         x_min = None
@@ -517,9 +521,7 @@ class ImJoyPlugin():
         # TODO: supported is only png, tif, tiff
         
         # Parameters
-        api.log('\nFQ-worker [save_image_filtered]: received data:')
-        api.log(config)
-
+        log_config('[FISH-QUANT][save_image_filtered]', config)
         channel_selected = config['channel_selected']
         channel_name = self.image_names[channel_selected]["image_name"]
         
@@ -531,14 +533,13 @@ class ImJoyPlugin():
         api.alert(f'Filtered image saved as {channel_name}, \nin folder: {str(path_save)}')
 
 
-    async def calc_local_max(self,config):
+    async def calc_local_max(self, config):
         '''
         Calculate local maximum image from filtered image.
         '''
 
-        # Input parameters
-        api.log('\nFQ-worker [calc_local_max]: received data:')
-        api.log(config)
+        # Parameters
+        log_config('[FISH-QUANT][calc_local_max]', config)
         minimum_distance = config['minimum_distance']
         sigma = (minimum_distance[1], minimum_distance[0], minimum_distance[0])
 
@@ -561,8 +562,7 @@ class ImJoyPlugin():
         '''
 
         # Parameters
-        api.log('\nFQ-worker [detect_test_thresholds]: received data:')
-        api.log(config)
+        log_config('[FISH-QUANT][detect_test_thresholds]', config)
         threshold_range = config['threshold_range']
         minimum_distance = config['minimum_distance']
         show_status = config['show_status']
@@ -586,7 +586,7 @@ class ImJoyPlugin():
             threshold = thresholds_spot[i]
             spots, _ = detection.spots_thresholding(self.image_filt, self.mask_lm, threshold)
             n_detections[i] = spots.shape[0]
-            api.log(f'Testing threshold {i}/{n_thresholds}: {threshold}  ... {n_detections[i]} spots detected.')
+            api.log(f'[FISH-QUANT][detect_test_thresholds] testing threshold {i}/{n_thresholds}: {threshold}  yields  {n_detections[i]}  spots.')
 
             self.FQ_interface.emit('extend_detection_plot', [thresholds_spot[i].tolist(), n_detections[i].tolist()])
 
@@ -596,23 +596,19 @@ class ImJoyPlugin():
 
 
     async def detect_apply(self,config):
-        '''
+        ''' 
         Apply spot detection.
         Returns spots as a nested list [[Z0,Y0,X0],[Z1,Y1,X1], .... ]. 
         Why return? Can then be used to display in calling plugin.
         '''
         # Parameters
-        api.log('\nFQ-worker [detect_apply]: will not show received data since detection plot is too large.')
-        #api.log(config)
-
-        # Get parameters
+        log_config('[FISH-QUANT][detect_apply]', config)
         threshold = config['detection_threshold']
-        #sigma = config['sigma']
         show_status = config['show_status']
         
         # Save detection plot
         if 'detection_plot' in config:
-            self.detetection_plot = config['detection_plot']
+            self.detection_plot = config['detection_plot']
 
         # Save detection plot
         if 'file_save' in config:
@@ -635,8 +631,8 @@ class ImJoyPlugin():
             image_contrasted = stack.maximum_projection(image_contrasted)
             plot.plot_detection(image_contrasted, spots, radius=2, framesize=(10, 8), remove_frame=True,path_output=file_save)
 
+        api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
-
         self.spots = spots
         return spots.tolist()
 
@@ -644,11 +640,7 @@ class ImJoyPlugin():
     async def decompose_clusters(self,config):
 
         # Parameters
-        api.log('\nFQ-worker [decompose_cluster]: received data:')
-        api.log(config)
-
-        # Relevant parameters
-        
+        log_config('[FISH-QUANT][decompose_clusters]', config)
         show_status = config['show_status']
         voxel_size_z = config['voxel_size_z']
         voxel_size_yx = config['voxel_size_yx']
@@ -658,16 +650,8 @@ class ImJoyPlugin():
         name_base = self.name_base
         channel_index = self.channel_index
         spots = self.spots
-        #image_names = self.image_names
-        #channel_selected = self.channel_selected
-        #channel_index = image_names[channel_selected]["index"]
-        
 
-        # File-name
-        #image_name = image_names[channel_selected]["image_name"]
-        #name_base, file_extension = os.path.splitext(image_name)
-
-        # Get images
+        # Get image
         if not self.filter_full:
             img = self.image_raw 
         else:
@@ -677,11 +661,7 @@ class ImJoyPlugin():
             img, spots, 
             voxel_size_z, voxel_size_yx, psf_size_z, psf_size_xy)
 
-        api.log(" Detected spots before decomposition")
-        api.log("\r shape: {0}".format(spots.shape))
-        api.log(" Detected spots after decomposition")
-        api.log("\r shape: {0}".format(spots_post_decomposition.shape))
-
+        api.log(f'[FISH-QUANT][decompose_cluster] from {len(spots)} to {len(spots_post_decomposition)} spots.')
         api.showStatus(f'Cluster decomposition: from {len(spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
@@ -691,9 +671,7 @@ class ImJoyPlugin():
     async def detect_foci(self,config):
     
         # Parameters
-        api.log('\nFQ-worker [detect_foci]: received data:')
-        api.log(config)
-
+        log_config('[FISH-QUANT][detect_foci]', config)
         radius = config['foci_radius']
         nb_min_spots = config['foci_nb_min_spots']
         voxel_size_z = config['voxel_size_z']
@@ -706,24 +684,20 @@ class ImJoyPlugin():
         path_save = self.path_analysis / 'spot_detection' / 'foci'
         create_folder(path_save)
 
-        name_save = str(path_save / f'{name_base}__foci_calling.png')
-        api.log(f'Foci decomposition plot saved as {name_save}')
-
+        # Detect foci
         spots_post_clustering, foci = detection.detect_foci(
             spots_post_decomposition, 
             voxel_size_z, voxel_size_yx, radius, nb_min_spots)
 
-        api.log(" Detected spots after clustering")
-        api.log("\r shape: {0}".format(spots_post_clustering.shape))
-        api.log(" Detected foci")
-        api.log("\r shape: {0}".format(foci.shape))
-
+        api.log(f'[FISH-QUANT][detect_foci] found {len(foci)} foci for {len(spots_post_decomposition)} spots')
+        
         self.spots_post_clustering = spots_post_clustering
         self.foci = foci
 
         # Create plot
         image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
         image_contrasted = stack.maximum_projection(image_contrasted)
+        name_save = str(path_save / f'{name_base}__foci_calling.png')
 
         plot.plot_detection(image_contrasted, 
                             spots=[spots_post_decomposition, foci[:, :3]], 
@@ -735,7 +709,7 @@ class ImJoyPlugin():
                             framesize=(10, 8), 
                             remove_frame=True,
                             path_output=name_save)
-
+        api.log(f'[FISH-QUANT][detect_foci] foci plot saved as {name_save}')
 
     async def detection_file(self,config):
         '''
@@ -743,8 +717,7 @@ class ImJoyPlugin():
         '''
 
         # Parameters
-        api.log('\nFQ-worker [detection_image]: received data:')
-        api.log(config)
+        log_config('[FISH-QUANT][detection_file]', config)
         channel_selected = config['channel_selected']
         channels = config['channels']
         analyze_clusters = config['analyze_clusters']
@@ -761,8 +734,7 @@ class ImJoyPlugin():
         config['show_status'] = False
         config['analysis_region'] = []  # Reset analysis region to analyze full size image
 
-        # Check if full size image has been processed already - if yes, filtering and local max can be reused
-        
+        # >>> Check if full size image has been processed already - if yes, filtering and local max can be reused
         if not self.filter_full:
 
             # Filter
@@ -773,7 +745,7 @@ class ImJoyPlugin():
             api.showStatus(f'Processing file: spot detection')
             await self.calc_local_max(config)
 
-        # Detection will be performed
+        # >>> SPOT DETECTION
 
         # Apply spot detection
         config['file_save'] =  str(path_save / f'{name_base}__detection.png')
@@ -781,7 +753,10 @@ class ImJoyPlugin():
 
         # Cluster decomposition
         if analyze_clusters:
-            api.log('Cluster analysis')
+            spots_decompose = await self.decompose_clusters(config)
+            await self.detect_foci(config)
+
+        # >>> Save results
 
         # Save spot positions as csv file
         file_save = path_save / f'{name_base}__spots.csv'
@@ -790,16 +765,16 @@ class ImJoyPlugin():
                     np.asarray(spots),
                     fmt='%i',
                     header="Z,Y,X", delimiter=',', comments='')
-        api.log(f'\nFQ-worker [detection_image]: results saved as {file_save}')
+        api.log(f'[FISH-QUANT][detection_image]: results saved as {file_save}')
 
         # Save detection plot
-        if hasattr(self, 'detetection_plot'): 
+        if hasattr(self, 'detection_plot'): 
             file_save = path_save / f'{name_base}__detection_tests.png'
-            header, img_encoded = self.detetection_plot.split(",", 1)
+            header, img_encoded = self.detection_plot.split(",", 1)
             img_decoded = base64.b64decode(img_encoded)
             with open(file_save, 'wb') as f:
                 f.write(img_decoded)
-            api.log(f'\nFQ-worker [detection_image]: detection tests saved as {file_save}')
+            api.log(f'[FISH-QUANT][detection_image]: detection tests saved as {file_save}')
 
         # Save analysis details
         name_save = os.path.join(path_save, name_base + '__analysis_details.json')
@@ -817,8 +792,7 @@ class ImJoyPlugin():
         '''
 
         # Parameters
-        api.log('\nFQ-worker [detection_batch]: received data:')
-        api.log(config)
+        log_config('[FISH-QUANT][detection_batch]', config)
         channels = config['channels']
 
         # Some preparation
@@ -862,7 +836,7 @@ class ImJoyPlugin():
                         np.asarray(spots),
                         fmt='%i',
                         header="Z,Y,X", delimiter=',', comments='')
-            api.log(f'\nFQ-worker [detection_batch]: results saved as {file_save}')
+            api.log(f'[FISH-QUANT][detection_batch]: results saved as {file_save}')
 
             #  Save analysis details
             name_save = os.path.join(path_save, name_base + '__analysis_details.json')

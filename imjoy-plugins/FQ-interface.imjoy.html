@@ -150,7 +150,7 @@ class ImJoyPlugin {
           sigma: [sigma_z, sigma_xy, sigma_xy],  // ZYX
           threshold_range: [0, 5000, 50 ], // min, max, n_bins
           minimum_distance: [2, 2], // xy, z
-          detetection_plot: [],
+          detection_plot: [],
           detection_threshold: null,
           img_filt: [],
           img_filt_load : null,
@@ -349,17 +349,14 @@ class ImJoyPlugin {
   async params_for_python(config={}){
 
     let  params = Object.assign({}, this.store);
-    console.log('params for python')
-    console.log(config)
+
     // Remove properties that are not needed in Python
     delete params.images;
-
+    delete params.img_filt;
+    delete params.img_filt_load;
+    console.log(config)
     if (!("keep_detection_plot" in config && config.keep_detection_plot == true)) {
-      delete params.keep_detection_plot;
-      console.log('delete detectio plot')
-    }
-    else{
-      console.log('keep detectio plot')
+      delete params.detection_plot;
     }
 
     return params;
@@ -573,7 +570,7 @@ class ImJoyPlugin {
           this.app.setThreshold(th)
     });
  
-    this.store.detetection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600})
+    this.store.detection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600})
     this.store.running_detect_test = false
   }
 
