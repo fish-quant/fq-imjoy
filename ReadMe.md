@@ -2,18 +2,15 @@
 </a>
 ![GitHub](https://img.shields.io/github/license/fish-quant/fq-imjoy)
 
-
 # Overview
+
 This repository provides several ImJoy plugins to run analysis workflows for smFISH images.
 
 For more information, please consult the dedicated [**documentation**](https://fish-quant.github.io/fq-imjoy/).
 
 If you encounter a problems, please file an [**issue**](https://github.com/fish-quant/fq-imjoy/issues).
 
+# Ongoing work
 
-# To Do
-
-- [ ] Add description of spot detection results after decompositon (including file for foci).
-- [ ] Provide demo data as release in repository.
-- [ ] Assign RNAs/foci/transcription sites to cells/nuclei.
-    - [ ] Describe how segmentations have to be pre-processed to be considered (one nuclei per cell, nuclei completely in the cell.)
+To check what we are currently working on, please have a look
+at the ongoing [**projects**](https://github.com/fish-quant/fq-imjoy/projects).
