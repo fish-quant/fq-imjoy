@@ -92,9 +92,10 @@ class ImJoyPlugin {
     }
 
     var data_path = await api.getConfig('data_path')
-    if(! data_path) {
-      data_path = 'paste-path-to-data'
-    }
+    if(! data_path) {data_path = 'paste-path-to-data'}
+
+    var img_ext = await api.getConfig('img_ext')
+    if(! img_ext) {img_ext = 'tif'}
 
     var sigma_xy =  parseFloat(await api.getConfig('sigma_xy'));
     if(! sigma_xy) {sigma_xy = 0.75}
@@ -122,8 +123,9 @@ class ImJoyPlugin {
 
     // Initialize parameters
     this.store = {
-          version_FQ: await api.getConfig('_version'),
-          version_interface: '',
+          version_interface: await api.getConfig('_version'),
+          version_FQ: '',
+          version_bigfish: '',
           active_tab: 'data',
           txt_navbar: 'No image loaded',
           txt_navbar_details: '',
@@ -133,6 +135,7 @@ class ImJoyPlugin {
           file_loaded: '',
           data_path: data_path, 
           output_path:"acquisition>>analysis",
+          img_ext: img_ext,
           channels: [],
           analysis_region: [],
           ch_name: [],
@@ -394,8 +397,6 @@ class ImJoyPlugin {
         ch_names.map(function(ch_name){
           file_info[ch_name] = file[ch_name]
         })
-        console.log('file_info')
-        console.log(file_info)
         this.store.files.push(file_info)
       }
 
@@ -440,6 +441,7 @@ class ImJoyPlugin {
       // Store parameters for next launch
       api.setConfig('data_path', this.store.data_path)
       api.setConfig('reg_exp', this.store.reg_exp)
+      api.setConfig('img_ext', this.store.img_ext)
       api.setConfig('voxel_size_yx', this.store.voxel_size_yx)
       api.setConfig('voxel_size_z', this.store.voxel_size_z)
 
@@ -654,6 +656,7 @@ class ImJoyPlugin {
     this.store.running_detect_image=true
 
     let config = await this.params_for_python({keep_detection_plot: true});
+    config.batch_analysis = false;
     await this.fq_worker.detection_file(config)
 
     this.store.running_detect_image=false
@@ -667,6 +670,7 @@ class ImJoyPlugin {
     this.store.running_detect_batch=true
 
     let config = await this.params_for_python({keep_detection_plot: true});
+    config.batch_analysis = true;
     await this.fq_worker.detection_batch(config)
 
     this.store.running_detect_batch=false
@@ -676,7 +680,8 @@ class ImJoyPlugin {
 
     if(ctx.data){
       console.log(ctx.data)
-      this.store.version_interface = ctx.data['version']
+      this.store.version_FQ = ctx.data['version_FQ']
+      this.store.version_bigfish = ctx.data['version_bigfish']
     }
   }
 }
@@ -751,7 +756,13 @@ api.export(new ImJoyPlugin())
           </b-field>
         </b-field> <!-- END: specify pixel size -->
         
-        
+                <!-- Specify pixel size -->
+        <b-field label="Image extension" horizontal grouped>
+          <b-field>
+            <b-input  v-model="img_ext"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify pixel size -->
+
         <!-- Channels -->
         <hr>
         <div class="columns is-desktop">
@@ -867,8 +878,6 @@ api.export(new ImJoyPlugin())
                 </b-carousel-item>
                 <template slot="indicators" slot-scope="props">
                   <span class="al image">
-                    <!-- <img :src="images[props.i" :title="props.i"> -->
-                    <!--<p v-bind="channels[props.i].name" expanded>asdfasd</p> -->
                     <span> {{ channels[props.i].name }}</span>
                   </span>
                 </template>
@@ -1251,7 +1260,10 @@ api.export(new ImJoyPlugin())
                   </b-navbar-item>
                   <hr class="navbar-divider">
                   <div class="navbar-item">
-                    <span> FQ: v{{ version_FQ }}</span>
+                    <span> FQ plugin: v{{ version_FQ }}</span>
+                  </div>  
+                    <div class="navbar-item">
+                  <span> big-fish: v{{ version_bigfish }}</span>
                   </div>  
                   <div class="navbar-item">
                     <span> FQ interface: v{{ version_interface }}</span>

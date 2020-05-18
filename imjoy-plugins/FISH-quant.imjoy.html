@@ -24,7 +24,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
   "api_version": "0.1.8",
   "env": "",
   "permissions": [],
-  "requirements": { "stable":["pip: -U git+https://github.com/muellerflorian/big-fish@test-setup#egg=big-fish"],
+  "requirements": { "stable":["pip: -U git+https://github.com/fish-quant/big-fish@master#egg=big-fish"],
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface",
@@ -55,7 +55,12 @@ if sys.platform == "darwin":
     import matplotlib
     matplotlib.use('PS')
 
+
 from bigfish import stack, plot, detection
+
+# Is there a way to get the version without import?
+import bigfish 
+
 
 def log_config(fun_name, config):
     """
@@ -93,7 +98,7 @@ def save_foci(foci, file_save):
     Save results of spot detection.
     """
 
-    header = "Z,Y,X,FOCI,DD"
+    header = "Z,Y,X,n_rna,index"
 
     np.savetxt( file_save,
                 np.asarray(foci),
@@ -232,7 +237,8 @@ class ImJoyPlugin():
                                                    name='FISH-quant',
                                                    data={'file_manager': api.FILE_MANAGER_URL,
                                                          'engine_url': api.ENGINE_URL,
-                                                         'version': await api.getConfig('_version')})
+                                                         'version_FQ': await api.getConfig('_version'),
+                                                         'version_bigfish': bigfish.__version__})
 
     def get_engine_url(self):
         return api.ENGINE_URL
@@ -314,7 +320,7 @@ class ImJoyPlugin():
         channels  = config['channels']
         reg_exp   = config['reg_exp']
         path_data_full = Path(config['data_path'])
-
+        
         if not path_data_full.is_dir():
             api.alert('Specified data path does not EXIST. No images found.')
             return
@@ -326,15 +332,18 @@ class ImJoyPlugin():
 
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
+
         for file in os.listdir(str(path_data_full)):
             match = re.search(reg_exp, file)
 
             if match:
                 match_dict = match.groupdict()
-                match_dict.update({'file_name': file})
-                df_regexp = df_regexp.append(match_dict, ignore_index=True)
 
-        print(df_regexp.size)
+                # Add only if image extension matches
+                if match_dict['img_ext'] == config['img_ext']:
+                    match_dict.update({'file_name': file})
+                    df_regexp = df_regexp.append(match_dict, ignore_index=True)
+
         if df_regexp.size == 0:
             api.alert('No images with these specifications found.')
             return
@@ -348,8 +357,7 @@ class ImJoyPlugin():
         for pos_unique in df_pos_unique.itertuples(index=False):
             file_ident_loop = getattr(pos_unique, 'file_ident')
             fov_loop = getattr(pos_unique, 'fov')
-            img_ext_loop = getattr(pos_unique, 'img_ext')
-
+           
             # Find all channels of unique positions
             df_loop = df_regexp.query('(file_ident == @file_ident_loop) and (fov == @fov_loop)')
             channels_loop = df_loop['channel'].values.tolist()
@@ -754,8 +762,34 @@ class ImJoyPlugin():
         # Create plot
         image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
         image_contrasted = stack.maximum_projection(image_contrasted)
-        name_save = str(path_save / f'{name_base}__foci_calling.png')
+        name_save = str(path_save / f'{name_base}__foci_calling')
 
+        # Consider entire image as a cell
+        fov_results = stack.extract_cell(
+            cell_label=np.ones(image_contrasted.shape).astype('uint8'),   # Consider entire image as a cell
+            ndim=3, 
+            rna_coord=spots_post_clustering, 
+            others={"foci": foci},
+            image=image_contrasted,
+            remove_cropped_cell=False)
+
+        # plot cell
+        plot.plot_cell(
+            ndim=3, 
+            cell_coord=fov_results[0]["cell_coord"],  
+            rna_coord=fov_results[0]["rna_coord"], 
+            foci_coord=fov_results[0]["foci"],  
+            image=image_contrasted, 
+            cell_mask=fov_results[0]["cell_mask"],  
+            title="Foci detection", 
+            remove_frame=True, framesize=(12, 10),
+            path_output=name_save,
+            ext = 'png',
+            show = False)
+
+
+
+        """
         plot.plot_detection(image_contrasted, 
                             spots=[spots_post_decomposition, foci[:, :3]], 
                             shape=["circle", "polygon"], 
@@ -766,10 +800,11 @@ class ImJoyPlugin():
                             framesize=(10, 8), 
                             remove_frame=True,
                             path_output=name_save)
+        """
         api.log(f'[FISH-QUANT][detect_foci] foci plot saved as {name_save}')
 
         if config['show_status']:
-            show_png(name_save)
+            show_png(name_save+'.png')
 
         self.analysis_details['spot_detection']['settings']['foci_decomposition'] = {
             'nb_min_spots': nb_min_spots,
@@ -841,10 +876,9 @@ class ImJoyPlugin():
 
         # Update status
         det_th = config['detection_threshold']
-        api.alert(f'Processing of loaded file finished:\n{name_base}\nDetection with threshold {det_th} yields  {len(spots)} spots')
+        if not config['batch_analysis']:
+            api.alert(f'Processing of loaded file finished:\n{name_base}\nDetection with threshold {det_th} yields  {len(spots)} spots')
         api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
-
-
 
 
     async def detection_batch(self,config):
@@ -884,63 +918,6 @@ class ImJoyPlugin():
         api.alert('Batch processing finished!')
         api.showStatus('Batch processing finished!')
 
-
-    async def detection_batch_old(self,config):
-        '''
-        Process all files with specified settings.
-        '''
-
-        # Parameters
-        log_config('[FISH-QUANT][detection_batch]', config)
-
-        # Some preparation
-        path_save = self.path_analysis / 'spot_detection' 
-        create_folder(path_save)
-  
-        # Set some parameters in config for batch processing        
-        config['create_mips'] = False
-        config['show_status'] = False
-        config['analysis_region'] = []  # Reset analysis region to analyze full size image
-
-        # Scan folder
-        files_process = self.scan_folder(config)
-
-        # Loop over all files
-        for idx, file_process in enumerate(files_process):
-
-            # Load image
-            api.showProgress((idx+1)/len(files_process))
-            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: loading image')
-            config['file'] = file_process
-            await self.load_image(config)
-            name_base = self.name_base
-
-            # Filter
-            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: filtering image')
-            await self.filter_image(config)
-
-            # Detection
-            api.showStatus(f'Processing file {idx+1} of {len(files_process)}: spot detection')
-            await self.calc_local_max(config)
-
-            config['file_save'] =  str(path_save / f'{name_base}__detection.png')
-            spots = await self.detect_apply(config)
-
-            # Save results of spot detection
-            file_save = path_save / f'{name_base}__spots.csv'
-
-            np.savetxt( file_save,
-                        np.asarray(spots),
-                        fmt='%i',
-                        header="Z,Y,X", delimiter=',', comments='')
-            api.log(f'[FISH-QUANT][detection_batch]: results saved as {file_save}')
-
-            #  Save analysis details
-            name_save = os.path.join(path_save, name_base + '__analysis_details.json')
-            await self.save_analysis_details(name_save)
-
-        api.alert('Batch processing finished!')
-        api.showStatus('Batch processing finished!')
 
 api.export(ImJoyPlugin())
 </script>
