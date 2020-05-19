@@ -638,6 +638,7 @@ class ImJoyPlugin {
     // Detect foci
     let config = await this.params_for_python();
     config.show_status = true;
+    config.name_save = 'tmp';
     var spots = await this.fq_worker.detect_foci(config)
 
     // Update interface
