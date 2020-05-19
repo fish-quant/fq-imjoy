@@ -163,6 +163,7 @@ class ImJoyPlugin {
           th_range_max:5000,
           th_range_nbins:50,
           analyze_clusters: false,
+          create_plots: true,
           show_filtered: true,
           show_detection: true,
           running_load: false,
@@ -1187,6 +1188,9 @@ api.export(new ImJoyPlugin())
             </b-field>
             <b-field>
               <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+            </b-field>
+            <b-field>
+              <b-checkbox v-model="create_plots" :disabled="status_detection_applied==false">Create plots</b-checkbox>
             </b-field>
           </b-field>
         </section>
