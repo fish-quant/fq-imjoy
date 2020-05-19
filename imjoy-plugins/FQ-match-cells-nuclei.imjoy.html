@@ -1,0 +1,196 @@
+﻿<docs lang="markdown">
+ImJoy plugin to match nuclei to cells.
+</docs>
+
+<config lang="json">
+{
+  "name": "FQ-match-cells-nuclei",
+  "type": "native-python",
+  "version": "0.0.1",
+  "description": "Pre-process 3D images to obtain 2D images for segmentation.",
+  "tags": ["stable","dev"],
+  "ui": [
+        "<span style='font-weight: 550; color:#666362'>Path LABELS</span>: {id: 'path_labels', type: 'string', placeholder: 'paste-path-to-data'}",
+        "<span style='font-weight: 550; color:#666362'>Path SAVE</span>: {id: 'path_save', type: 'string', placeholder: 'segmentation-results˃˃segmentation-fq'}",
+        "<span style='font-weight: 550; color:#666362'>Ident NUCLEI</span>: {id: 'ident_nuc', type: 'string', placeholder: 'mask__nuclei'}",
+        "<span style='font-weight: 550; color:#666362'>Ident CELLS</span>: {id: 'ident_cell', type: 'string', placeholder: 'mask__cells'}",
+        "<span style='font-weight: 550; color:#666362'>Channel NUCLEI</span>: {id: 'ch_nuc', type: 'string', placeholder: 'dapi'}",
+        "<span style='font-weight: 550; color:#666362'>Channel CELLS</span>: {id: 'ch_cell', type: 'string', placeholder: 'cy3'}",
+        "<span style='font-weight: 550; color:#666362'>Search recursive</span>: {id: 'search_recursive', type: 'choose', options: ['false', 'true'], placeholder: 'false'}"
+        ],
+  "cover": "",
+  "inputs": null,
+  "outputs": null,
+  "flags": [],
+  "icon": "extension",
+  "api_version": "0.1.8",
+  "env": "",
+  "permissions": [],
+  "requirements": { "stable":["pip: -U git+https://github.com/fish-quant/big-fish@master#egg=big-fish"],
+                    "dev": [""]},
+  "dependencies": []
+}
+</config>
+
+<script lang="python">
+from imjoy import api
+import  bigfish.segmentation as segmentation
+import pathlib
+import re
+from pathlib import Path
+from skimage import io
+import numpy as np
+
+
+# Create new output path
+def create_output_path(path_orig, str_replace, subfolder=None, create_path=True, callback_log=None):
+    """ Allows to create new path object by replacing a string in a provided path object.
+
+    Parameters
+    ----------
+    path_orig : pathlib object
+        Original file-name.
+    str_replace : str
+        str defining the replacement operation: 'str_orig>>str_new',
+        where 'str_orig' is the orginal string, 'str_new' is the new string.
+        For example, 'acquisition>>analysis'.
+    subfolder : str or pathlib object
+        Subfolder that should be added to new file-name
+    create_path : bool
+        Create new path if it doesn't exist.
+    callback_log : str
+        Callback function to be used. If None, then system print will be used.
+
+    Returns
+    -------
+    pathlib object
+        New path.
+    """
+
+    api.log("Creating name to path to store data.")
+
+    if (re.search(">>", str_replace)):
+        str_orig = re.search(r'^(.*)>>(.*)$', str_replace).group(1)
+        str_rep = re.search(r'^(.*)>>(.*)$', str_replace).group(2)
+
+        path_replace = Path(str(path_orig).replace(str_orig, str_rep))
+    
+        if subfolder:
+            path_replace = path_replace / subfolder
+        
+        api.log(f'Replacement parameters found: original string: {str_orig}, replacement string: {str_rep}')
+        api.log(f'Output path: {path_replace}')
+
+    else:
+        log_message("No match", callback_fun=callback_log)
+        return None
+
+    # Create default folder to save data if none was defined by the user
+    if create_path:
+        if not path_replace.is_dir():
+            path_replace.mkdir(parents=True)
+
+    return path_replace
+
+
+class ImJoyPlugin():
+    def setup(self):
+        api.log('initialized')
+
+    def run(self, ctx):
+        
+        api.log(ctx.config)
+
+        # Get parameters
+        path_labels = ctx.config.path_labels
+        path_save = ctx.config.path_save
+        ident_cell = ctx.config.ident_cell
+        ident_nuc = ctx.config.ident_nuc
+        ch_nuc =  ctx.config.ch_nuc
+        ch_cell = ctx.config.ch_cell
+
+        # >>> CHECK INPUT PARAMETERS
+
+        # Path containing the data
+        if path_labels == 'paste-path-to-data':
+            api.alert('Path containing data to be processed has to be specified.')
+            return
+        
+        path_labels = Path(path_labels)
+    
+        if not path_labels.is_dir():
+            api.alert('Path containing data to be processed does not exist.')    
+            return
+        
+        # Path to save data
+        # This looks a bit weird, but the default string does not contain the greater sign,
+        # but a close unicode replacement (otherwise rendering would not be possible due security risk, strings are sanitised)
+        if path_save == 'segmentation-results˃˃segmentation-fq':
+            path_save = 'segmentation-results>>segmentation-fq'
+
+             
+        if '>>' in path_save:
+            api.log('Path replacement defined in path_save. Will keep string as is.')
+            
+        else:
+            if path_save == 'paste-path-to-save-data':
+                api.alert('Path to save data has to be specified.')
+                return
+            
+            path_save_results = Path(path_save)
+            
+            if not path_save_results.is_dir():
+                path_save_results.mkdir(parents=True)
+
+
+        # Interpret search_recursive
+        if ctx.config.search_recursive == 'true':
+            search_recursive = True 
+        else:
+            search_recursive = False
+
+        # How to look for files
+        files_proc = []
+        if search_recursive:
+            for path_img in path_labels.rglob(f'*{ident_cell}*'):
+                files_proc.append(path_img)
+        else:
+            for path_img in path_labels.glob(f'*{ident_cell}*'):
+                files_proc.append(path_img)
+
+        # Process files
+        n_files = len(files_proc)
+        for idx, f_cell in enumerate(files_proc):
+
+        # Call pre-processing function
+        #for f_cell in path_segmentation.glob(f'*{ident_cell}*'):
+            api.log(f'Processing file {str(f_cell)}')
+
+            # Get file with cell segmentationFQ-
+            f_nuc = Path(str(f_cell).replace(ident_cell, ident_nuc).replace(ch_cell, ch_nuc))
+            if not f_nuc.is_file():
+                api.log(f'File with nuclear segmentation not found: {f_nuc}')
+            
+            # Load label images
+            nuc_label = io.imread(str(f_nuc))
+            cell_label = io.imread(str(f_cell))
+                
+            # Path to save results (if string replacement is used)
+            if not isinstance(path_save, pathlib.PurePath):
+                path_save_results = create_output_path(f_cell.parent, path_save, subfolder='', create_path=True)
+
+            # Match nuclei and cells
+            new_nuc_label, new_cell_label = segmentation.match_nuc_cell(nuc_label, cell_label)
+            
+            # Save new label images
+            nuc_name = path_save_results / f_nuc.name
+            cell_name =  path_save_results / f_cell.name
+            
+            io.imsave(nuc_name,new_nuc_label)
+            io.imsave(cell_name,new_cell_label)
+
+
+        api.showStatus('Calculation finished.')
+
+api.export(ImJoyPlugin())
+</script>
