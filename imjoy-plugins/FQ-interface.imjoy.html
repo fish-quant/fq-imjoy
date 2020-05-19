@@ -376,6 +376,7 @@ class ImJoyPlugin {
   async scan_folder(){
 
       // Call python function to scan folder
+       this.store.files = []
       let config = await this.params_for_python()
       let file_list = await this.fq_worker.scan_folder(config)
 
@@ -383,7 +384,6 @@ class ImJoyPlugin {
       let ch_names = this.store.channels.map(channel => channel['name'])
 
       // Replace file list with new scan results
-      this.store.files = []
       file_list.map(update_files.bind(this))
 
       function update_files(file){
@@ -676,6 +676,7 @@ class ImJoyPlugin {
     await this.fq_worker.detection_batch(config)
 
     this.store.running_detect_batch=false
+    this.reset_parameters()
   }
   
   async run(ctx) {

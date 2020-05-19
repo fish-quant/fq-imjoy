@@ -691,7 +691,7 @@ class ImJoyPlugin():
         if name_save:
             image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
             image_contrasted = stack.maximum_projection(image_contrasted)
-            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(6, 5), remove_frame=True,path_output=name_save)
+            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(10, 8), remove_frame=True,path_output=name_save)
 
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
@@ -785,7 +785,7 @@ class ImJoyPlugin():
                 image=image_contrasted, 
                 cell_mask=fov_results[0]["cell_mask"],  
                 title="", 
-                remove_frame=True, framesize=(6, 5),
+                remove_frame=True, framesize=(10, 8),
                 path_output=name_save,
                 ext = 'png',
                 show = False)
