@@ -121,6 +121,12 @@ class ImJoyPlugin {
     var foci_radius = parseFloat(await api.getConfig('foci_radius'));
     if(! foci_radius) {foci_radius = 400}
 
+    var cluster_alpha = parseFloat(await api.getConfig('cluster_alpha'));
+    if(! cluster_alpha) {cluster_alpha = 0.5}
+
+    var cluster_beta = parseFloat(await api.getConfig('cluster_beta'));
+    if(! cluster_beta) {cluster_beta = 2}
+
     // Initialize parameters
     this.store = {
           version_interface: await api.getConfig('_version'),
@@ -145,6 +151,8 @@ class ImJoyPlugin {
           voxel_size_z:  voxel_size_z,
           psf_size_xy: psf_size_xy,
           psf_size_z: psf_size_z,
+          cluster_alpha: cluster_alpha,
+          cluster_beta: cluster_beta,
           foci_radius: 300,
           foci_nb_min_spots: 4,
           images: [],
@@ -1101,7 +1109,7 @@ api.export(new ImJoyPlugin())
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
             <p>
-            <p class="subtitle is-6">Remove background and enhance spots. </p>
+            <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
           </b-field>
 
 
@@ -1115,6 +1123,24 @@ api.export(new ImJoyPlugin())
             <b-field>
               <b-checkbox v-model="analyze_clusters" > Decompose RNA clusters</b-checkbox>
             </b-field>
+
+          <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_detection_applied==false || analyze_clusters==false">
+            <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForA11y1">Advanced parameters</b-button>
+            <div class="notification">
+
+              <b-field>
+                <p class="control"> <span class="button is-static">alpha</span></p>
+                <b-input v-model.number="cluster_alpha"></b-input>
+              </b-field>
+              
+              <b-field>
+                <p class="control"> <span class="button is-static">beta</span></p>
+                <b-input v-model.number="cluster_beta"></b-input>
+              </b-field>
+
+            </div>
+          </b-collapse>
+
           </b-field>
 
           <!-- Decompose clusters -->
@@ -1134,8 +1160,14 @@ api.export(new ImJoyPlugin())
                   <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
                 </b-field>
               </b-field> <!-- END: specify spot size -->
+          </b-field>
 
-            </b-field>
+
+
+
+
+
+          
 
 
           <!-- Foci calling -->

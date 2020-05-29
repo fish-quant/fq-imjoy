@@ -700,49 +700,46 @@ class ImJoyPlugin():
 
 
     async def decompose_clusters(self,config):
-
+        """
+        Decompose clusters.
+        For more details see bigfish: detection.decompose_cluster
+        """
         # Parameters
         log_config('[FISH-QUANT][decompose_clusters]', config)
         show_status = config['show_status']
-        voxel_size_z = config['voxel_size_z']
-        voxel_size_yx = config['voxel_size_yx']
-        psf_size_z = config['psf_size_z']
-        psf_size_xy = config['psf_size_xy']
-
-        name_base = self.name_base
-        channel_index = self.channel_index
-        spots = self.spots
-
+  
         # Get image
         if not self.filter_full:
             img = self.image_raw 
         else:
-            img = self.image[0, channel_index, :, :, :]
+            img = self.image[0, self.channel_index, :, :, :]
         
         spots_post_decomposition, clusters, reference_spot = detection.decompose_cluster(
-            img, spots, 
-            voxel_size_z, voxel_size_yx, psf_size_z, psf_size_xy)
+            img, 
+            spots=self.spots, 
+            voxel_size_z = config['voxel_size_z'], 
+            voxel_size_yx = config['voxel_size_yx'],
+            psf_z = config['psf_size_z'], 
+            psf_yx = config['psf_size_xy'], 
+            alpha = config['cluster_alpha'], 
+            beta = config['cluster_beta'])
 
-        api.log(f'[FISH-QUANT][decompose_cluster] from {len(spots)} to {len(spots_post_decomposition)} spots.')
-        api.showStatus(f'Cluster decomposition: from {len(spots)} to {len(spots_post_decomposition)} spots.')
+        api.log(f'[FISH-QUANT][decompose_cluster] from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
+        api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
         return spots_post_decomposition.tolist()
 
 
     async def detect_foci(self,config):
-    
+        """
+        Detect foci.
+        For more details see bigfish: detection.detect_foci
+        """
         # Parameters
         log_config('[FISH-QUANT][detect_foci]', config)
-        radius = config['foci_radius']
-        nb_min_spots = config['foci_nb_min_spots']
-        voxel_size_z = config['voxel_size_z']
-        voxel_size_yx = config['voxel_size_yx']
-        psf_size_z = config['psf_size_z']
-        psf_size_xy = config['psf_size_xy']
         name_save = config['name_save']
-        spots_post_decomposition = self.spots_post_decomposition
-        
+
         # Generate name for temporary image
         if name_save == 'tmp':
             name_base = self.name_base
@@ -752,10 +749,13 @@ class ImJoyPlugin():
 
         # Detect foci
         spots_post_clustering, foci = detection.detect_foci(
-            spots_post_decomposition, 
-            voxel_size_z, voxel_size_yx, radius, nb_min_spots)
+            spots =  self.spots_post_decomposition, 
+            voxel_size_z = config['voxel_size_z'], 
+            voxel_size_yx = config['voxel_size_yx'],
+            radius = config['foci_radius'], 
+            nb_min_spots = config['foci_nb_min_spots'])
 
-        api.log(f'[FISH-QUANT][detect_foci] found {len(foci)} foci for {len(spots_post_decomposition)} spots')
+        api.log(f'[FISH-QUANT][detect_foci] found {len(foci)} foci for {len(self.spots_post_decomposition)} spots')
         
         self.spots_post_clustering = spots_post_clustering
         self.foci = foci
@@ -796,15 +796,17 @@ class ImJoyPlugin():
             show_png(name_save+'.png')
 
         self.analysis_details['spot_detection']['settings']['foci_decomposition'] = {
-            'nb_min_spots': nb_min_spots,
-            'radius': radius,
-            'voxel_size_z': voxel_size_z,
-            'voxel_size_yx': voxel_size_yx,
-            'psf_size_z': psf_size_z,
-            'psf_size_xy': psf_size_xy,
+            'nb_min_spots': config['foci_nb_min_spots'],
+            'radius': config['foci_radius'],
+            'voxel_size_z': config['voxel_size_z'],
+            'voxel_size_yx': config['voxel_size_yx'],
+            'psf_size_z': config['psf_size_z'],
+            'psf_size_xy': config['psf_size_xy'],
+            'cluster_alpha': config['cluster_alpha'],
+            'cluster_beta': config['cluster_beta']
         }
 
-        self.analysis_details['spot_detection']['counts']['spots_decomposed'] = len(spots_post_decomposition)
+        self.analysis_details['spot_detection']['counts']['spots_decomposed'] = len(self.spots_post_decomposition)
         self.analysis_details['spot_detection']['counts']['foci'] = len(foci)
 
         return spots_post_clustering.tolist(), foci.tolist()
