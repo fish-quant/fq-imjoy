@@ -9,7 +9,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "cover": "",
   "description": "Image viewer powered by OpenLayers and itk-vtk-viewer",
   "icon": "extension",
@@ -129,38 +129,59 @@ const numpy2vtkType = {
   'float64': {componentType: 'double', arrayType: Float64Array }
 }
 
-function convertVtkImage(data){
-  if(data.__jailed_type__ === 'ndarray'){
-    if(data.__shape__.length === 2 || (data.__shape__.length==3 && data.__shape__[2]<=3)){
-      const dtype = numpy2vtkType[data.__dtype__];
-      const dshape = data.__shape__.length === 2? data.__shape__ : data.__shape__.slice(0, 2)
-      const channels =  data.__shape__.length === 3 ?  data.__shape__[2] : 1;
+function convertVtkImage(data) {
+  // convert legacy ndarray encoding
+  if (data.__jailed_type__ === 'ndarray') {
+    data._rtype = data.__jailed_type__;
+    data._rshape = data.__shape__;
+    data._rvalue = data.__value__.buffer ? data.__value__.buffer : data.__value__;
+    data._rdtype = data.__dtype__;
+  }
+
+  if (data._rtype === 'ndarray') {
+    const dtype = numpy2vtkType[data._rdtype];
+    if (data._rshape.length === 2 || (data._rshape.length == 3 && data._rshape[2] <= 3)) {
+      const channels = data._rshape.length === 3 ? data._rshape[2] : 1;
       return itkVtkViewer.utils.vtkITKHelper.convertItkToVtkImage({
-        imageType: { dimension: 2, pixelType: 1, componentType: dtype.componentType, components:channels},
+        imageType: {
+          dimension: 2,
+          pixelType: 1,
+          componentType: dtype.componentType,
+          components: channels
+        },
         name: 'Image',
-        origin: [0,0],
-        spacing: [1,1],
-        direction: {data: [1,0,0,-1]},
-        size: [dshape[1], dshape[0]],
-        data: new dtype.arrayType(data.__value__.buffer)
+        origin: [0, 0],
+        spacing: [1, 1],
+        direction: {
+          data: [1, 0, 0, 1]
+        },
+        size: [data._rshape[1], data._rshape[0]],
+        data: new dtype.arrayType(data._rvalue)
       })
-    }
-    else if(data.__shape__.length === 3){
+    } else if (data._rshape.length === 3) {
       return itkVtkViewer.utils.vtkITKHelper.convertItkToVtkImage({
-        imageType: { dimension: 3, pixelType: 1, componentType: dtype.componentType, components: 1},
-        name: 'image',
-        origin: [0,0,0],
-        spacing: [1,1,1],
-        direction: {data: [1,0,0,0,1,0,0,0,1]},
-        size: [dshape[2], dshape[1], dshape[0]],
-        data: new dtype.arrayType(data.__value__.buffer)
+        imageType: {
+          dimension: 3,
+          pixelType: 1,
+          componentType: dtype.componentType,
+          components: 1
+        },
+        name: 'Volume',
+        origin: [0, 0, 0],
+        spacing: [1, 1, 1],
+        direction: {
+          data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        },
+        size: [data._rshape[2], data._rshape[1], data._rshape[0]],
+        data: new dtype.arrayType(data._rvalue)
       })
-    }
-    else{
+    } else {
       throw new Error(`Unsupported shape: ${arr.shape}`)
     }
   }
+  return data
 }
+
 
 const app = new Vue({
   el: '#app',
