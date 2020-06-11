@@ -231,10 +231,12 @@ class ImJoyPlugin {
             self.load_image(file)
           },
 
+          // Show filtered image
           showImageFilt(obj){
                   this.img_filt = obj
-              },
+          },
 
+          // Show raw image
           showImage(obj){
               this.images.push(obj)
               if(this.images.length>5){
@@ -243,6 +245,7 @@ class ImJoyPlugin {
               this.current_index = this.images.length -1
           },
 
+          // Set detection threshold
           setThreshold(threshold){
             this.detection_threshold = threshold
           },
@@ -767,7 +770,7 @@ api.export(new ImJoyPlugin())
           </b-field>
         </b-field> <!-- END: specify pixel size -->
         
-                <!-- Specify pixel size -->
+        <!-- Specify pixel size -->
         <b-field label="Image extension" horizontal grouped>
           <b-field>
             <b-input  v-model="img_ext"></b-input>
@@ -1044,8 +1047,8 @@ api.export(new ImJoyPlugin())
             <b-input placeholder="107" v-model.number="minimum_distance[1]"></b-input>
           </b-field>
 
-          <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_image_filtered==false">
-            <b-button class="button is-primary" :disabled="status_image_filtered==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForA11y1">Specify intensity range to test thresholds</b-button>
+          <b-collapse :open="true" aria-id="contentIdForDetectionPars" :disabled="status_image_filtered==false">
+            <b-button class="button is-primary" :disabled="status_image_filtered==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForDetectionPars">Specify intensity range to test thresholds</b-button>
             <div class="notification">
 
               <b-field label="Minimum">
@@ -1124,8 +1127,8 @@ api.export(new ImJoyPlugin())
               <b-checkbox v-model="analyze_clusters" > Decompose RNA clusters</b-checkbox>
             </b-field>
 
-          <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_detection_applied==false || analyze_clusters==false">
-            <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForA11y1">Advanced parameters</b-button>
+          <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
+            <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForClusterPar">Advanced parameters</b-button>
             <div class="notification">
 
               <b-field>

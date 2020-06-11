@@ -82,7 +82,7 @@ def save_spots(spots, type, name_save):
         header = "Z,Y,X"
 
     if type == 'ZYXF':
-        header = "Z,Y,n_rna,id"
+        header = "Z,Y,X,foci_idx"
 
     np.savetxt( name_save,
                 np.asarray(spots),
