@@ -263,7 +263,7 @@ class ImJoyPlugin {
 
             let data_show = [];
             let data_img = ['img_raw',channel_selected,'mip'];
-            data_show.push(data_img, data_img);
+            data_show.push(data_img);
 
             this.fq_worker.show_results({
                         'display_type': 'dialog',
@@ -280,8 +280,8 @@ class ImJoyPlugin {
           btn_show_image_filtered: async function(){
 
             let data_show = [];
-            let data_img_raw = ['img_raw',channel_selected,'mip'];
-            let data_img_filt = ['img_filt',channel_selected,'mip'];
+            let data_img_raw = ['img_raw', this.channel_selected,'mip'];
+            let data_img_filt = ['img_filt', this.channel_selected,'mip'];
             data_show.push(data_img_raw, data_img_filt);
 
             this.fq_worker.show_results({
@@ -609,7 +609,7 @@ class ImJoyPlugin {
     this.store.running_detect_apply=true
     let config = await this.params_for_python();
     config.show_status = true;
-    var spots = await this.fq_worker.detect_apply(config)
+    await this.fq_worker.detect_apply(config)
     
     // Display results
     let data_show = [];
@@ -639,14 +639,20 @@ class ImJoyPlugin {
     // Decompose clusters
     let config = await this.params_for_python();
     config.show_status = true;
-    var spots = await this.fq_worker.decompose_clusters(config)
+    await this.fq_worker.decompose_clusters(config)
 
-    // Show detected spots
-    this.fq_viewer.run({'data':{
-                              'url': this.store.img_filt_load['url'],
-                              'shape':this.store.img_filt_load['shape'],
-                              'points':spots}
-                              })
+    // Display results
+    let data_show = [];
+    let data_img_raw = ['img_raw',this.store.channel_selected,'mip'];
+    let data_img_filt = ['img_filt',this.store.channel_selected,'mip'];
+    let data_spots = ['spots_decompose','3'];
+
+    data_show.push(data_img_raw, data_img_filt,data_spots);
+
+    this.fq_worker.show_results({
+                'display_type': 'dialog',
+                'data_show':data_show
+                })
 
     // Update interface
     api.setConfig('psf_size_xy', this.store.psf_size_xy)

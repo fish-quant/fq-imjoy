@@ -28,8 +28,8 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface",
-          "fish-quant/fq-imjoy:FQ-image-viewer",
-          "fish-quant/fq-imjoy:ImageViewer"],
+          "fish-quant/fq-imjoy:FQ-image-viewer"
+          ],
   "runnable": true
 }
 </config>
@@ -306,8 +306,13 @@ class ImJoyPlugin():
 
                 await viewer.view_image(image_array, type="itk-vtk", name=name)
 
-            elif data_type == 'spots': 
+            elif data_type == 'spots' or data_type == 'spots_decompose':
                 
+                if data_type == 'spots':
+                    spots=self.spots
+                else:
+                    spots=self.spots_post_decomposition
+
                 # Remove z position if present 
                 if spots.shape[1] == 3:
                     spots = np.delete(spots, 0, 1)
@@ -724,7 +729,7 @@ class ImJoyPlugin():
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
         self.spots = spots
-        return spots.tolist()
+        #return spots.tolist()
 
 
     async def decompose_clusters(self,config):
@@ -756,7 +761,7 @@ class ImJoyPlugin():
         api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
-        return spots_post_decomposition.tolist()
+        #return spots_post_decomposition.tolist()
 
 
     async def detect_foci(self,config):
