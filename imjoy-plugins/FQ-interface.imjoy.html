@@ -260,11 +260,14 @@ class ImJoyPlugin {
           // Callback to save filtered image
           dblclick_show_image_raw: async function(channel_selected){
             console.log(channel_selected)
-            this.fq_worker.show_image({
-                        'channel_selected': channel_selected,
-                        'image_type': 'raw',
-                        'image_dim': 'mip',
-                        'display_type': 'dialog'
+
+            let data_show = [];
+            let data_img = ['img_raw',channel_selected,'mip'];
+            data_show.push(data_img, data_img);
+
+            this.fq_worker.show_results({
+                        'display_type': 'dialog',
+                        'data_show':data_show
                         })
           },
 
@@ -275,21 +278,29 @@ class ImJoyPlugin {
 
           // Callback to show filtered image: as resizable window
           btn_show_image_filtered: async function(){
-            this.fq_worker.show_image({
-                        'channel_selected': this.channel_selected,
-                        'image_type': 'filtered',
-                        'image_dim': 'mip',
-                        'display_type': 'window'
+
+            let data_show = [];
+            let data_img_raw = ['img_raw',channel_selected,'mip'];
+            let data_img_filt = ['img_filt',channel_selected,'mip'];
+            data_show.push(data_img_raw, data_img_filt);
+
+            this.fq_worker.show_results({
+                        'display_type': 'window',
+                        'data_show':data_show
                         })
           },
 
           // Callback to show filtered image: as dialog
           dblclick_show_image_filtered: async function(){
-            this.fq_worker.show_image({
-                        'channel_selected': this.channel_selected,
-                        'image_type': 'filtered',
-                        'image_dim': 'mip',
-                        'display_type': 'dialog'
+
+            let data_show = [];
+            let data_img_raw = ['img_raw', this.channel_selected,'mip'];
+            let data_img_filt = ['img_filt', this.channel_selected,'mip'];
+            data_show.push(data_img_raw, data_img_filt);
+
+            this.fq_worker.show_results({
+                        'display_type': 'dialog',
+                        'data_show':data_show
                         })
           },
 
@@ -601,12 +612,18 @@ class ImJoyPlugin {
     var spots = await this.fq_worker.detect_apply(config)
     
     // Display results
-    this.fq_viewer.run({'data':{
-                              'url': this.store.img_filt_load['url'],
-                              'shape':this.store.img_filt_load['shape'],
-                              'points':spots}
-                              })
-    
+    let data_show = [];
+    let data_img_raw = ['img_raw',this.store.channel_selected,'mip'];
+    let data_img_filt = ['img_filt',this.store.channel_selected,'mip'];
+    let data_spots = ['spots','3'];
+
+    data_show.push(data_img_raw, data_img_filt,data_spots);
+
+    this.fq_worker.show_results({
+                'display_type': 'dialog',
+                'data_show':data_show
+                })
+
     this.store.running_detect_apply=false
     this.store.status_detection_applied = true
   }

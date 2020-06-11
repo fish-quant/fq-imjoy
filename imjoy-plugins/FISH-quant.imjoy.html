@@ -245,51 +245,79 @@ class ImJoyPlugin():
         return api.ENGINE_URL
 
 
-    async def show_image(self, config):
+    async def show_results(self, config):
         """
-        Show filtered image
+        Show results (images, spots, outlines, ...)
         """
 
         # Parameters
         log_config('[FISH-QUANT][show_image]', config)
-        channel_selected = config['channel_selected']
-        image_type = config['image_type']
-        image_dim = config['image_dim']
+        #channel_selected = config['channel_selected']
+        #image_type = config['image_type']
+        #image_dim = config['image_dim']
         display_type = config['display_type']
-
-        # Check if channel was selected
-        if len(channel_selected) == 0:
-            api.alert('Please select which channel should be processed!')
-            return
-
-        # Get index of selected channel
-        #api.log(self.image_names[channel_selected])
-        channel_index = self.image_names[channel_selected]["index"]
-        api.log(f'channel_index: {channel_index}; image_type: {image_type}; image_dim: {image_dim};')
-        
-        # Get image to be shown
-        if image_type == 'raw':
-            if image_dim == 'orig':
-                image_array = self.image[0, channel_index, :, :, :]
-            
-            elif image_dim == 'mip':
-                image_array = self.image_mips[channel_index, :, :]
-
-        elif image_type == 'filtered':
-            if image_dim == 'orig':
-                image_array = self.image_filt
-
-            elif image_dim == 'mip':
-                image_array = self.image_filt_mip
-
-        #api.log(image_array.size())
+        data_show = config['data_show']
 
         # Show image
+        # Could also be viewer = await api.createWindow(type="Kaibu")
+
         if display_type == 'window':
-            p = await api.createWindow(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
+            viewer = await api.createWindow(src="https://kaibu.org")
+
         elif display_type == 'dialog':
-            p = await api.showDialog (type='ImageViewer', name="Show image with ImageViewer", data={"image_array": image_array,'lut_name': 'BkRd'})
-  
+            viewer = await api.showDialog(src="https://kaibu.org")
+
+        # Loop over provided layers that should be displayed
+        for data_add in data_show:
+            api.log(f'Adding new layer with specs: {data_add}')
+
+            data_type = data_add[0]
+
+            # Raw or filtered image
+            if data_type == 'img_raw' or data_type == 'img_filt':
+                channel_selected = data_add[1]
+                display_dim = data_add[2]
+
+                # Check if channel was selected
+                if len(channel_selected) == 0:
+                    api.alert('Please select which channel should be processed!')
+                    return
+
+                # Get index of selected channel
+                channel_index = self.image_names[channel_selected]["index"]
+                api.log(f'channel_index: {channel_index}; image_type: {data_type}; display_dim: {display_dim};')
+                
+                # Get image to be shown
+                if data_type == 'img_raw':
+                    name = 'raw image'
+                    if display_dim == 'orig':
+                        image_array = self.image[0, channel_index, :, :, :]
+                    
+                    elif display_dim == 'mip':
+                        image_array = self.image_mips[channel_index, :, :]
+
+                elif data_type == 'img_filt':
+                    name = 'filtered image'
+                    if display_dim == 'orig':
+                        image_array = self.image_filt
+
+                    elif display_dim == 'mip':
+                        image_array = self.image_filt_mip
+
+                await viewer.view_image(image_array, type="itk-vtk", name=name)
+
+            elif data_type == 'spots': 
+                
+                # Remove z position if present 
+                if spots.shape[1] == 3:
+                    spots = np.delete(spots, 0, 1)
+                
+                # Invert X and Y 
+                spots[:,[0, 1]] = spots[:,[1, 0]]
+                points = spots.tolist()
+ 
+                await viewer.add_shapes(points, shape_type="point", size=data_add[1], name='Detections', edge_color = '#db2307')
+
 
     async def save_analysis_details(self, name_save):
         """
