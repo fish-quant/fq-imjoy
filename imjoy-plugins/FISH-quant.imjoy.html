@@ -13,7 +13,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
   "name": "FISH-QUANT",
   "type": "native-python",
   "version": "0.0.4",
-  "description": "Worker to process smFISH images.",
+  "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
   "cover": "",
@@ -27,7 +27,7 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
   "requirements": { "stable":["pip: -U git+https://github.com/fish-quant/big-fish@master#egg=big-fish"],
                     "dev": [""]},
     "dependencies":  [
-          "fish-quant/fq-imjoy:FQ-interface",
+          "fish-quant/fq-imjoy:FQ-interface"
           ],
   "runnable": true
 }
@@ -276,7 +276,7 @@ class ImJoyPlugin():
         await viewer.view_image(image_array, type="itk-vtk", name='image')
 
         # Add annotation layer
-        layer = await viewer.add_shapes([ ], shape_type="polygon", edge_color="red", name="analysis region", draw_shape_type= "Rectangle",draw_enable=True)
+        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", draw_edge_color = '#db2307',  draw_face_color = '#eb9d91AA', draw_shape_type= "Rectangle",draw_enable=True)
 
         # get the annotation in geojson format
 
@@ -299,7 +299,9 @@ class ImJoyPlugin():
             analysis_region = np.around(np.concatenate((coords.min(axis=0),coords.max(axis=0))))
             
             self.analysis_region = analysis_region.astype('uint16')
-            viewer.close 
+            
+            api.alert('Analysis region will be used. You can close the Kaibu window if you want.')
+            #viewer.close # doesn't work
 
         await viewer.set_ui({"title": "Utilities",
                     "elements": [
@@ -589,6 +591,7 @@ class ImJoyPlugin():
         self.channel_names = channel_name
 
         # Initiate some parameters that will be populated along the way
+        self.filter_full = True
         self.image_filt = []
         self.mask_lm = []
         self.analysis_region = []
