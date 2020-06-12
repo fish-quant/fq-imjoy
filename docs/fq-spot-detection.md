@@ -18,13 +18,12 @@ In this tab, the user will specify
 1. Select which channel should be analyzed.
 2. [Optional]: to speed up an exploratory analysis, you can **restrict the analysis to a smaller region of the image**.
       1. Press `Select smaller region to test analysis`
-      2. This will open a new window where you see the filtered image. In this window, you can
-         1. Change the contrast with the slider at the top
-         2. Pan and zoom with the   mouse
-      3. Select a rectangular region after pressing on the square symbol in the lower-left corner.
-      4. Once you are satisfied with the selection, highlight the rectangle (it will turn red) and press on the return button in the upper right corner.
+      2. This will open a new window where you see the filtered image.
+      3. A rectangular selection is preselected. You can highlight a region where you want to test the analysis. Draw only one region!
+      4. Once you are satisfied with the selection, you can press the button `Return selection to FISH-quant`.
+      5. You can then close the window.
 
-      ![fq-select-region.gif](img/fq-select-region.gif){: style="width:450px"}
+      ![kaibu_select_region.png](img/kaibu_select_region.png){: style="width:450px"}
 
 ### Filter image
 Here you can change the paramaters of the LoG (Laplacian of Gaussian filter. More details about the LoG filter can be found in the background section below.
@@ -60,10 +59,8 @@ Spot detection is performed with a local maximum detection on the filtered image
     ![fq-detection-curve.png](img/fq-detection-curve.png){: style="width:350px"}
 
 3. To apply the threshold, press the button `Apply detection threshold`. Once finished, 
-    this will show the results in a separate window, where the spot detections can be toogled and the 
-    image contrast be changed.
-
-    ![fq-inspect-spots.gif](img/fq-inspect-spots.gif){: style="width:350px"}
+   the detection results will be shown in Kaibu. Here you can toggle the spot detection results, 
+   show either the raw and filtered image, and judge the quality of the spot detection. 
 
 4. You can then analyze either
     * The **currently selected image** with the button `Analyze current image`. If filtering was performed on the full size image, the image will not be filtered again.
