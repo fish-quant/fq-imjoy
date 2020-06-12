@@ -262,7 +262,7 @@ class ImJoyPlugin {
             console.log(channel_selected)
 
             let data_show = [];
-            let data_img = ['img_raw',channel_selected,'mip'];
+            let data_img = ['img_raw',channel_selected,'mip','true'];
             data_show.push(data_img);
 
             this.fq_worker.show_results({
@@ -280,8 +280,8 @@ class ImJoyPlugin {
           btn_show_image_filtered: async function(){
 
             let data_show = [];
-            let data_img_raw = ['img_raw', this.channel_selected,'mip'];
-            let data_img_filt = ['img_filt', this.channel_selected,'mip'];
+            let data_img_raw = ['img_raw', this.channel_selected,'mip','false'];
+            let data_img_filt = ['img_filt', this.channel_selected,'mip','true'];
             data_show.push(data_img_raw, data_img_filt);
 
             this.fq_worker.show_results({
@@ -294,8 +294,8 @@ class ImJoyPlugin {
           dblclick_show_image_filtered: async function(){
 
             let data_show = [];
-            let data_img_raw = ['img_raw', this.channel_selected,'mip'];
-            let data_img_filt = ['img_filt', this.channel_selected,'mip'];
+            let data_img_raw = ['img_raw', this.channel_selected,'mip','false'];
+            let data_img_filt = ['img_filt', this.channel_selected,'mip','true'];
             data_show.push(data_img_raw, data_img_filt);
 
             this.fq_worker.show_results({
@@ -474,40 +474,16 @@ class ImJoyPlugin {
 
 
   /**
-   * Set smaller region for analysis
-   * Used as a callback function.
-   */
-  async set_analysis_region(coords) {
-    console.log('[FISH-quant] Obtained coordinates:' + coords)
-    this.store.analysis_region = coords
-  }
-
-
-  /**
-   * Select smaller region for analysis
+   * Define region to specify analysis parameters
    */
   async select_analysis_region() {
 
-    // Get image corresponding to selected channel
-    var img_selected = this.store.images.find(obj => {
-      return obj.channel === this.store.channel_selected
-    })
+    this.fq_worker.select_analysis_region({
+                'display_type': 'dialog',
+                'channel_selected':this.store.channel_selected
+                })
 
-    if (img_selected === undefined){
-      api.alert('Select a channel first')
-      return
-    }
-
-    // Sending data to the viewer
-    console.log('[FQ] sending data to viewer.')
-    await this.fq_viewer.run({'data':{
-                                      'url': img_selected['url'],
-                                      'shape':img_selected['shape'],
-                                      'callback_return_region': this.set_analysis_region
-                                      }
-    })
   }
-
 
   /**
    * Filter image
@@ -613,9 +589,9 @@ class ImJoyPlugin {
     
     // Display results
     let data_show = [];
-    let data_img_raw = ['img_raw',this.store.channel_selected,'mip'];
-    let data_img_filt = ['img_filt',this.store.channel_selected,'mip'];
-    let data_spots = ['spots','3'];
+    let data_img_raw = ['img_raw',this.store.channel_selected,'mip','false'];
+    let data_img_filt = ['img_filt',this.store.channel_selected,'mip','true'];
+    let data_spots = ['spots','3','true'];
 
     data_show.push(data_img_raw, data_img_filt,data_spots);
 
@@ -643,9 +619,9 @@ class ImJoyPlugin {
 
     // Display results
     let data_show = [];
-    let data_img_raw = ['img_raw',this.store.channel_selected,'mip'];
-    let data_img_filt = ['img_filt',this.store.channel_selected,'mip'];
-    let data_spots = ['spots_decompose','3'];
+    let data_img_raw = ['img_raw',this.store.channel_selected,'mip','false'];
+    let data_img_filt = ['img_filt',this.store.channel_selected,'mip','true'];
+    let data_spots = ['spots_decompose','3','true'];
 
     data_show.push(data_img_raw, data_img_filt,data_spots);
 

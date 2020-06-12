@@ -28,7 +28,6 @@ TODO: update install link to fish-quant/big-fish once PR for pip installation is
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface",
-          "fish-quant/fq-imjoy:FQ-image-viewer"
           ],
   "runnable": true
 }
@@ -244,6 +243,73 @@ class ImJoyPlugin():
     def get_engine_url(self):
         return api.ENGINE_URL
 
+    async def select_analysis_region(self, config):
+        """
+        Show results (images, spots, outlines, ...)
+        """
+
+        # Parameters
+        log_config('[FISH-QUANT][select_analysis_region]', config)
+        channel_selected = config['channel_selected']
+        display_type = config['display_type']
+
+        # Show image
+        # Could also be viewer = await api.createWindow(type="Kaibu")
+
+        if display_type == 'window':
+            viewer = await api.createWindow(src="https://kaibu.org")
+    
+        elif display_type == 'dialog':
+            viewer = await api.showDialog(src="https://kaibu.org")
+    
+        # Check if channel was selected
+        if len(channel_selected) == 0:
+            api.alert('Please select which channel should be processed!')
+            return
+
+        # Get index of selected channel
+        channel_index = self.image_names[channel_selected]["index"]
+        api.log(f'channel_index: {channel_index}')
+        
+        # Create viewer
+        image_array = self.image_mips[channel_index, :, :]
+        await viewer.view_image(image_array, type="itk-vtk", name='image')
+
+        # Add annotation layer
+        layer = await viewer.add_shapes([ ], shape_type="polygon", edge_color="red", name="analysis region", draw_shape_type= "Rectangle",draw_enable=True)
+
+        # get the annotation in geojson format
+
+        async def get_geojson_features():    
+            features = await layer.get_features()
+ 
+            if len(features['features']) != 1:
+                api.alert('Only one annotation is allowed')
+                return
+
+            if features['features'][0]['geometry']['type'] != 'Polygon':
+                api.alert('Annotation has to be a Polygon')
+                return
+
+            coords = np.asarray(features['features'][0]['geometry']['coordinates'][0])
+            if len(coords) != 5:
+                api.alert('This is not a rectangular selection')
+                return
+
+            analysis_region = np.around(np.concatenate((coords.min(axis=0),coords.max(axis=0))))
+            
+            self.analysis_region = analysis_region.astype('uint16')
+            viewer.close 
+
+        await viewer.set_ui({"title": "Utilities",
+                    "elements": [
+                        {"_rintf": True,
+                        "type": "button",
+                        "label": "Return selection to FISH-quant",
+                        "callback": get_geojson_features
+                        },   
+                    ]
+        })    
 
     async def show_results(self, config):
         """
@@ -251,10 +317,7 @@ class ImJoyPlugin():
         """
 
         # Parameters
-        log_config('[FISH-QUANT][show_image]', config)
-        #channel_selected = config['channel_selected']
-        #image_type = config['image_type']
-        #image_dim = config['image_dim']
+        log_config('[FISH-QUANT][show_results]', config)
         display_type = config['display_type']
         data_show = config['data_show']
 
@@ -263,13 +326,10 @@ class ImJoyPlugin():
 
         if display_type == 'window':
             viewer = await api.createWindow(src="https://kaibu.org")
-            #viewer = await api.createWindow(src="https://deploy-preview-12--kaibu.netlify.app/#/app")
-
-        
+  
         elif display_type == 'dialog':
             viewer = await api.showDialog(src="https://kaibu.org")
-            #viewer = await api.showDialog(src="https://deploy-preview-12--kaibu.netlify.app/#/app")
-
+   
         # Loop over provided layers that should be displayed
         for data_add in data_show:
             api.log(f'Adding new layer with specs: {data_add}')
@@ -278,8 +338,15 @@ class ImJoyPlugin():
 
             # Raw or filtered image
             if data_type == 'img_raw' or data_type == 'img_filt':
+                
                 channel_selected = data_add[1]
                 display_dim = data_add[2]
+                visible = data_add[3]
+                
+                if visible == 'true':
+                    visible = True
+                else:
+                    visible = False
 
                 # Check if channel was selected
                 if len(channel_selected) == 0:
@@ -293,11 +360,24 @@ class ImJoyPlugin():
                 # Get image to be shown
                 if data_type == 'img_raw':
                     name = 'raw image'
-                    if display_dim == 'orig':
-                        image_array = self.image[0, channel_index, :, :, :]
+                        
+                    # Full image
+                    if self.filter_full:
+            
+                        if display_dim == 'orig':
+                            image_array = self.image[0, channel_index, :, :, :]
                     
-                    elif display_dim == 'mip':
-                        image_array = self.image_mips[channel_index, :, :]
+                        elif display_dim == 'mip':
+                            image_array = self.image_mips[channel_index, :, :]
+                    
+                    # Croppend image for analysis
+                    else:
+                        
+                        if display_dim == 'orig':
+                            image_array = self.image_raw
+                    
+                        elif display_dim == 'mip':
+                            image_array = self.image_raw_mip
 
                 elif data_type == 'img_filt':
                     name = 'filtered image'
@@ -307,10 +387,18 @@ class ImJoyPlugin():
                     elif display_dim == 'mip':
                         image_array = self.image_filt_mip
 
-                await viewer.view_image(image_array, type="itk-vtk", name=name)
+                await viewer.view_image(image_array, type="itk-vtk", name=name, visible=visible)
 
             elif data_type == 'spots' or data_type == 'spots_decompose':
                 
+                size=data_add[1]
+                visible = data_add[2]
+
+                if visible == 'true':
+                    visible = True
+                else:
+                    visible = False
+
                 if data_type == 'spots':
                     points=self.spots.astype('uint16')
                 else:
@@ -323,7 +411,7 @@ class ImJoyPlugin():
                 # Invert X and Y 
                 points[:,[0, 1]] = points[:,[1, 0]]
                 
-                await viewer.add_points(points, size=data_add[1], name='Detections', edge_color = '#db2307', face_color = '#eb9d91')
+                await viewer.add_points(points, size=size, name='Detections', visible=visible, edge_color = '#db2307', face_color = '#eb9d91')
 
 
     async def save_analysis_details(self, name_save):
@@ -499,8 +587,11 @@ class ImJoyPlugin():
         self.image_names = image_names
         self.channel_identifiers = channel_identifiers
         self.channel_names = channel_name
+
+        # Initiate some parameters that will be populated along the way
         self.image_filt = []
         self.mask_lm = []
+        self.analysis_region = []
 
         # Status updates
         api.log(f'[FISH-QUANT][load_image] loaded image: shape: {image.shape}, dtype: {image.dtype}')
@@ -527,47 +618,42 @@ class ImJoyPlugin():
 
         if show_status: api.showStatus('Filtering image ....')
 
-        # Is a sub-region selected?
-        if 'analysis_region' in config:
-            analysis_region = config['analysis_region']
-        else:
-            analysis_region = []
-
-        # Check if channel was selected
-        if len(channel_selected) == 0:
-            api.alert('Please select which channel should be processed!')
-            return
-
         # Get index of channel that will be analyzed
         channel_index = image_names[channel_selected]["index"]
         api.log(f'[FISH-QUANT][filter_image] filtering channel {channel_selected} with index {channel_index}')
 
         # Crop image if specified
         x_min = None
+        
+        if len(self.analysis_region) > 0:
+            analysis_region = self.analysis_region
 
-        if analysis_region:
-            numbers = np.fromstring(analysis_region,dtype=float, sep=',').astype('int')
             n_y = self.image.shape[3]-1
             n_x = self.image.shape[4]-1
 
-            x_min = numbers[0]
-            x_max = numbers[2]
-            y_min = n_y-numbers[3]
-            y_max = n_y-numbers[1]
-
+            x_min = analysis_region[0]
+            y_min = analysis_region[1]
+            x_max = analysis_region[2]
+            y_max = analysis_region[3]
+   
             if (x_min<0): x_min = 0
             if (x_max>n_x): x_max = n_x
             if (y_min<0): x_min = 0
             if (y_max>n_y): y_max = n_y
-
-        # Select image and filter
-        if x_min:
+        
             img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
             self.image_raw = img
+            self.image_raw_mip = stack.maximum_projection(img)
             self.filter_full = False
+        
         else:
             img = self.image[0, channel_index, :, :, :]
-            self.filter_full = True
+            self.filter_full = True        
+
+        # Check if channel was selected
+        if len(channel_selected) == 0:
+            api.alert('Please select which channel should be processed!')
+            return
 
         img_filt = stack.log_filter(img, sigma)
 
@@ -604,7 +690,6 @@ class ImJoyPlugin():
             create_folder(path_save)
             
             name_save = str(path_save / f'img_filt_mip_dum_c{channel_index}.png')
-            #url,shape = await image_mip_url(img_filt, name_save, self.file_manager, rescale = True)
             img_mip, shape, url = await image_mip(img_filt, name_save, self.file_manager, create_url=True, rescale=True)
 
             self.image_filt_mip = img_mip
