@@ -70,6 +70,10 @@ Spot detection is performed with a local maximum detection on the filtered image
     For each analysed images, results files will be created in the specified results folder. 
     More details on the results files can be found below.
 
+## RNA decomposition and foci detection
+
+TODO: To be added.
+
 ## Results
 
 For each analyzed image, two files will be created and stored under the orginal image name with a suffix
