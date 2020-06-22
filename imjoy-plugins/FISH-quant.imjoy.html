@@ -556,6 +556,12 @@ class ImJoyPlugin():
             api.log(f'[FISH-QUANT][load_image] reading image: {image_name_full}')
 
             tensor_3d = io.imread(image_name_full)
+
+            # Code needed to swap z at first axes
+            if not config['z_first']:
+                tensor_3d = np.swapaxes(tensor_3d,0,2)
+                tensor_3d = np.swapaxes(tensor_3d,1,2)
+
             tensors_3d.append(tensor_3d)
 
             image_names.update({ channel_name :  {
@@ -932,7 +938,7 @@ class ImJoyPlugin():
         self.analysis_details['spot_detection']['counts']['spots_decomposed'] = len(self.spots_post_decomposition)
         self.analysis_details['spot_detection']['counts']['foci'] = len(foci)
 
-        return spots_post_clustering.tolist(), foci.tolist()
+        #return spots_post_clustering.tolist(), foci.tolist()
 
 
     async def detection_file(self,config):
@@ -962,10 +968,14 @@ class ImJoyPlugin():
         config['analysis_region'] = []  # Reset analysis region to analyze full size image
 
         # >>> Check if full size image has been processed already - if yes, filtering and local max can be reused
+        api.log(' <><><><><><><><> DEBUG: self.filter_full')
+        api.log(self.filter_full)
+        
         if not self.filter_full:
 
             # Filter
             api.showStatus(f'Processing file: filtering image')
+            self.analysis_region = []
             await self.filter_image(config)
         
             # Detection
@@ -980,10 +990,10 @@ class ImJoyPlugin():
         else:
             config['name_save'] = False
 
-        spots = await self.detect_apply(config)
-   
+        await self.detect_apply(config)
+
         # Save spot positions
-        save_spots(spots, 'ZYX',  path_save / f'{name_base}__spots.csv')
+        save_spots(self.spots, 'ZYX',  path_save / f'{name_base}__spots.csv')
 
         # Save detection plot (if present)
         if hasattr(self, 'detection_plot'): 
@@ -998,10 +1008,11 @@ class ImJoyPlugin():
             else:
                 config['name_save'] = False
 
-            spots_post_clustering, foci = await self.detect_foci(config)
-            
-            save_spots(spots_post_clustering, 'ZYXF',  path_save / f'{name_base}__spots_foci.csv')
-            save_foci(foci,  path_save / f'{name_base}__foci.csv')
+            #spots_post_clustering, foci = await self.detect_foci(config)
+            await self.detect_foci(config)
+
+            save_spots(self.spots_post_clustering, 'ZYXF',  path_save / f'{name_base}__spots_foci.csv')
+            save_foci(self.foci,  path_save / f'{name_base}__foci.csv')
 
         # >>> Save analysis details
         await self.save_analysis_details(path_save / f'{name_base}__analysis_details.json')
@@ -1009,8 +1020,8 @@ class ImJoyPlugin():
         # Update status
         det_th = config['detection_threshold']
         if not config['batch_analysis']:
-            api.alert(f'Processing of loaded file finished:\n{name_base}\nDetection with threshold {det_th} yields  {len(spots)} spots')
-        api.showStatus(f'Processing of loaded file finished: {len(spots)} spots detected')
+            api.alert(f'Processing of loaded file finished:\n{name_base}\nDetection with threshold {det_th} yields  {len(self.spots)} spots')
+        api.showStatus(f'Processing of loaded file finished: {len(self.spots)} spots detected')
 
 
     async def detection_batch(self,config):

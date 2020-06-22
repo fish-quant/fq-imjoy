@@ -141,8 +141,10 @@ class ImJoyPlugin {
           file_loaded: '',
           data_path: data_path, 
           output_path:"acquisition>>analysis",
+          z_first: true,
           img_ext: img_ext,
           channels: [],
+          analysis_region: [],
           ch_name: [],
           ch_ident: [],
           reg_exp: reg_exp,
@@ -352,6 +354,7 @@ class ImJoyPlugin {
 
       this.store.images = []
       this.store.img_filt = []
+      this.store.analysis_region = []
 
       this.store.channel_selected = null
       this.store.detection_threshold = null
@@ -364,6 +367,15 @@ class ImJoyPlugin {
       this.store.status_detection_applied = false
       this.store.status_detect_apply = false
       this.store.status_decompose_clusters = false
+
+      this.store.running_load = false
+      this.store.running_filter = false
+      this.store.running_detect_test = false
+      this.store.running_detect_apply = false
+      this.store.running_decompose_clusters = false
+      this.store.running_detect_foci = false
+      this.store.running_detect_image = false
+      this.store.running_detect_batch = false
   }
 
 
@@ -765,6 +777,10 @@ api.export(new ImJoyPlugin())
             <p class="control"> <span class="button is-static">z [nm]</span></p>
             <b-input placeholder="300" v-model.number="voxel_size_z"></b-input>
           </b-field>
+          <b-field>
+            <b-switch v-model="z_first">Z first</b-switch>
+          </b-field>
+
         </b-field> <!-- END: specify pixel size -->
         
         <!-- Specify pixel size -->
