@@ -14,7 +14,7 @@ The organization of the provided test data is the following
 
 ```
 ├─ fq-imjoy-demo/
-│  ├─ acquisition                          # Folder with raw data
+│  ├─ acquisition                          # Folder with raw images
 │  │  ├─ test_pos001_cy3.tif
 │  │  ├─ test_pos001_dapi.tif
 │  │  ├─ test_pos002_cy3.tif
