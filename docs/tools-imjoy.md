@@ -122,7 +122,7 @@ pip install -U imjoy
 ### Plugin running on wrong engine
 You have several options
 
-* Disconnect or delete the engine the plugin is connecting to (see )[here](#managing-plugin-engines)).
+* Disconnect or delete the engine the plugin is connecting to see [here](#managing-plugin-engines)).
 * In the plugin menu (clicking on the little puzzle symbol left of the plugin name), select the appropriate engine.
 
 ### Remove conda environment
@@ -144,4 +144,4 @@ When launched like this, you will not get the full Jupyter URL in the terminal, 
 
 When copying this link to the ImJoy app for the first time you have to replace the `...` by the token you actually specified.
 
-The next time you start jupyter with `imjoy --jupyter` your custom token will be used
+The next time you start jupyter with `imjoy --jupyter` your custom token will be used.
