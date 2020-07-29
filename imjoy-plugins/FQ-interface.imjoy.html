@@ -8,7 +8,7 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "cover": "",
   "description": "[TODO: describe this plugin with one sentence.]",
   "icon": "extension",
@@ -17,7 +17,7 @@
   "api_version": "0.1.8",
   "env": "",
   "permissions": [],
-    "requirements": [
+  "requirements": [
                       "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css",
                       "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js",
                       "https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css",
@@ -27,7 +27,7 @@
                       ],
   "dependencies": [],
   "runnable": false,
-  "defaults": {"w": 20, "h": 10}
+  "defaults": {"w": 20, "h": 20}
 }
 </config>
 
@@ -92,9 +92,10 @@ class ImJoyPlugin {
     }
 
     var data_path = await api.getConfig('data_path')
-    if(! data_path) {
-      data_path = 'paste-path-to-data'
-    }
+    if(! data_path) {data_path = 'paste-path-to-data'}
+
+    var img_ext = await api.getConfig('img_ext')
+    if(! img_ext) {img_ext = 'tif'}
 
     var sigma_xy =  parseFloat(await api.getConfig('sigma_xy'));
     if(! sigma_xy) {sigma_xy = 0.75}
@@ -102,10 +103,35 @@ class ImJoyPlugin {
     var sigma_z = parseFloat(await api.getConfig('sigma_z'));
     if(! sigma_z) {sigma_z = 1}
 
+    var voxel_size_yx =  parseFloat(await api.getConfig('voxel_size_yx'));
+    if(! voxel_size_yx) {voxel_size_yx = 100}
+
+    var voxel_size_z = parseFloat(await api.getConfig('voxel_size_z'));
+    if(! voxel_size_z) {voxel_size_z = 300}
+
+    var psf_size_xy =  parseFloat(await api.getConfig('psf_size_xy'));
+    if(! psf_size_xy) {psf_size_xy = 200}
+
+    var psf_size_z = parseFloat(await api.getConfig('psf_size_z'));
+    if(! psf_size_z) {psf_size_z = 400}
+
+    var foci_nb_min_spots =  parseFloat(await api.getConfig('foci_nb_min_spots'));
+    if(! foci_nb_min_spots) {foci_nb_min_spots = 4}
+
+    var foci_radius = parseFloat(await api.getConfig('foci_radius'));
+    if(! foci_radius) {foci_radius = 400}
+
+    var cluster_alpha = parseFloat(await api.getConfig('cluster_alpha'));
+    if(! cluster_alpha) {cluster_alpha = 0.5}
+
+    var cluster_beta = parseFloat(await api.getConfig('cluster_beta'));
+    if(! cluster_beta) {cluster_beta = 2}
+
     // Initialize parameters
     this.store = {
-          version_FQ: await api.getConfig('_version'),
-          version_interface: '',
+          version_interface: await api.getConfig('_version'),
+          version_FQ: '',
+          version_bigfish: '',
           active_tab: 'data',
           txt_navbar: 'No image loaded',
           txt_navbar_details: '',
@@ -115,19 +141,28 @@ class ImJoyPlugin {
           file_loaded: '',
           data_path: data_path, 
           output_path:"acquisition>>analysis",
+          z_first: true,
+          img_ext: img_ext,
           channels: [],
           analysis_region: [],
           ch_name: [],
           ch_ident: [],
           reg_exp: reg_exp,
-          pixel_size_xy: await api.getConfig('pixel_size_xy'),
-          pixel_size_z:  await api.getConfig('pixel_size_z'),
+          voxel_size_yx: voxel_size_yx,
+          voxel_size_z:  voxel_size_z,
+          psf_size_xy: psf_size_xy,
+          psf_size_z: psf_size_z,
+          cluster_alpha: cluster_alpha,
+          cluster_beta: cluster_beta,
+          foci_radius: 300,
+          foci_nb_min_spots: 4,
           images: [],
           current_index: 0,
           channel_selected: null,
           sigma: [sigma_z, sigma_xy, sigma_xy],  // ZYX
-          minimum_distance: 2,
-          detetection_plot: [],
+          threshold_range: [0, 5000, 50 ], // min, max, n_bins
+          minimum_distance: [2, 2], // xy, z
+          detection_plot: [],
           detection_threshold: null,
           img_filt: [],
           img_filt_load : null,
@@ -136,12 +171,16 @@ class ImJoyPlugin {
           th_range_min:0,
           th_range_max:5000,
           th_range_nbins:50,
+          analyze_clusters: false,
+          create_plots: true,
           show_filtered: true,
           show_detection: true,
           running_load: false,
           running_filter: false,
           running_detect_test: false,
           running_detect_apply: false,
+          running_decompose_clusters: false,
+          running_detect_foci: false,
           running_detect_image: false,
           running_detect_batch: false,
           status_image_loaded: false,
@@ -149,6 +188,8 @@ class ImJoyPlugin {
           status_channel_selected: false,
           status_thresholds_tested: false,
           status_detection_applied: false,
+          status_detect_apply: false,
+          status_decompose_clusters: false,
     },
 
     // Initialize vue app
@@ -183,33 +224,7 @@ class ImJoyPlugin {
 
           // Scan data directory
           btn_scan_folder: async function() {
-            let config = {channels: this.channels,
-                          reg_exp: this.reg_exp,
-                          data_path: this.data_path}
-            let file_list  = await this.fq_worker.scan_folder(config)
-
-            // Get all channel names
-            let ch_names = this.channels.map(channel => channel['name'])
-
-            // Replace file list
-            this.files = []
-            file_list.map(update_files.bind(this))
-            console.log(file_list)
-
-            function update_files(file){
-              let file_info = {
-                    file_ident: file['file_ident'],
-                    fov: file['fov'],
-                    img_ext: file['img_ext']
-              }
-
-              // Assign all channel names
-              ch_names.map(function(ch_name){
-                file_info[ch_name] = file[ch_name]
-              })
-
-              this.files.push(file_info)
-            }
+            self.scan_folder()
           },
 
           // Load image
@@ -217,10 +232,12 @@ class ImJoyPlugin {
             self.load_image(file)
           },
 
+          // Show filtered image
           showImageFilt(obj){
                   this.img_filt = obj
-              },
+          },
 
+          // Show raw image
           showImage(obj){
               this.images.push(obj)
               if(this.images.length>5){
@@ -229,8 +246,9 @@ class ImJoyPlugin {
               this.current_index = this.images.length -1
           },
 
+          // Set detection threshold
           setThreshold(threshold){
-                  this.detection_threshold = threshold
+            this.detection_threshold = threshold
           },
 
 
@@ -243,11 +261,14 @@ class ImJoyPlugin {
           // Callback to save filtered image
           dblclick_show_image_raw: async function(channel_selected){
             console.log(channel_selected)
-            this.fq_worker.show_image({
-                        'channel_selected': channel_selected,
-                        'image_type': 'raw',
-                        'image_dim': 'mip',
-                        'display_type': 'dialog'
+
+            let data_show = [];
+            let data_img = ['img_raw',channel_selected,'mip','true'];
+            data_show.push(data_img);
+
+            this.fq_worker.show_results({
+                        'display_type': 'dialog',
+                        'data_show':data_show
                         })
           },
 
@@ -258,21 +279,29 @@ class ImJoyPlugin {
 
           // Callback to show filtered image: as resizable window
           btn_show_image_filtered: async function(){
-            this.fq_worker.show_image({
-                        'channel_selected': this.channel_selected,
-                        'image_type': 'filtered',
-                        'image_dim': 'mip',
-                        'display_type': 'window'
+
+            let data_show = [];
+            let data_img_raw = ['img_raw', this.channel_selected,'mip','false'];
+            let data_img_filt = ['img_filt', this.channel_selected,'mip','true'];
+            data_show.push(data_img_raw, data_img_filt);
+
+            this.fq_worker.show_results({
+                        'display_type': 'window',
+                        'data_show':data_show
                         })
           },
 
           // Callback to show filtered image: as dialog
           dblclick_show_image_filtered: async function(){
-            this.fq_worker.show_image({
-                        'channel_selected': this.channel_selected,
-                        'image_type': 'filtered',
-                        'image_dim': 'mip',
-                        'display_type': 'dialog'
+
+            let data_show = [];
+            let data_img_raw = ['img_raw', this.channel_selected,'mip','false'];
+            let data_img_filt = ['img_filt', this.channel_selected,'mip','true'];
+            data_show.push(data_img_raw, data_img_filt);
+
+            this.fq_worker.show_results({
+                        'display_type': 'dialog',
+                        'data_show':data_show
                         })
           },
 
@@ -294,10 +323,15 @@ class ImJoyPlugin {
           },
 
           // Callback to plot detections detection
-          btn_detection_GMM: async function(){
-            console.log('to be implemented')
+          btn_decompose_clusters: async function(){
+            self.decompose_clusters()
           },
 
+          // Callback to plot detections detection
+          btn_detect_foci: async function(){
+            self.detect_foci()
+          },
+          
           // Callback to plot detections detection
           btn_detection_batch: async function(){
             self.detection_batch()
@@ -308,27 +342,107 @@ class ImJoyPlugin {
             self.detection_file()
           },
 
-
-
-
       } // END methods vue
     }) // END vue
   } // END SETUP
 
 
-  // Load images
-  async load_image(file) {
+  /**
+   * Reset all processing parameters
+   */
+  async reset_parameters(){
 
-      // Reset all processing parameters
       this.store.images = []
       this.store.img_filt = []
       this.store.analysis_region = []
 
-      this.store.status_image_loaded = true
       this.store.channel_selected = null
+      this.store.detection_threshold = null
+      
+      this.store.status_image_loaded = false
+      this.store.status_image_loaded = false
       this.store.status_image_filtered = false
+      this.store.status_channel_selected = false
       this.store.status_thresholds_tested = false
       this.store.status_detection_applied = false
+      this.store.status_detect_apply = false
+      this.store.status_decompose_clusters = false
+
+      this.store.running_load = false
+      this.store.running_filter = false
+      this.store.running_detect_test = false
+      this.store.running_detect_apply = false
+      this.store.running_decompose_clusters = false
+      this.store.running_detect_foci = false
+      this.store.running_detect_image = false
+      this.store.running_detect_batch = false
+  }
+
+
+  /**
+   * Returns simplified object that can be used an input for python function
+   * @return {object} Object to be used as argument for Python functions.
+   */
+  async params_for_python(config={}){
+
+    let  params = Object.assign({}, this.store);
+
+    // Remove properties that are not needed in Python
+    delete params.images;
+    delete params.img_filt;
+    delete params.img_filt_load;
+    console.log(config)
+    if (!("keep_detection_plot" in config && config.keep_detection_plot == true)) {
+      delete params.detection_plot;
+    }
+
+    return params;
+  }
+  
+  /**
+   * Scan folder for file fitting the regular expression
+   * @param  {Number} num1 The first number
+   * @param  {Number} num2 The second number
+   * @return {Number}      The total of the two numbers
+   */
+  async scan_folder(){
+
+      // Call python function to scan folder
+       this.store.files = []
+      let config = await this.params_for_python()
+      let file_list = await this.fq_worker.scan_folder(config)
+
+      // Get all channel names
+      let ch_names = this.store.channels.map(channel => channel['name'])
+
+      // Replace file list with new scan results
+      file_list.map(update_files.bind(this))
+
+      function update_files(file){
+
+        let file_info = {
+              file_ident: file['file_ident'],
+              fov: file['fov'],
+              img_ext: file['img_ext']
+        }
+
+        // Assign all channel names
+        ch_names.map(function(ch_name){
+          file_info[ch_name] = file[ch_name]
+        })
+        this.store.files.push(file_info)
+      }
+
+  }
+
+  /**
+   * Load image
+   */
+  async load_image(file) {
+      this.store.running_load=true
+
+      // Reset parameters and graph
+      this.reset_parameters()
 
       let graph_detection = document.getElementById('graph_detection');
       if (graph_detection != null){
@@ -336,19 +450,11 @@ class ImJoyPlugin {
       };
 
       // Load image
-      this.store.running_load=true
-      let mips = await this.fq_worker.load_image({
-                            'file': file,
-                            'channels': this.store.channels,
-                            'data_path': this.store.data_path,
-                            'output_path': this.store.output_path,
-                            'create_mips': true,
-                            'show_status': true,
-                            })
-
-      this.store.txt_navbar = 'Loaded image IDENTIFIER :: FOV  :  ' + file.file_ident + ' :: ' + file.fov;
-      this.store.file_loaded = file;
-      this.store.running_load=false
+      let config = await this.params_for_python();
+      config.file = file;
+      config.create_mips = true;
+      config.show_status = true;
+      let mips = await this.fq_worker.load_image(config)
 
       // Assign images to carousel
       mips.map(mip => this.app.showImage({
@@ -359,103 +465,92 @@ class ImJoyPlugin {
                             'shape': mip.shape,
                             })
       )
+
+      // Update parameters
+      this.store.txt_navbar = 'Loaded image IDENTIFIER :: FOV  :  ' + file.file_ident + ' :: ' + file.fov;
+      this.store.file_loaded = file;
+      this.store.status_image_loaded = true;
       
       // Store parameters for next launch
       api.setConfig('data_path', this.store.data_path)
       api.setConfig('reg_exp', this.store.reg_exp)
-      api.setConfig('pixel_size_xy', this.store.pixel_size_xy)
-      api.setConfig('pixel_size_z', this.store.pixel_size_z)
+      api.setConfig('img_ext', this.store.img_ext)
+      api.setConfig('voxel_size_yx', this.store.voxel_size_yx)
+      api.setConfig('voxel_size_z', this.store.voxel_size_z)
+
+      this.store.running_load=false;
+
   }
 
 
-  // Select a region for analysis
-  async set_analysis_region(coords) {
-    console.log('[FISH-quant] Obtained coordinates:' + coords)
-    this.store.analysis_region = coords
-  }
-
+  /**
+   * Define region to specify analysis parameters
+   */
   async select_analysis_region() {
 
-    // Get image corresponding to selected channel
-    var img_selected = this.store.images.find(obj => {
-      return obj.channel === this.store.channel_selected
-    })
-
-    if (img_selected === undefined){
-      api.alert('Select a channel first')
-      return
-    }
-    console.log('[FQ] sending data to viewer.')
-    
-    await this.fq_viewer.run({'data':{
-                              'url': img_selected['url'],
-                              'shape':img_selected['shape'],
-                              'callback_return_region': this.set_analysis_region}
-                              })
+    this.fq_worker.select_analysis_region({
+                'display_type': 'dialog',
+                'channel_selected':this.store.channel_selected
+                })
 
   }
 
-  // Filter image
+  /**
+   * Filter image
+   */  
   async filter_image() {
+      this.store.running_filter=true
 
+      // Reset loaded filtered image
       this.store.img_filt = []
  
-      this.store.running_filter=true
-      this.store.img_filt_load = await this.fq_worker.filter_image({
-                            'sigma': this.store.sigma,
-                            'channel_selected': this.store.channel_selected,
-                            'data_path': this.store.data_path,
-                            'output_path': this.store.output_path,
-                            'create_mips': true,
-                            'show_status': true,
-                            'selected_region': this.store.analysis_region,
-                            })
-      this.store.running_filter=false
+      // Filter image
+      let config = await this.params_for_python();
+      config.create_mips = true;
+      config.show_status = true;
+      this.store.img_filt_load = await this.fq_worker.filter_image(config)
+
+      // Show filtered image
       this.app.showImageFilt({
                     'url': this.store.img_filt_load['url'],
                     'meta': 'loaded image'
                     })
 
+      // Save some parameters of filtered image
       this.store.img_filt_min = this.store.img_filt_load['min']
       this.store.img_filt_max = this.store.img_filt_load['max']
-
       this.store.status_image_filtered = true
 
       // Set filtering parameters for next load of FQ
       api.setConfig('sigma_xy', this.store.sigma[1])
       api.setConfig('sigma_z', this.store.sigma[0])
+
+      this.store.running_filter=false
   }
 
 
-  // Save filtered image
+  /**
+   * Save filtered image
+   */
   async save_image_filtered() {
-
-      this.fq_worker.save_image_filtered({
-                            'data_path': this.store.data_path,
-                            'output_path': this.store.output_path,
-                            'channel_selected': this.store.channel_selected,
-                            })
+      let config = await this.params_for_python();
+      this.fq_worker.save_image_filtered(config)
   }
 
- async plot_detection_test(th_tests){
-   console.log(th_tests)
- }
 
-
-  // Test thresholds for detection
+  /**
+   * Test thresholds for detection
+   */
   async detection_test_thresholds() {
 
-    this.store.status_thresholds_tested = false
-    //this.store.running_detect_test=true
-    var th_tests = await this.fq_worker.detect_test_thresholds({
-                              'threshold_range': [this.store.th_range_min,
-                                                  this.store.th_range_max,
-                                                  this.store.th_range_nbins],
-                              'sigma': this.store.sigma,
-                              'minimum_distance': this.store.minimum_distance,
-                              'show_status': true,
-                              })
-    //this.store.running_detect_test=false
+    this.store.running_detect_test=true
+    
+    // Test thresholds
+    let config = await this.params_for_python();
+    config.show_status = true;
+    let th_tests = await this.fq_worker.detect_test_thresholds(config)
+
+    //
     this.store.status_thresholds_tested = true
 
     // Create plotly plot
@@ -487,83 +582,129 @@ class ImJoyPlugin {
           this.app.setThreshold(th)
     });
  
-    this.store.detetection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600})
-  
+    this.store.detection_plot = await Plotly.toImage('graph_detection', {format: 'png', width: 800, height: 600})
+    this.store.running_detect_test = false
   }
 
-
-  // Test thresholds for detection
+  /**
+   * Apply detection threshold
+   */
   async detection_apply() {
     
-    if ( this.store.detection_threshold == null){
-      api.alert('Please set a numeric value to test the intensity threshold!')
-      return
-    }
+    // Perform detection
     this.store.running_detect_apply=true
-    var spots = await this.fq_worker.detect_apply({
-                              'detection_threshold': this.store.detection_threshold,
-                              'sigma': this.store.sigma,
-                              'show_status': true,
-                              'detection_plot': this.store.detetection_plot
-                              })
-    this.store.running_detect_apply=false
-    this.fq_viewer.run({'data':{
-                              'url': this.store.img_filt_load['url'],
-                              'shape':this.store.img_filt_load['shape'],
-                              'points':spots}
-                              })
+    let config = await this.params_for_python();
+    config.show_status = true;
+    await this.fq_worker.detect_apply(config)
     
+    // Display results
+    let data_show = [];
+    let data_img_raw = ['img_raw',this.store.channel_selected,'mip','false'];
+    let data_img_filt = ['img_filt',this.store.channel_selected,'mip','true'];
+    let data_spots = ['spots','3','true'];
+
+    data_show.push(data_img_raw, data_img_filt,data_spots);
+
+    this.fq_worker.show_results({
+                'display_type': 'dialog',
+                'data_show':data_show
+                })
+
+    this.store.running_detect_apply=false
     this.store.status_detection_applied = true
   }
 
-  // Detect current file
+
+  /**
+   * Decompose clusters
+   */
+  async decompose_clusters() {
+    
+    this.store.running_decompose_clusters=true
+
+    // Decompose clusters
+    let config = await this.params_for_python();
+    config.show_status = true;
+    await this.fq_worker.decompose_clusters(config)
+
+    // Display results
+    let data_show = [];
+    let data_img_raw = ['img_raw',this.store.channel_selected,'mip','false'];
+    let data_img_filt = ['img_filt',this.store.channel_selected,'mip','true'];
+    let data_spots = ['spots_decompose','3','true'];
+
+    data_show.push(data_img_raw, data_img_filt,data_spots);
+
+    this.fq_worker.show_results({
+                'display_type': 'dialog',
+                'data_show':data_show
+                })
+
+    // Update interface
+    api.setConfig('psf_size_xy', this.store.psf_size_xy)
+    api.setConfig('psf_size_z', this.store.psf_size_z)
+    this.store.running_decompose_clusters=false
+    this.store.status_decompose_clusters=true
+
+  }
+
+
+  /**
+   * Detect foci
+   */
+  async detect_foci() {
+    
+    this.store.running_detect_foci=true
+
+    // Detect foci
+    let config = await this.params_for_python();
+    config.show_status = true;
+    config.name_save = 'tmp';
+    var spots = await this.fq_worker.detect_foci(config)
+
+    // Update interface
+    this.store.running_detect_foci=false
+    this.store.status_detect_foci=true
+    api.setConfig('foci_nb_min_spots', this.store.foci_nb_min_spots)
+    api.setConfig('foci_radius', this.store.foci_radius)
+
+  }
+
+
+  /**
+   * Analyze current file
+   */  
   async detection_file() {
     this.store.running_detect_image=true
-    await this.fq_worker.detection_file({
 
-                      // To scan folder and store results
-                      'channels': this.store.channels,
-                      'channel_selected': this.store.channel_selected,
-                      'reg_exp': this.store.reg_exp,
-                      'data_path': this.store.data_path,
-                      'output_path': this.store.output_path,
-                      'channel_selected': this.store.channel_selected,
-
-                      // Filter & detection
-                      'sigma': this.store.sigma,
-                      'minimum_distance': this.store.minimum_distance,
-                      'detection_threshold': this.store.detection_threshold,
-                      });
+    let config = await this.params_for_python({keep_detection_plot: true});
+    config.batch_analysis = false;
+    await this.fq_worker.detection_file(config)
 
     this.store.running_detect_image=false
   }
 
-
-  // Batch detection
+  /**
+   * Batch detection
+   */
   async detection_batch() {
-    this.store.running_detect_batch=true
-    await this.fq_worker.detection_batch({
-      
-                      // To scan folder and store results
-                      'channels': this.store.channels,
-                      'reg_exp': this.store.reg_exp,
-                      'data_path': this.store.data_path,
-                      'output_path': this.store.output_path,
-                      'channel_selected': this.store.channel_selected,
 
-                      // Filter & detection
-                      'sigma': this.store.sigma,
-                      'minimum_distance': this.store.minimum_distance,
-                      'detection_threshold': this.store.detection_threshold,
-                      });
+    this.store.running_detect_batch=true
+
+    let config = await this.params_for_python({keep_detection_plot: true});
+    config.batch_analysis = true;
+    await this.fq_worker.detection_batch(config)
+
     this.store.running_detect_batch=false
+    this.reset_parameters()
   }
   
   async run(ctx) {
 
     if(ctx.data){
       console.log(ctx.data)
-      this.store.version_interface = ctx.data['version']
+      this.store.version_FQ = ctx.data['version_FQ']
+      this.store.version_bigfish = ctx.data['version_bigfish']
     }
   }
 }
@@ -630,15 +771,25 @@ api.export(new ImJoyPlugin())
         <b-field label="Pixel size" horizontal grouped>
           <b-field>
             <p class="control"> <span class="button is-static">XY [nm]</span></p>
-            <b-input placeholder="107" v-model.number="pixel_size_xy"></b-input>
+            <b-input placeholder="107" v-model.number="voxel_size_yx"></b-input>
           </b-field>
           <b-field>
             <p class="control"> <span class="button is-static">z [nm]</span></p>
-            <b-input placeholder="300" v-model.number="pixel_size_z"></b-input>
+            <b-input placeholder="300" v-model.number="voxel_size_z"></b-input>
           </b-field>
+          <b-field>
+            <b-switch v-model="z_first">Z first</b-switch>
+          </b-field>
+
         </b-field> <!-- END: specify pixel size -->
         
-        
+        <!-- Specify pixel size -->
+        <b-field label="Image extension" horizontal grouped>
+          <b-field>
+            <b-input  v-model="img_ext"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify pixel size -->
+
         <!-- Channels -->
         <hr>
         <div class="columns is-desktop">
@@ -710,7 +861,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Data in folder fitting search criteria</p>
-          <p class="subtitle is-7">Load one dataset for analysis. </p>
+          <p class="subtitle is-6">Load one dataset for analysis. </p>
         </div>
       </div>
       <br>
@@ -754,8 +905,6 @@ api.export(new ImJoyPlugin())
                 </b-carousel-item>
                 <template slot="indicators" slot-scope="props">
                   <span class="al image">
-                    <!-- <img :src="images[props.i" :title="props.i"> -->
-                    <!--<p v-bind="channels[props.i].name" expanded>asdfasd</p> -->
                     <span> {{ channels[props.i].name }}</span>
                   </span>
                 </template>
@@ -780,7 +929,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Select channel</p>
-          <p class="subtitle is-7">Select channel, and [optional] region to be used for testing. </p>
+          <p class="subtitle is-6">Select channel, and [optional] region to be used for testing. </p>
         </div>
       </div>
       <br>
@@ -843,13 +992,10 @@ api.export(new ImJoyPlugin())
               <b-button type="is-primary" :loading="running_filter" :disabled="status_image_loaded==false || channel_selected==null" @click="btn_filter_image">Filter image</b-button>
             </p>
             <b-field>
-              <p class="control"> <span class="button is-static">sigma-x</span></p>
-              <b-input placeholder="1" v-model.number="sigma[2]"></b-input>
-            </b-field>
-            <b-field>
-              <p class="control"> <span class="button is-static">sigma-y</span></p>
+              <p class="control"> <span class="button is-static">sigma-xy</span></p>
               <b-input placeholder="1" v-model.number="sigma[1]"></b-input>
             </b-field>
+
             <b-field>
               <p class="control"> <span class="button is-static">sigma-z</span></p>
               <b-input placeholder="1.25" v-model.number="sigma[0]"></b-input>
@@ -889,7 +1035,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Spot detection</p>
-          <p class="subtitle is-7">Define intensity threshold to perform spot detection. </p>
+          <p class="subtitle is-6">Define intensity threshold to perform spot detection. </p>
         </div>
       </div>
       <br>
@@ -905,32 +1051,33 @@ api.export(new ImJoyPlugin())
           </p>
 
           <b-field>
-            <p class="control"> <span class="button is-static">Min dist</span></p>
-            <b-input placeholder="2" v-model.number="minimum_distance"></b-input>
+            <p class="control"> <span class="button is-static">Min dist XY</span></p>
+            <b-input placeholder="107" v-model.number="minimum_distance[0]"></b-input>
           </b-field>
 
+          <b-field>
+            <p class="control"> <span class="button is-static">Min dist Z</span></p>
+            <b-input placeholder="107" v-model.number="minimum_distance[1]"></b-input>
+          </b-field>
 
-          <b-collapse :open="true" aria-id="contentIdForA11y1" :disabled="status_image_filtered==false">
-            <b-button class="button is-primary" :disabled="status_image_filtered==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForA11y1">Specify intensity range to test thresholds</b-button>
+          <b-collapse :open="true" aria-id="contentIdForDetectionPars" :disabled="status_image_filtered==false">
+            <b-button class="button is-primary" :disabled="status_image_filtered==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForDetectionPars">Specify intensity range to test thresholds</b-button>
             <div class="notification">
 
               <b-field label="Minimum">
-                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="th_range_min" :min="img_filt_min" :max="img_filt_max">
+                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="threshold_range[0]" :min="img_filt_min" :max="img_filt_max">
                 </b-numberinput>
               </b-field>
-
 
               <b-field label="Maximum">
-                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="th_range_max" :min="img_filt_min" :max="img_filt_max">
+                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="threshold_range[1]" :min="img_filt_min" :max="img_filt_max">
                 </b-numberinput>
               </b-field>
-
 
               <b-field label="Number of values">
-                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="th_range_nbins" min=2 max=300>
+                <b-numberinput type="is-dark" :disabled="status_image_filtered==false" v-model.number="threshold_range[2]" min=2 max=300>
                 </b-numberinput>
               </b-field>
-
 
             </div>
           </b-collapse>
@@ -940,13 +1087,13 @@ api.export(new ImJoyPlugin())
 
         <b-field grouped>
           <p class="control">
-            <button class="button is-primary" :loading="running_detect_apply" :disabled="status_thresholds_tested==false" @click="btn_detection_apply">
+            <button class="button is-primary" :loading="running_detect_apply" :disabled="status_thresholds_tested==false || detection_threshold == null" @click="btn_detection_apply">
               Apply detection threshold
             </button>
           </p>
 
           <b-field>
-            <p class="control"> <span class="button is-static">Intensity threshold</span></p>
+            <p class="control"> <span class="button is-static">Threshold</span></p>
             <b-input placeholder="Set threshold either manually or by clicking on graph below" v-model.number="detection_threshold"></b-input>
           </b-field>
 
@@ -964,8 +1111,109 @@ api.export(new ImJoyPlugin())
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
 
+  <!-- Card to Decompose foci -->
+  <br>
+  <div class="card">
+    <div class="card-content">
 
-  <!-- Card to analyze image -->
+      <!-- Summary -->
+      <div class="summary">
+        <div class="summary-content">
+          <p class="title is-4">[Optional] decompose RNA aggregates</p>
+  
+          <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
+            <p>
+            <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
+          </b-field>
+
+
+      </div>
+
+      <!-- Actual content -->
+      <br>
+      <div class="content" :disabled="status_detection_applied==false">
+
+          <b-field grouped>
+            <b-field>
+              <b-checkbox v-model="analyze_clusters" > Decompose RNA clusters</b-checkbox>
+            </b-field>
+
+          <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
+            <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForClusterPar">Advanced parameters</b-button>
+            <div class="notification">
+
+              <b-field>
+                <p class="control"> <span class="button is-static">alpha</span></p>
+                <b-input v-model.number="cluster_alpha"></b-input>
+              </b-field>
+              
+              <b-field>
+                <p class="control"> <span class="button is-static">beta</span></p>
+                <b-input v-model.number="cluster_beta"></b-input>
+              </b-field>
+
+            </div>
+          </b-collapse>
+
+          </b-field>
+
+          <!-- Decompose clusters -->
+          <b-field grouped group-multiline>
+              <b-field>
+                <b-button type="is-primary" :loading="running_decompose_clusters" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_clusters">Decompose aggregates</b-button>
+              </b-field>
+          
+              <!-- Specify spot size -->
+              <b-field label="Spot size" horizontal grouped >
+                <b-field>
+                  <p class="control"> <span class="button is-static">XY [nm]</span></p>
+                  <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
+                </b-field>
+                <b-field>
+                  <p class="control"> <span class="button is-static">Z [nm]</span></p>
+                  <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
+                </b-field>
+              </b-field> <!-- END: specify spot size -->
+          </b-field>
+
+
+
+
+
+
+          
+
+
+          <!-- Foci calling -->
+          <b-field grouped group-multiline>
+              <b-field>
+                <b-button type="is-primary" :loading="running_detect_foci" :disabled="status_decompose_clusters==false || analyze_clusters==false" @click="btn_detect_foci">Define foci</b-button>
+              </b-field>
+          
+              <!-- Specify pixel size -->
+              <b-field label="" horizontal grouped>
+                <b-field>
+                  <p class="control"> <span class="button is-static">Min nb of spots</span></p>
+                  <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
+                </b-field>
+                <b-field>
+                  <p class="control"> <span class="button is-static">Radius [nm]</span></p>
+                  <b-input placeholder="400" v-model.number="foci_radius"></b-input>
+                </b-field>
+              </b-field> <!-- END: specify pixel size -->
+
+            </b-field>
+
+
+      </div> <!-- END Class content -->
+    </div> <!-- END class card-content -->
+  </div> <!-- END class card -->
+
+
+
+  <!-- Card to analyze image(s) -->
   <br>
   <div class="card">
     <div class="card-content">
@@ -974,7 +1222,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Process file(s)</p>
-          <p class="subtitle is-7">Specified settings will be used to process selected file or all files in folder. </p>
+          <p class="subtitle is-6">Specified settings will be used to process selected file or all files in folder. </p>
         </div>
       </div>
 
@@ -989,6 +1237,9 @@ api.export(new ImJoyPlugin())
             </b-field>
             <b-field>
               <b-button type="is-primary" :loading="running_detect_batch" :disabled="status_detection_applied==false" @click="btn_detection_batch">Launch batch processing</b-button>
+            </b-field>
+            <b-field>
+              <b-checkbox v-model="create_plots" :disabled="status_detection_applied==false">Create plots</b-checkbox>
             </b-field>
           </b-field>
         </section>
@@ -1011,7 +1262,7 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Postprocessing</p>
-          <p class="subtitle is-7">coming soon. </p>
+          <p class="subtitle is-6">coming soon. </p>
         </div>
       </div>
       <br>
@@ -1063,7 +1314,10 @@ api.export(new ImJoyPlugin())
                   </b-navbar-item>
                   <hr class="navbar-divider">
                   <div class="navbar-item">
-                    <span> FQ: v{{ version_FQ }}</span>
+                    <span> FQ plugin: v{{ version_FQ }}</span>
+                  </div>  
+                    <div class="navbar-item">
+                  <span> big-fish: v{{ version_bigfish }}</span>
                   </div>  
                   <div class="navbar-item">
                     <span> FQ interface: v{{ version_interface }}</span>

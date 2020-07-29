@@ -12,65 +12,76 @@ In this tab, the user will specify
 * Apply this detection either to one image, or all images in the specified data folder.
 
 ## Workflow
+
+### Select channel and region
+
 1. Select which channel should be analyzed.
 2. [Optional]: to speed up an exploratory analysis, you can **restrict the analysis to a smaller region of the image**.
       1. Press `Select smaller region to test analysis`
-      2. This will open a new window where you see the filtered image. In this window, you can
-         1. Change the contrast with the slider at the top
-         2. Pan and zoom with the   mouse
-      3. Select a rectangular region after pressing on the square symbol in the lower-left corner.
-      4. Once you are satisfied with the selection, highlight the rectangle (it will turn red) and press on the return button in the upper right corner.
+      2. This will open a new window where you see the filtered image.
+      3. A rectangular selection is preselected. You can highlight a region where you want to test the analysis. Draw only one region!
+      4. Once you are satisfied with the selection, you can press the button `Return selection to FISH-quant`.
+      5. You can then close the window.
 
-      ![fq-select-region.gif](img/fq-select-region.gif){: style="width:450px"}
+      ![kaibu_select_region.png](img/kaibu_select_region.png){: style="width:450px"}
 
-3. **Filter image**. Here you can change the paramaters of the LoG (Laplacian of Gaussian filter. 
-   More details about the LoG filter can be found in the background section below.
+### Filter image
+Here you can change the paramaters of the LoG (Laplacian of Gaussian filter. More details about the LoG filter can be found in the background section below.
 
-   * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate for more details on how to use the  [**image viewer**](fq-overview.md#image-viewer).
-   * To show the image in a interface that can be resized and kept open, press the button button `Show`.
-   * You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
-   * The filter size will be stored and reused when you launch ImJoy the next time.
+* **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate for more details on how to use the  [**image viewer**](fq-overview.md#image-viewer).
+* To show the image in a interface that can be resized and kept open, press the button button `Show`.
+* You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
+* The filter size will be stored and reused when you launch ImJoy the next time.
 
-4. **Establish detection thresholds**. Spot detection is performed with a local maximum detection on the filtered image (more details below). This detection requires setting two paramters:
+###  Detection threshold
+Spot detection is performed with a local maximum detection on the filtered image (more details below). 
 
-    1. Minimum distance two spots have to be separated in order to be detected (default 2 pixels)
-    2. Minimum intensity a spot must have. To better establish this value, you can specify a range of detection tresholds that will be tested in the pull-down menu. To properly set this range, it can be useful to inspect the filtered image. A good starting point is:
+1. This detection requires setting two paramters:
 
-    * a **minimum value** somewhat dimmer than the dimmest spot, and brighter than the typical background.  
-    * a **maximum value** brighter than the brightest spot.
+      1. **Minimum distance** two spots have to be separated in order to be detected (default 2 pixels)
 
-        ![fq-detection-thresholds.png](img/fq-detection-thresholds.png){: style="width:350px"}
+      2. **Minimum intensity** a spot must have. To better establish this value, you can specify a range of detection tresholds that will be tested in the pull-down menu.
 
-    1. Pressing `Test thresholds` will calculate for each threshold the number
-       of detected spots and show this as a graph.
-         * This plot is interactive. When you hoover over it
-           it will show you the corresponding values, you can also zoom, and save it as an image.
-         * When you press on it, the respective threshold will be set
-           in the field next to the button `Apply detection threshold`
+          ![fq-detection-thresholds.png](img/fq-detection-thresholds.png){: style="width:350px"}
 
-        ![fq-detection-curve.png](img/fq-detection-curve.png){: style="width:350px"}
+          To properly set this range, it can be useful to inspect the filtered image. A good starting point is:
 
-    2. To apply the threshold, press the button `Apply detection threshold`. Once finished, 
-        this will show the results in a separate window, where the spot detections can be toogled and the 
-        image contrast be changed.
+          * a **minimum value** somewhat dimmer than the dimmest spot, and brighter than the typical background.  
+          * a **maximum value** brighter than the brightest spot.
 
-        ![fq-inspect-spots.gif](img/fq-inspect-spots.gif){: style="width:350px"}
+2. Pressing `Test thresholds` will calculate for each threshold the number
+   of detected spots and show this as a graph.
+     * This plot is interactive. When you hoover over it
+       it will show you the corresponding values, you can also zoom, and save it as an image.
+     * When you press on it, the respective threshold will be set
+       in the field next to the button `Apply detection threshold`
 
-    3. You can then analyze either
-        * The **currently selected image** with the button `Analyze current image`. If filtering was performed on the full size image, the image will not be filtered again.
+    ![fq-detection-curve.png](img/fq-detection-curve.png){: style="width:350px"}
 
-        This will also automatically save the plot with the tested thresholds in addition to the results files with the suffix `__detection_tests.png`.
-        * All **images in the folder** with the button `Launch batch processing`
-        For each analysed images, results files will be created in the specified results folder. 
-        More details on the results files can be found below.
+3. To apply the threshold, press the button `Apply detection threshold`. Once finished, 
+   the detection results will be shown in Kaibu. Here you can toggle the spot detection results, 
+   show either the raw and filtered image, and judge the quality of the spot detection. 
+
+4. You can then analyze either
+    * The **currently selected image** with the button `Analyze current image`. If filtering was performed on the full size image, the image will not be filtered again.
+
+    This will also automatically save the plot with the tested thresholds in addition to the results files with the suffix `__detection_tests.png`.
+    * All **images in the folder** with the button `Launch batch processing`
+    For each analysed images, results files will be created in the specified results folder. 
+    More details on the results files can be found below.
+
+## RNA decomposition and foci detection
+
+TODO: To be added.
 
 ## Results
 
 For each analyzed image, two files will be created and stored under the orginal image name with a suffix
 
-* `**__analysis_details`: file with details about the analysis: all settings, and some basic image properties.
-* `**___spots.csv`: csv file with the position of all detected spots (in pixel). 
-
+* **`__analysis_details.json`**: file with details about the analysis: all settings, and some basic image properties.
+* **`___spots.csv`**: csv file with the position of all detected spots (in pixel).
+* **`__detection.png`**: 2d (filtered) image with detected spots.
+  
 ## Some background
 
 ### LoG filter
@@ -107,7 +118,7 @@ detected because an even bright spot is found in close proximity, e.g in the exa
 useful, if not many spots are to be detected. In contrast, a low value, will permit to detect
 close spots, which can be useful for denser signals.
 
-![local-max.png](img/local-max.png){: style="width:600px"}
+![local-max.png](img/local-max.png){: style="width:400px"}
 
 One crucial aspect  is **determining the optimal intensity threshold**. For smFISH
 image analysis, no fully automated method to determine this threshold has been proposed so far, but a simple sequential test of different thresholds provides a good
