@@ -25,7 +25,7 @@ If you press on the installation link, the ImJoy app will open and display a
 dialog asking if you want to install the specified plugin. To confirm, press 
 the `install` button.
 
-![imjoy-plugin-installation](img/imjoy-plugin-installation.png){: style="width:400px"}
+![imjoy-plugin-installation](img/install_plugin.png){: style="width:400px"}
 
 These installation links also specify in which [ImJoy workspaces](tools-imjoy.md#opening-a-workspace) the plugin will be installed. 
 
@@ -46,6 +46,32 @@ are available, you will see a corresponding symbol next to the plugin name.
 Most of the provided plugins use Python for data processing. To use these plugins, 
 you have to connect ImJoy to a Plugin engine. For this repository, we use **Jupyter notebooks** as 
 and engine, which can be installed via Miniconda (see installation instructions below [below](#install-jupyter-engine-for-imjoy)). 
+
+### Install Jupyter engine for ImJoy
+
+This you only need to do **once**.
+
+We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
+choose latest Python version (3.X) and your operating system. You  can then use the annoconda prompt 
+to excecute the commands listed below. 
+
+We recommend creating a **dedicated environment** to run code in this analysis package. To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`):
+
+``` bash
+conda create --name fq-imjoy python=3.7
+```
+
+**Activate the environment**:
+
+``` bash
+conda activate fq-imjoy
+```
+
+**Install code Jupyter optimized for ImJoy**:
+
+``` bash
+pip install -U imjoy
+```
 
 ### Connect Jupyter engine
 
@@ -92,34 +118,10 @@ registered engines by pressing on the rocket symbol.
 * **Connected engines** will be shown with their name in black, and a red cross next to the name. Pressing the cross will disconnect ImJoy from the engine, but it will remain in the list.
 * **Known engines** (but not connected) will be shown with their name in gray, with a little trash symbol next to them. Pressing on the trash symbol will remove the engine.
 
-## Install Jupyter engine for ImJoy
-
-We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
-choose Python 3.7 and your operating system. You  can then use the annoconda prompt to excecute the different commands listed below. 
-
-We further recommend creating a **dedicated environment** to run code in this analysis package. 
-This guarantess that only necessary code is installed. 
-To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`):
-
-```
-conda create --name fq-imjoy python=3.7
-```
-
-**Activate the environment**:
-
-```
-conda activate fq-imjoy
-```
-
-**Install code Jupyter optimized for ImJoy**:
-
-```
-pip install -U imjoy
-```
-
 ## FAQ
 
 ### Plugin running on wrong engine
+
 You have several options
 
 * Disconnect or delete the engine the plugin is connecting to see [here](#managing-plugin-engines)).
@@ -133,13 +135,14 @@ At one point, your conda environment might get corrupted. You can easily remove 
 0. **Activate base environment**: `conda deactivate`
 0. **Remove `fq-imjoy` environment**: `conda env remove --name fq-imjoy`
 
-
 ### Specify your own Jupyter token
+
 You can specify your own token `yourtoken`
 
-```
+``` bash
 imjoy --jupyter --token yourtoken
 ```
+
 When launched like this, you will not get the full Jupyter URL in the terminal, but `http://localhost:8888/?token=...`.
 
 When copying this link to the ImJoy app for the first time you have to replace the `...` by the token you actually specified.

@@ -1,21 +1,36 @@
 # FISH-quant: RNA detection in smFISH images
 
-This repository contains graphical user-interface powered by ImJoy plugins to faciliate the analysis 
-of smFISH images. Code is build on
+This repository contains code for graphical user-interfaces powered by ImJoy
+to analyse smFISH images. 
 
-* **bigfish**: Python code performin the actual analysis.
-* **ImJoy**: graphical user interface and data visualization.
+__How to get started:__
+
+1. Read this documentation.
+2. Install the ImJoy plugin engine (we explain what this is just a bit further down).
+3. Install the FISH-quant plugins.
+4. Try to analyze the provided test data.
+
+## FISH-quant? ImJoy? Plugin engine?
+
+For new users it might be a bit confusing how the different software packages work together. 
+We hence provide here a small overview of hwo the different pieces work together. 
+
+There are three  essential parts
+
+![fq-get-version.gif](img/fq-imjoy-overview.png){: style="width:500px"}
+
+* **bigfish**: Python code performing the actual analysis (available in a dedicated [GitHub repository](https://github.com/fish-quant/big-fish. This code can be used from the command line, but we here we provide convient user-interfaces implemented in ImJoy for the most common tasks. 
+* **ImJoy**: ImJoy is a plugin powered computing platform to deploy advanced image analysis tools. FISH-quant is implemented as a set of such plugins. Plugins can be installed with a simple installation link. More details about ImJoy and how it can be installed, can be found in the decicated overview section.
+* **Plugin Engine**: the ImJoy app is running in your webbrowser (prefereably Chrome). In order to perform computations, you have to install a 
+so-called plugin engine. ImJoy can connect to such an engine, and launch data processing tasks. Importantly, this engine can run locally or remotely, but the ImJoy interface will always be the same. YOu have to install this engine once. Each time you want to use FISH-quant, you have to launch it and connect ImJoy to this engine.
+
+## Summary: connect ImJoy to the plugin engine
 
 !!! abstract "Summary for how to connect ImJoy to Jupyter engine. Details in dedicated sections."
     1. Open **anaconda terminal**. 
     2. **Activate environment**: `conda activate fq-imjoy`
     3. **Start Jupyter engine**: `imjoy --jupyter`
     4. **Connect** ImJoy app to Jupyter Engine with 🚀 button.
-
-In the other **overview sections** we describe
-
-* How to **install & use ImJoy**.
-* How to **organize data** for best use in the provided workflows.
 
 ## Reporting bugs
 
@@ -38,7 +53,7 @@ please provide the following information.
 
 ## Development team
 
-* Florian Mueller. [Github](https://github.com/muellerflorian)
-    * **Mail**: muellerf.research@gmail.com
+* Florian Mueller. [Github](https://github.com/muellerflorian).
 * Arthur Imbert. [GitHub](https://github.com/Henley13).
+* Wei Ouyang. [Github](https://github.com/oeway).
 * Thomas Walter. [Github](https://github.com/ThomasWalter).
