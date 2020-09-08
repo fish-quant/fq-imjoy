@@ -1,5 +1,5 @@
 ﻿<docs lang="markdown">
-[TODO: write documentation for this plugin.]
+User-interface of FISH-quant implemented with buefy.
 </docs>
 
 <config lang="json">
@@ -8,9 +8,9 @@
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "cover": "",
-  "description": "[TODO: describe this plugin with one sentence.]",
+  "description": "User-interface of FQ.",
   "icon": "extension",
   "inputs": null,
   "outputs": null,
@@ -79,7 +79,7 @@ class ImJoyPlugin {
     // Get plugins from workspace
     // TODO: maybe we can change this and provide this as an input to allow for remote calls?
     this.fq_worker = await api.getPlugin("FISH-QUANT")
-    this.fq_viewer = await api.getPlugin("FQ-image-viewer")
+    //this.fq_viewer = await api.getPlugin("FQ-image-viewer")
 
     // Get file-manager of FQ plugin
     const fq_worker_url = await this.fq_worker.get_engine_url()
@@ -974,8 +974,8 @@ api.export(new ImJoyPlugin())
           <b-field grouped>
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
-            <p>
-            <p class="subtitle is-6">Remove background and enhance spots. </p>
+                <p>
+                  <p class="subtitle is-6">Remove background and enhance spots. </p>
           </b-field>
 
         </div>
@@ -1120,98 +1120,88 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">[Optional] decompose RNA aggregates</p>
-  
+
           <b-field grouped>
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
-            <p>
-            <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
+                <p>
+                  <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
           </b-field>
 
 
-      </div>
+        </div>
 
-      <!-- Actual content -->
-      <br>
-      <div class="content" :disabled="status_detection_applied==false">
+        <!-- Actual content -->
+        <br>
+        <div class="content" :disabled="status_detection_applied==false">
 
           <b-field grouped>
             <b-field>
-              <b-checkbox v-model="analyze_clusters" > Decompose RNA clusters</b-checkbox>
+              <b-checkbox v-model="analyze_clusters"> Decompose RNA clusters</b-checkbox>
             </b-field>
 
-          <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
-            <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForClusterPar">Advanced parameters</b-button>
-            <div class="notification">
+            <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
+              <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForClusterPar">Advanced parameters</b-button>
+              <div class="notification">
 
-              <b-field>
-                <p class="control"> <span class="button is-static">alpha</span></p>
-                <b-input v-model.number="cluster_alpha"></b-input>
-              </b-field>
-              
-              <b-field>
-                <p class="control"> <span class="button is-static">beta</span></p>
-                <b-input v-model.number="cluster_beta"></b-input>
-              </b-field>
+                <b-field>
+                  <p class="control"> <span class="button is-static">alpha</span></p>
+                  <b-input v-model.number="cluster_alpha"></b-input>
+                </b-field>
 
-            </div>
-          </b-collapse>
+                <b-field>
+                  <p class="control"> <span class="button is-static">beta</span></p>
+                  <b-input v-model.number="cluster_beta"></b-input>
+                </b-field>
+
+              </div>
+            </b-collapse>
 
           </b-field>
 
           <!-- Decompose clusters -->
           <b-field grouped group-multiline>
+            <b-field>
+              <b-button type="is-primary" :loading="running_decompose_clusters" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_clusters">Decompose aggregates</b-button>
+            </b-field>
+
+            <!-- Specify spot size -->
+            <b-field label="Spot size" horizontal grouped>
               <b-field>
-                <b-button type="is-primary" :loading="running_decompose_clusters" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_clusters">Decompose aggregates</b-button>
+                <p class="control"> <span class="button is-static">XY [nm]</span></p>
+                <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
               </b-field>
-          
-              <!-- Specify spot size -->
-              <b-field label="Spot size" horizontal grouped >
-                <b-field>
-                  <p class="control"> <span class="button is-static">XY [nm]</span></p>
-                  <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
-                </b-field>
-                <b-field>
-                  <p class="control"> <span class="button is-static">Z [nm]</span></p>
-                  <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
-                </b-field>
-              </b-field> <!-- END: specify spot size -->
+              <b-field>
+                <p class="control"> <span class="button is-static">Z [nm]</span></p>
+                <b-input placeholder="400" v-model.number="psf_size_z"></b-input>
+              </b-field>
+            </b-field> <!-- END: specify spot size -->
           </b-field>
-
-
-
-
-
-
-          
-
 
           <!-- Foci calling -->
           <b-field grouped group-multiline>
-              <b-field>
-                <b-button type="is-primary" :loading="running_detect_foci" :disabled="status_decompose_clusters==false || analyze_clusters==false" @click="btn_detect_foci">Define foci</b-button>
-              </b-field>
-          
-              <!-- Specify pixel size -->
-              <b-field label="" horizontal grouped>
-                <b-field>
-                  <p class="control"> <span class="button is-static">Min nb of spots</span></p>
-                  <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
-                </b-field>
-                <b-field>
-                  <p class="control"> <span class="button is-static">Radius [nm]</span></p>
-                  <b-input placeholder="400" v-model.number="foci_radius"></b-input>
-                </b-field>
-              </b-field> <!-- END: specify pixel size -->
-
+            <b-field>
+              <b-button type="is-primary" :loading="running_detect_foci" :disabled="status_decompose_clusters==false || analyze_clusters==false" @click="btn_detect_foci">Define foci</b-button>
             </b-field>
 
+            <!-- Specify pixel size -->
+            <b-field label="" horizontal grouped>
+              <b-field>
+                <p class="control"> <span class="button is-static">Min nb of spots</span></p>
+                <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
+              </b-field>
+              <b-field>
+                <p class="control"> <span class="button is-static">Radius [nm]</span></p>
+                <b-input placeholder="400" v-model.number="foci_radius"></b-input>
+              </b-field>
+            </b-field> <!-- END: specify pixel size -->
 
-      </div> <!-- END Class content -->
-    </div> <!-- END class card-content -->
+          </b-field>
+
+        </div> <!-- END Class content -->
+      </div> <!-- END class card-content -->
+    </div> <!-- END class card -->
   </div> <!-- END class card -->
-
-
 
   <!-- Card to analyze image(s) -->
   <br>
@@ -1247,7 +1237,6 @@ api.export(new ImJoyPlugin())
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
-
 
 </attachment>
 
