@@ -1,5 +1,4 @@
-<a href="https://imjoy.io" target="_blank" ><img src="https://github.com/fish-quant/fq-imjoy/blob/master/docs/img/imjoy-logo-powered.png" width="140"></img>
-</a>
+[![powered by ImJoy](https://imjoy.io/static/badge/powered-by-imjoy-badge.svg)](https://imjoy.io/)
 ![GitHub](https://img.shields.io/github/license/fish-quant/fq-imjoy)
 
 # Overview
