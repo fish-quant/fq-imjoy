@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -821,7 +821,7 @@ class ImJoyPlugin():
         if name_save:
             image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
             image_contrasted = stack.maximum_projection(image_contrasted)
-            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(10, 8), remove_frame=True,path_output=name_save)
+            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(40, 21), remove_frame=True,path_output=name_save)
 
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
