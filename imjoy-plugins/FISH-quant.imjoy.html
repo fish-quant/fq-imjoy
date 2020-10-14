@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.6",
+  "version": "0.0.5",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -902,7 +902,7 @@ class ImJoyPlugin():
                 cell_label=np.ones(image_contrasted.shape).astype('uint8'),   # Consider entire image as a cell
                 ndim=3, 
                 rna_coord=spots_post_clustering, 
-                others={"foci": foci},
+                others_coord={"foci": foci},
                 image=image_contrasted,
                 remove_cropped_cell=False)
 
