@@ -18,7 +18,7 @@
 
 ## Connect ImJoy to the plugin engine
 
-Once you have the ImJoy plugin engine installed (instructions see below), you can connect to it with this easy steps:
+Once you have the ImJoy plugin engine installed ([**installation instructions**](imjoy-installation.md#nstall-jupyter-engine-for-imjoy)), you can connect to it with this easy steps:
 
 !!! abstract "Connect ImJoy to Jupyter engine."
     1. Open **anaconda terminal**. 
@@ -36,7 +36,7 @@ the `install` button.
 
 ![imjoy-plugin-installation](img/install_plugin.png){: style="width:400px"}
 
-These installation links also specify in which [ImJoy workspaces](tools-imjoy.md#opening-a-workspace) the plugin will be installed. 
+These installation links also specify in which [ImJoy workspaces](imjoy-installation.md#opening-a-workspace) the plugin will be installed. 
 
 ## Opening a workspace
 
