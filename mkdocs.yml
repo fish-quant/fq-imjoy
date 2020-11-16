@@ -14,15 +14,15 @@ copyright: 'Copyright &copy; 2019 Florian MUELLER, Arthur IMBERT'
 
 # Configuration
 theme:
-  name: 'material'
+  name: 'readthedocs'
   #name: mkdocs
   # 404 page
   static_templates:
     - 404.html
 
   # Don't include MkDocs' JavaScript
-  include_search_page: false
-  search_index_only: true
+  #include_search_page: false
+  #search_index_only: true
 
   # Default values, taken from mkdocs_theme.yml
   language: en
@@ -57,18 +57,29 @@ markdown_extensions:
 
 nav:
     - Overview: index.md   # Needed for material theme but not for others
-    - ImJoy: tools-imjoy.md  
     
-    - FISH-quant:
+    - ImJoy:
+      - Overview: imjoy-overview.md
+      - Plugin engine: imjoy-installation.md
+      - FAQ: imjoy-faq.md
+
+    - Image analysis:
       - Overview: fq-overview.md
       - Data: data.md
       - Loading data: fq-load-data.md
       - Spot detection: fq-spot-detection.md
+
     - Support workflows:
-      - Split channels: fiji-split-channels.md     
+      - Split channels: fiji-split-channels.md 
+
     - Advanced:
       - Developer notes: developer-notes.md
+      
+
+    - More:
       - Licence: licence.md
+      - Contact: contact.md
+
 
 
 

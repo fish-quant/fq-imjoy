@@ -1,6 +1,6 @@
 # Data 
 
-##  Organization
+## Organization
 
 We strongly recommend the following data-organization on which this workflow has been tested. 
 
@@ -30,7 +30,7 @@ The organization of the provided test data is the following
 
 ```
 
-# Naming convention
+## Naming convention
 FISH-quant will extract information directly from the file-names with a **regular expression**. The filenames **MUST** contain an identifier for
 
 * experiment (`file_ident`): string specifying an experiment, e.g. what gene was imaged. Has to be shared by (at least) the images corresponding to the different channels.
@@ -40,7 +40,7 @@ FISH-quant will extract information directly from the file-names with a **regula
 
 These information are extracted by using regular expression and capture groups. You can either define your own regular expression, or use the **default expression** that assumes a naming scheme as used in the example above, where the different elements are separated by `_` and ordered as `<file_ident>_<fov>_<channel>.<img_ext>`, e.g.
 
-```
+``` bash
        fov      img_ext
         |          |
   test_pos001_cy3.tif
