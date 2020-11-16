@@ -1,4 +1,6 @@
-## Some background
+# Spot detection
+
+## Overview
 Spot detection is performed with a standard spot detection approach on either 2D or 3D images. For more details and some
 benchmarking, we refer to our paper ([Tsanov et al., NAR, 2016](https://academic.oup.com/nar/article/44/22/e165/2691336)).
 

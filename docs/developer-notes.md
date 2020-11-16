@@ -1,24 +1,19 @@
-
+# Development notes
 ## Documentation
 Documentation is written with mkdocs using the Material style.
 
 * [mkdocs website](https://www.mkdocs.org/)
-* [Material for mkdocs](https://squidfunk.github.io/mkdocs-material/)
-
   
 ### Installation
 
 Install mkdocs:  `pip install mkdocs`
 
-Install Material: `pip install mkdocs-material`
-
 ### Preview and deployment
 
 * Launch dev-server: `mkdocs serve`
 * Building the site: `mkdocs build`
-* Deploy to GitHub pages: `mkdocs gh-deploy
-
-    __Note__ if this does not work, force commit with `mkdocs gh-deploy --clean --force`
+* Deploy to GitHub pages: `mkdocs gh-deploy` 
+    **Note**:  if this does not work, force commit with `mkdocs gh-deploy --clean --force`
 
 ### Some options
 
@@ -56,11 +51,11 @@ After changes in ImJoy plugins, update the plugin manifest.
 
 Install `node.js` with conda
 
-```
+``` bash
 conda install -c conda-forge nodejs
 ```
 
-Run this command in project root path
-```
+Run this command in project root directory
+``` bash
 node update_manifest.js
 ```

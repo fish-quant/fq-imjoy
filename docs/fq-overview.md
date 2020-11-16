@@ -1,6 +1,8 @@
+# Overview 
+
 ## Installation
 
-* If you use, FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a> 
+* If you use FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a> 
     
     First time installation can take a few minutes, since several Python libraries are installed.
 
@@ -16,7 +18,7 @@ In the ImJoy app, you have **main plugin** `FISH-QUANT`, as wells as several hel
     So when using FISH-QUANT, you have to connect ImJoy to a Jupyter engine and make sure that 
     the FISH-QUANT is running on this engine.  
 
-    ![fq-plugins.png](img/fq-plugins.png){: style="width:300px"}
+    ![fq-plugins.png](img/fq-plugins.png){: style="width:200px"}
 
 ## General use
 
@@ -38,19 +40,19 @@ To maximize the available space in the ImJoy window, you can do two things:
 
 1. Start ImJoy as a **Chrome App**. This will detach ImJoy from Chrome and show it as a separate application with its own icon in the taskbar
 
-    ![imjoy-open-as-app.gif](img/imjoy-open-as-app.gif){: style="width:300px"}
+    ![imjoy-open-as-app.gif](img/imjoy-open-as-app.gif){: style="width:200px"}
 
 2. **Minimize the plugin side-bar** once you launched FISH-quant.
 
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
 
-## Image viewer
+## Kaibu Image viewer
 Images and analysis results are displayed with [Kaibu](https://kaibu.org/#/about).
 
 ![kaibu_screenshot.png](img/kaibu_screenshot.png){: style="width:500px"}
 
 ### Layers
-A central concept in Kaibu are **layers**. Each layer can contain different content (images, spot detection results, ...). 
+A central concept in Kaibu are **layers**. Each layer can contain different content (images, spot detection results, ...).
 
 * The visibility of a layer can be turned on and off by clicking on the eye symbol.
 * When clicking on a layer a content specific menu is show, e.g. to change the contrast of an image.
