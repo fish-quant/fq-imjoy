@@ -51,7 +51,7 @@ from skimage.exposure import rescale_intensity
 # 1. fix_1: bad orientation in kaibu:
 #     * 'np.flipud': correct orientation of image in Kaibu. 
 #     * Flip y corrdinates
-
+# 2. fix_2: when setting visible to False in Kaibu, image can't be displayed
 
 # For MAC
 if sys.platform == "darwin":
@@ -350,7 +350,7 @@ class ImJoyPlugin():
                 if visible == 'true':
                     visible = True
                 else:
-                    visible = False
+                    visible = True # fix_2: should be False  
 
                 # Check if channel was selected
                 if len(channel_selected) == 0:
