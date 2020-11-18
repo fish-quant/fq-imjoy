@@ -25,7 +25,7 @@ If you press on the installation link, the ImJoy app will open and display a
 dialog asking if you want to install the specified plugin. To confirm, press 
 the `install` button.
 
-![imjoy-plugin-installation](img/install_plugin.png){: style="width:400px"}
+![imjoy-plugin-installation](img/imjoy-plugin-installation.png){: style="width:400px"}
 
 These installation links also specify in which [ImJoy workspaces](tools-imjoy.md#opening-a-workspace) the plugin will be installed. 
 
