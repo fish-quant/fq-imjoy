@@ -139,7 +139,7 @@ At one point, your conda environment might get corrupted. You can easily remove 
 
 You can specify your own token `yourtoken`
 
-``` bash
+```
 imjoy --jupyter --token yourtoken
 ```
 
