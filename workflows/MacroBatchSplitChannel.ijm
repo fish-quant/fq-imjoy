@@ -81,8 +81,8 @@ function processFile(path,file) {
 
 		   getDimensions(dummy, dummy, nChannels, dummy, nFrames);
 
-		   if(nChannels <= 2){
-				print("Image is not multi-channel: " +  nChannels);
+		   if(nChannels < 2){
+				print("Image is not multi-channel. Number of channels " +  nChannels);
 		   }	
 		   else{	
 
