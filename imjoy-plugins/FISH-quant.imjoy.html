@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -47,6 +47,12 @@ from skimage import io
 import pandas as pd
 from skimage.exposure import rescale_intensity
 
+# TEMPORARY BUG FIX 
+# 1. fix_1: bad orientation in kaibu:
+#     * 'np.flipud': correct orientation of image in Kaibu. 
+#     * Flip y corrdinates
+
+
 # For MAC
 if sys.platform == "darwin":
     import matplotlib
@@ -57,7 +63,6 @@ from bigfish import stack, plot, detection
 
 # Is there a way to get the version without import?
 import bigfish 
-
 
 def log_config(fun_name, config):
     """
@@ -92,7 +97,7 @@ def save_spots(spots, type, name_save):
 
 def save_foci(foci, name_save):
     """
-    Save results of spot detection.
+    Save results of foci detection.
     """
 
     header = "Z,Y,X,n_rna,index"
@@ -108,7 +113,7 @@ def save_foci(foci, name_save):
 
 def save_encoded_plot(plot, name_save):
     """
-    Save encoded plot as png.
+    Save encoded plot as png. Can then be used to be displayed in ImJoy.
     """
     header, img_encoded = plot.split(",", 1)
     img_decoded = base64.b64decode(img_encoded)
@@ -119,7 +124,7 @@ def save_encoded_plot(plot, name_save):
 
 def show_png(name_img):
     """
-    Show png image.
+    Show png image in ImJoy dialog.
     """
     with open(name_img, 'rb') as f:
         data = f.read()
@@ -131,7 +136,7 @@ def show_png(name_img):
 
 def create_folder(path_new):
     """
-    Check if path `path_new` exisist. If not, create it.
+    Create new folder. Checks if path `path_new` exisist. If not, create it.
     """
     if not path_new.is_dir():
         path_new.mkdir(parents=True)
@@ -139,7 +144,7 @@ def create_folder(path_new):
 
 def create_output_path(data_path, output_path):
     """
-    Function to determine correct output path.
+    Function to create output path to stored data.
 
     If the string output_path contains characters '>>' it will not
     be interpreted as a path name but as an indicator for a string
@@ -252,8 +257,6 @@ class ImJoyPlugin():
         display_type = config['display_type']
 
         # Show image
-        # Could also be viewer = await api.createWindow(type="Kaibu")
-
         if display_type == 'window':
             viewer = await api.createWindow(src="https://kaibu.org")
     
@@ -271,16 +274,17 @@ class ImJoyPlugin():
         
         # Create viewer
         image_array = self.image_mips[channel_index, :, :]
-        await viewer.view_image(image_array, type="itk-vtk", name='image')
+        await viewer.view_image(np.flipud(image_array), type="itk-vtk", name='image')   # fix_1
 
         # Add annotation layer
-        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", draw_edge_color = '#db2307',  draw_face_color = '#eb9d91AA', draw_shape_type= "Rectangle",draw_enable=True)
+        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", draw_edge_color='#db2307',  draw_face_color='#eb9d91AA', draw_shape_type="Rectangle",draw_enable=True)
 
         # get the annotation in geojson format
 
         async def get_geojson_features():    
             features = await layer.get_features()
- 
+            api.log(features)
+
             if len(features['features']) != 1:
                 api.alert('Only one annotation is allowed')
                 return
@@ -290,16 +294,15 @@ class ImJoyPlugin():
                 return
 
             coords = np.asarray(features['features'][0]['geometry']['coordinates'][0])
+
             if len(coords) != 5:
                 api.alert('This is not a rectangular selection')
                 return
 
             analysis_region = np.around(np.concatenate((coords.min(axis=0),coords.max(axis=0))))
-            
             self.analysis_region = analysis_region.astype('uint16')
-            
-            api.alert('Analysis region will be used. You can close the Kaibu window if you want.')
-            #viewer.close # doesn't work
+
+            viewer.close()
 
         await viewer.set_ui({"title": "Utilities",
                     "elements": [
@@ -310,6 +313,7 @@ class ImJoyPlugin():
                         },   
                     ]
         })    
+
 
     async def show_results(self, config):
         """
@@ -387,7 +391,7 @@ class ImJoyPlugin():
                     elif display_dim == 'mip':
                         image_array = self.image_filt_mip
 
-                await viewer.view_image(image_array, type="itk-vtk", name=name, visible=visible)
+                await viewer.view_image(np.flipud(image_array), type="itk-vtk", name=name, visible=visible)   # fix_1
 
             elif data_type == 'spots' or data_type == 'spots_decompose':
                 
@@ -407,7 +411,11 @@ class ImJoyPlugin():
                 # Remove z position if present 
                 if points.shape[1] == 3:
                     points = np.delete(points, 0, 1)
-                
+
+                # fix_1: orientation of y axis inverted in Kaibu
+                n_y = image_array.shape[0]
+                points[:,0] = n_y -  points[:,0] -1
+
                 # Invert X and Y 
                 points[:,[0, 1]] = points[:,[1, 0]]
                 
@@ -500,6 +508,7 @@ class ImJoyPlugin():
 
         self.path_data_full = path_data_full
         scan_results = df_scan.to_dict('records')
+
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
         api.log('[FISH-QUANT][scan_folder] scan results:')
         api.log(scan_results)
@@ -636,8 +645,12 @@ class ImJoyPlugin():
         if len(self.analysis_region) > 0:
             analysis_region = self.analysis_region
 
+            # Size of full image
             n_y = self.image.shape[3]-1
             n_x = self.image.shape[4]-1
+
+            api.log(self.image.shape)
+            api.log(str(analysis_region))
 
             x_min = analysis_region[0]
             y_min = analysis_region[1]
@@ -648,8 +661,17 @@ class ImJoyPlugin():
             if (x_max>n_x): x_max = n_x
             if (y_min<0): x_min = 0
             if (y_max>n_y): y_max = n_y
-        
+
+            # fix_1: orientation of y axis inverted in Kaibu
+            y_max_new = n_y - y_min -1
+            y_min_new = n_y - y_max -1
+            y_min = y_min_new
+            y_max = y_max_new
+            api.log(f'min: {y_min}, max: {y_max}')
+
+            # crop image
             img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
+            api.log(img.shape)
             self.image_raw = img
             self.image_raw_mip = stack.maximum_projection(img)
             self.filter_full = False
@@ -821,7 +843,7 @@ class ImJoyPlugin():
         if name_save:
             image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
             image_contrasted = stack.maximum_projection(image_contrasted)
-            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(10, 8), remove_frame=True,path_output=name_save)
+            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(40, 21), remove_frame=True,path_output=name_save)
 
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
@@ -902,7 +924,7 @@ class ImJoyPlugin():
                 cell_label=np.ones(image_contrasted.shape).astype('uint8'),   # Consider entire image as a cell
                 ndim=3, 
                 rna_coord=spots_post_clustering, 
-                others={"foci": foci},
+                others_coord={"foci": foci},
                 image=image_contrasted,
                 remove_cropped_cell=False)
 
