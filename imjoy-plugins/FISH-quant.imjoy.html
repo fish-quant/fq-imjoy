@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -22,7 +22,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "api_version": "0.1.8",
   "env": "",
   "permissions": [],
-  "requirements": { "stable":["pip: -U git+https://github.com/fish-quant/big-fish@master#egg=big-fish"],
+  "requirements": { "stable":["big-fish"],
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface"
@@ -598,7 +598,7 @@ class ImJoyPlugin():
         self.analysis_details['image_properties']['image_names'] = image_names
         self.analysis_details['image_properties']['size'] = image.shape
 
-        # Store for later usage
+        # Store for later use
         self.image = image
         self.image_names = image_names
         self.channel_identifiers = channel_identifiers
@@ -848,7 +848,6 @@ class ImJoyPlugin():
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
         self.spots = spots
-        #return spots.tolist()
 
 
     async def decompose_clusters(self,config):
@@ -880,7 +879,6 @@ class ImJoyPlugin():
         api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
-        #return spots_post_decomposition.tolist()
 
 
     async def detect_foci(self,config):
