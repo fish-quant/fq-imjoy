@@ -27,7 +27,7 @@
    "permissions": [],
    "requirements": {
     "stable": [
-     "big-fish"
+     "big-fish==0.4.0"
     ],
     "dev": [
      ""

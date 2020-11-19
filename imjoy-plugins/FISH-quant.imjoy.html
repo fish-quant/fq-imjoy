@@ -22,7 +22,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "api_version": "0.1.8",
   "env": "",
   "permissions": [],
-  "requirements": { "stable":["big-fish"],
+  "requirements": { "stable":["big-fish==0.4.0"],
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface"
@@ -848,6 +848,7 @@ class ImJoyPlugin():
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
         self.spots = spots
+        #return spots.tolist()
 
 
     async def decompose_clusters(self,config):
@@ -879,6 +880,7 @@ class ImJoyPlugin():
         api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
+        #return spots_post_decomposition.tolist()
 
 
     async def detect_foci(self,config):
