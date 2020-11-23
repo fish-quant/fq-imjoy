@@ -1,6 +1,7 @@
 [![powered by ImJoy](https://imjoy.io/static/badge/powered-by-imjoy-badge.svg)](https://imjoy.io/)
 ![GitHub](https://img.shields.io/github/license/fish-quant/fq-imjoy)
-
+[![Documentation Status](https://readthedocs.org/projects/fq-imjoy/badge/?version=latest)](https://fq-imjoy.readthedocs.io/en/latest/?badge=latest)
+ 
 # Overview
 
 This repository provides several ImJoy plugins to run analysis workflows for smFISH images.
