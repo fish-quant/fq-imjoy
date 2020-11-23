@@ -6,7 +6,7 @@
 
 This repository provides several ImJoy plugins to run analysis workflows for smFISH images.
 
-For more information, please consult the dedicated [**documentation**](https://fish-quant.github.io/fq-imjoy/).
+For more information, please consult the dedicated [**documentation**](https://fq-imjoy.readthedocs.io/en/latest/).
 
 If you encounter a problems, please file an [**issue**](https://github.com/fish-quant/fq-imjoy/issues).
 
