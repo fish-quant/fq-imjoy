@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -79,7 +79,6 @@ class ImJoyPlugin {
     // Get plugins from workspace
     // TODO: maybe we can change this and provide this as an input to allow for remote calls?
     this.fq_worker = await api.getPlugin("FISH-QUANT")
-    //this.fq_viewer = await api.getPlugin("FQ-image-viewer")
 
     // Get file-manager of FQ plugin
     const fq_worker_url = await this.fq_worker.get_engine_url()
@@ -206,7 +205,7 @@ class ImJoyPlugin {
 
           // Open docs
           openDocs(section){
-            api.showDialog({type: "external", src: "https://fish-quant.github.io/fq-imjoy"+section, passive: true})
+            api.showDialog({type: "external", src: "https://fq-imjoy.readthedocs.io/en/latest"+section, passive: true})
           },
 
           // Data: remove channel
@@ -1282,7 +1281,7 @@ api.export(new ImJoyPlugin())
           <b-navbar>
               <template slot="brand">
                   <b-navbar-item href="#">
-                      <a @click="openUrl('https://fish-quant.github.io/fq-imjoy')" class="btn btn-link">
+                      <a @click="openUrl('https://fq-imjoy.readthedocs.io/en/latest/')" class="btn btn-link">
                       <b-icon icon="help-circle" size="is-small"></b-icon> Documentation</a>
                   </b-navbar-item>
                   <b-navbar-dropdown label="Analysis Info">
