@@ -1,6 +1,7 @@
 # Spot detection
 
 ## Overview
+
 Spot detection is performed with a standard spot detection approach on either 2D or 3D images. For more details and some
 benchmarking, we refer to our paper ([Tsanov et al., NAR, 2016](https://academic.oup.com/nar/article/44/22/e165/2691336)).
 
@@ -28,6 +29,7 @@ In this tab, the user will specify
       ![kaibu_select_region.png](img/kaibu_select_region.png){: style="width:450px"}
 
 ### Filter image
+
 Here you can change the paramaters of the LoG (Laplacian of Gaussian filter. More details about the LoG filter can be found in the background section below.
 
 * **Double click** on the image will show it in a separate interface for inspection. This interface can not be resized and has to be closed before continuing the analysis. See dedicate for more details on how to use the  [**image viewer**](fq-overview.md#image-viewer).
@@ -35,7 +37,8 @@ Here you can change the paramaters of the LoG (Laplacian of Gaussian filter. Mor
 * You can **save** filtered image on the disk with the button `Save`. It will saved in a subfolder `filtered_image`.
 * The filter size will be stored and reused when you launch ImJoy the next time.
 
-###  Detection threshold
+### Detection threshold
+
 Spot detection is performed with a local maximum detection on the filtered image (more details below). 
 
 1. This detection requires setting two paramters:
@@ -93,7 +96,7 @@ For each analyzed image, two files will be created and stored under the orginal 
     **scale of the filter** and should be set to the typical size of spots in the image.
 
 ![fq-select-region.gif](img/log-filter.png){: style="width:350px"}
-    
+
 A LoG filter is a standard filter that is routinely used to **detect rapid change (edges) in images**.
 
 It computes the second derivatives of an image, measuring the rate at which the first derivatives change.
