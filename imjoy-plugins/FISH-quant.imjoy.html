@@ -177,6 +177,7 @@ async def create_mip(img, name_save, file_manager, create_url=False, rescale=Tru
 
     """
 
+    # Create MIP for 3D images
     img_mip = stack.maximum_projection(img)
 
     # Create URL for image to be shown in interface
@@ -587,9 +588,8 @@ class ImJoyPlugin():
                 mip_tensors.append(img_mip)
                 mips.append({'url':url,'shape':shape,'channel':channel_name,'image_name':image_name})
 
-        # stack 3-d tensors in 4-d tensors (for different channels)
         image = np.stack(imgs_3d, axis=0)
-
+        
         # Save some image properties
         self.analysis_details['data_specs']['output_path'] = config['output_path']
         self.analysis_details['image_properties']['image_names'] = image_names
@@ -841,11 +841,10 @@ class ImJoyPlugin():
 
         # Save image (filtered, contrasted) with detections
         if name_save:
-            
             img_filt_mip = stack.maximum_projection(self.image_filt)
             pa, pb = np.percentile(img_filt_mip, (0.1,99.99))
             img_filt_mip = rescale_intensity(img_filt_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
-
+            
             plot.plot_detection(img_filt_mip, spots, radius=2, framesize=(40, 21), remove_frame=True,path_output=name_save)
             api.log(f'[FISH-QUANT][detect_apply] plot with detection results: {name_save}.')
 
@@ -883,7 +882,6 @@ class ImJoyPlugin():
         api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
-        #return spots_post_decomposition.tolist()
 
 
     async def detect_foci(self,config):
@@ -963,9 +961,6 @@ class ImJoyPlugin():
 
         self.analysis_details['spot_detection']['counts']['spots_decomposed'] = len(self.spots_post_decomposition)
         self.analysis_details['spot_detection']['counts']['foci'] = len(foci)
-
-        #return spots_post_clustering.tolist(), foci.tolist()
-
 
     async def detection_file(self,config):
         '''
