@@ -15,7 +15,7 @@
 //  - Last part of image name, by default  'ome.tif'
 //  - String contained in input folder which will be replaced, by default  "multi_channel_stacks"
  
-suffix = ".czi"
+suffix = ".tif"
 folder_img = "multi_channel_stacks"
 
 setBatchMode(true);
