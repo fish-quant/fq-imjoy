@@ -462,7 +462,8 @@ class ImJoyPlugin():
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
-        for file_full in path_data_full.glob(f"*.{config['img_ext']}"):  
+        #for file in os.listdir(str(path_data_full)):
+        for file_full in path_data_full.rglob(f"*.{config['img_ext']}"):  
             api.log(f'Checking file: {str(file_full)}')
             file = file_full.name
             match = re.search(reg_exp, file)
@@ -643,12 +644,14 @@ class ImJoyPlugin():
         # Crop image if specified
         x_min = None
         
+        api.log(self.image.shape)
+
         if len(self.analysis_region) > 0:
             analysis_region = self.analysis_region
 
             # Size of full image
-            n_y = self.image.shape[3]-1
-            n_x = self.image.shape[4]-1
+            n_y = self.image.shape[2]-1
+            n_x = self.image.shape[3]-1
 
             api.log(self.image.shape)
             api.log(str(analysis_region))
@@ -671,7 +674,7 @@ class ImJoyPlugin():
             
             # crop image
             api.log(f'crop in y: min: {y_min}, max: {y_max}')
-            img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
+            img = self.image[channel_index, :,y_min:y_max, x_min:x_max]
             api.log(img.shape)
             self.image_raw = img
             self.image_raw_mip = stack.maximum_projection(img)
