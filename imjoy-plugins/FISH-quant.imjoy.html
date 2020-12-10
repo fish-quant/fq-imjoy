@@ -462,7 +462,9 @@ class ImJoyPlugin():
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
-        for file in os.listdir(str(path_data_full)):
+        for file_full in path_data_full.glob(f"*.{config['img_ext']}"):  
+            api.log(f'Checking file: {str(file_full)}')
+            file = file_full.name
             match = re.search(reg_exp, file)
 
             if match:
@@ -472,7 +474,9 @@ class ImJoyPlugin():
                 if match_dict['img_ext'] == config['img_ext']:
                     match_dict.update({'file_name': file})
                     df_regexp = df_regexp.append(match_dict, ignore_index=True)
-
+            else:
+                api.log('     ... no match')
+                
         if df_regexp.size == 0:
             api.alert('No images with these specifications found.')
             return
