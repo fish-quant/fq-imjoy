@@ -301,15 +301,19 @@ class ImJoyPlugin():
 
             viewer.close()
 
-        await viewer.set_ui({"title": "Utilities",
-                    "elements": [
-                        {"_rintf": True,
+        await viewer.add_widget(
+            {
+                "_rintf": True,
+                "name": "Control",
+                "type": "control",
+                "elements": [
+                    {
                         "type": "button",
                         "label": "Return selection to FISH-quant",
-                        "callback": get_geojson_features
-                        },   
-                    ]
-        })    
+                        "callback": get_geojson_features,
+                    }
+                ],
+            })
 
 
     async def show_results(self, config):
