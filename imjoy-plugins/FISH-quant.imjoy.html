@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -46,23 +46,19 @@ import numpy as np
 from skimage import io
 import pandas as pd
 from skimage.exposure import rescale_intensity
+import bigfish  # Is there a way to get the version without import?
+from bigfish import stack, plot, detection
 
 # TEMPORARY BUG FIX 
 # 1. fix_1: bad orientation in kaibu:
 #     * 'np.flipud': correct orientation of image in Kaibu. 
 #     * Flip y corrdinates
-# 2. fix_2: when setting visible to False in Kaibu, image can't be displayed
 
 # For MAC
 if sys.platform == "darwin":
     import matplotlib
     matplotlib.use('PS')
 
-
-from bigfish import stack, plot, detection
-
-# Is there a way to get the version without import?
-import bigfish 
 
 def log_config(fun_name, config):
     """
@@ -175,36 +171,35 @@ def create_output_path(data_path, output_path):
     return output_path_return
 
 
-async def image_mip(img, name_save, file_manager, create_url=False, rescale=True):
+async def create_mip(img, name_save, file_manager, create_url=False, rescale=True):
     """
     Provide a base64 encoded URL of a MIP.
-    """
-    img_mip = stack.maximum_projection(img)
 
-    #await api.showDialog(type='ImageViewer', name="Show image with ImageViewer", data={"image_array": img_mip})
+    """
+
+    # Create MIP for 3D images
+    img_mip = stack.maximum_projection(img)
 
     # Create URL for image to be shown in interface
     if create_url:
 
         # Rescale image (only required when creating url)
         if rescale:
-            pa, pb = np.percentile(img_mip, (0.1,99.9))
+            pa, pb = np.percentile(img_mip, (0.1,99.99))
             img_mip_save = rescale_intensity(img_mip, in_range=(pa, pb),out_range=np.uint8).astype('uint8')
         else:
             img_mip_save = np.copy(img_mip)
 
         stack.save_image(img_mip_save, name_save)
-        api.log(f'[FISH-QUANT][image_mip] mip saved as: {name_save}')
+        api.log(f'[FISH-QUANT][create_mip] mip saved as: {name_save}')
 
         # Preferred solution, but doesn't work yet. 
         # Bug in Jupyter: returned content-Type is "text/html" but should be "image/png"
         # Causes CORB error in Chrome.
 
-        """
-        img_url = await file_manager.getFileUrl({'path': name_save})
-        api.log(file_url)
-        return img_mip, img_mip.shape, file_url
-        """
+        # img_url = await file_manager.getFileUrl({'path': name_save})
+        # api.log(file_url)
+        # return img_mip, img_mip.shape, file_url
     
         # Workaround until content type is fixed
         with open(name_save, 'rb') as f:
@@ -243,12 +238,14 @@ class ImJoyPlugin():
                                                          'version_FQ': await api.getConfig('_version'),
                                                          'version_bigfish': bigfish.__version__})
 
+
     def get_engine_url(self):
         return api.ENGINE_URL
 
+
     async def select_analysis_region(self, config):
         """
-        Show results (images, spots, outlines, ...)
+        Select analysis region in Kaibu.
         """
 
         # Parameters
@@ -304,15 +301,19 @@ class ImJoyPlugin():
 
             viewer.close()
 
-        await viewer.set_ui({"title": "Utilities",
-                    "elements": [
-                        {"_rintf": True,
+        await viewer.add_widget(
+            {
+                "_rintf": True,
+                "name": "Control",
+                "type": "control",
+                "elements": [
+                    {
                         "type": "button",
                         "label": "Return selection to FISH-quant",
-                        "callback": get_geojson_features
-                        },   
-                    ]
-        })    
+                        "callback": get_geojson_features,
+                    }
+                ],
+            })
 
 
     async def show_results(self, config):
@@ -350,7 +351,7 @@ class ImJoyPlugin():
                 if visible == 'true':
                     visible = True
                 else:
-                    visible = True # fix_2: should be False  
+                    visible = False
 
                 # Check if channel was selected
                 if len(channel_selected) == 0:
@@ -369,7 +370,7 @@ class ImJoyPlugin():
                     if self.filter_full:
             
                         if display_dim == 'orig':
-                            image_array = self.image[0, channel_index, :, :, :]
+                            image_array = self.image[channel_index, :, :, :]
                     
                         elif display_dim == 'mip':
                             image_array = self.image_mips[channel_index, :, :]
@@ -465,7 +466,10 @@ class ImJoyPlugin():
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
-        for file in os.listdir(str(path_data_full)):
+        #for file in os.listdir(str(path_data_full)):
+        for file_full in path_data_full.rglob(f"*.{config['img_ext']}"):  
+            api.log(f'Checking file: {str(file_full)}')
+            file = file_full.name
             match = re.search(reg_exp, file)
 
             if match:
@@ -475,7 +479,9 @@ class ImJoyPlugin():
                 if match_dict['img_ext'] == config['img_ext']:
                     match_dict.update({'file_name': file})
                     df_regexp = df_regexp.append(match_dict, ignore_index=True)
-
+            else:
+                api.log('     ... no match')
+                
         if df_regexp.size == 0:
             api.alert('No images with these specifications found.')
             return
@@ -552,8 +558,7 @@ class ImJoyPlugin():
             api.log(f'[FISH-QUANT][load_image] path for MIPs: {path_save}')
 
         # Loop over channels and build 5D tensor (starfish)
-        tensors_3d = []
-        tensors_4d = []
+        imgs_3d = []
         mip_tensors = []
         image_names = {}
 
@@ -563,14 +568,20 @@ class ImJoyPlugin():
             image_name_full = str(path_data_full / image_name)
             api.log(f'[FISH-QUANT][load_image] reading image: {image_name_full}')
 
-            tensor_3d = io.imread(image_name_full)
+            img_channel = io.imread(image_name_full)
 
-            # Code needed to swap z at first axes
+            # Add z-dimension for 2D images
+            if img_channel.ndim == 2:
+                img_3d = np.array(img_channel)[np.newaxis, :]
+            else:
+                img_3d = img_channel
+
+            # Swap z (necessary for some images .... not sure why)
             if not config['z_first']:
-                tensor_3d = np.swapaxes(tensor_3d,0,2)
-                tensor_3d = np.swapaxes(tensor_3d,1,2)
+                img_3d = np.swapaxes(img_3d,0,2)
+                img_3d = np.swapaxes(img_3d,1,2)
 
-            tensors_3d.append(tensor_3d)
+            imgs_3d.append(img_3d)
 
             image_names.update({ channel_name :  {
                                     'index': index,
@@ -581,17 +592,12 @@ class ImJoyPlugin():
 
             if config['create_mips']:
                 name_save = str(path_save / f'img_mip_dum__{channel_name}.png')
-                img_mip, shape, url = await image_mip(tensor_3d, name_save, self.file_manager, create_url=True, rescale=True)
+                img_mip, shape, url = await create_mip(img_3d, name_save, self.file_manager, create_url=True, rescale=True)
 
                 mip_tensors.append(img_mip)
                 mips.append({'url':url,'shape':shape,'channel':channel_name,'image_name':image_name})
 
-        # stack 3-d tensors in 4-d
-        tensor_4d = np.stack(tensors_3d, axis=0)
-        tensors_4d.append(tensor_4d)
-
-        # stack 4-d tensors in 5-d
-        image = np.stack(tensors_4d, axis=0)
+        image = np.stack(imgs_3d, axis=0)
         
         # Save some image properties
         self.analysis_details['data_specs']['output_path'] = config['output_path']
@@ -642,12 +648,14 @@ class ImJoyPlugin():
         # Crop image if specified
         x_min = None
         
+        api.log(self.image.shape)
+
         if len(self.analysis_region) > 0:
             analysis_region = self.analysis_region
 
             # Size of full image
-            n_y = self.image.shape[3]-1
-            n_x = self.image.shape[4]-1
+            n_y = self.image.shape[2]-1
+            n_x = self.image.shape[3]-1
 
             api.log(self.image.shape)
             api.log(str(analysis_region))
@@ -667,17 +675,17 @@ class ImJoyPlugin():
             y_min_new = n_y - y_max -1
             y_min = y_min_new
             y_max = y_max_new
-            api.log(f'min: {y_min}, max: {y_max}')
-
+            
             # crop image
-            img = self.image[0, channel_index, :,y_min:y_max, x_min:x_max]
+            api.log(f'crop in y: min: {y_min}, max: {y_max}')
+            img = self.image[channel_index, :,y_min:y_max, x_min:x_max]
             api.log(img.shape)
             self.image_raw = img
             self.image_raw_mip = stack.maximum_projection(img)
             self.filter_full = False
         
         else:
-            img = self.image[0, channel_index, :, :, :]
+            img = self.image[channel_index, :, :, :]
             self.filter_full = True        
 
         # Check if channel was selected
@@ -721,11 +729,15 @@ class ImJoyPlugin():
             create_folder(path_save)
             
             name_save = str(path_save / f'img_filt_mip_dum_c{channel_index}.png')
-            img_mip, shape, url = await image_mip(img_filt, name_save, self.file_manager, create_url=True, rescale=True)
+            img_filt_mip, shape, url = await create_mip(img_filt, name_save, self.file_manager, create_url=True, rescale=True)
 
-            self.image_filt_mip = img_mip
+            self.image_filt_mip = img_filt_mip
             if show_status: api.showStatus('Filtering finished!')
-            return {'url':url,'shape':shape,'min':img_filt.min().item(),'max':img_filt.max().item()}  # .item() to convert to number
+
+            return {'url':url,
+                    'shape':shape,
+                    'min':img_filt.min().item(),
+                    'max':img_filt.max().item()}  
 
 
     def save_image_filtered(self,config):
@@ -783,7 +795,6 @@ class ImJoyPlugin():
         if show_status: api.showStatus('Performing predection ... calculate local maximum image')
 
         # Calculate local maximum
-        #if len(self.mask_lm)==0:
         await self.calc_local_max({ 'minimum_distance': config['minimum_distance']})
 
         # Loop over thresholds
@@ -812,8 +823,8 @@ class ImJoyPlugin():
         ''' 
         Apply spot detection.
         Returns spots as a nested list [[Z0,Y0,X0],[Z1,Y1,X1], .... ]. 
-        Why return? Can then be used to display in calling plugin.
         '''
+
         # Parameters
         log_config('[FISH-QUANT][detect_apply]', config)
         api.log(f'[FISH-QUANT][detect_apply] name base {self.name_base}')
@@ -839,16 +850,18 @@ class ImJoyPlugin():
             'spots': len(spots)
         }
 
-        # Save image with detections
+        # Save image (filtered, contrasted) with detections
         if name_save:
-            image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
-            image_contrasted = stack.maximum_projection(image_contrasted)
-            plot.plot_detection(image_contrasted, spots, radius=2, framesize=(40, 21), remove_frame=True,path_output=name_save)
+            img_filt_mip = stack.maximum_projection(self.image_filt)
+            pa, pb = np.percentile(img_filt_mip, (0.1,99.99))
+            img_filt_mip = rescale_intensity(img_filt_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
+            
+            plot.plot_detection(img_filt_mip, spots, radius=2, framesize=(40, 21), remove_frame=True,path_output=name_save)
+            api.log(f'[FISH-QUANT][detect_apply] plot with detection results: {name_save}.')
 
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
         self.spots = spots
-        #return spots.tolist()
 
 
     async def decompose_clusters(self,config):
@@ -864,7 +877,7 @@ class ImJoyPlugin():
         if not self.filter_full:
             img = self.image_raw 
         else:
-            img = self.image[0, self.channel_index, :, :, :]
+            img = self.image[self.channel_index, :, :, :]
         
         spots_post_decomposition, clusters, reference_spot = detection.decompose_cluster(
             img, 
@@ -880,7 +893,6 @@ class ImJoyPlugin():
         api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
-        #return spots_post_decomposition.tolist()
 
 
     async def detect_foci(self,config):
@@ -961,9 +973,6 @@ class ImJoyPlugin():
         self.analysis_details['spot_detection']['counts']['spots_decomposed'] = len(self.spots_post_decomposition)
         self.analysis_details['spot_detection']['counts']['foci'] = len(foci)
 
-        #return spots_post_clustering.tolist(), foci.tolist()
-
-
     async def detection_file(self,config):
         '''
         Process all files with specified settings.
@@ -999,7 +1008,6 @@ class ImJoyPlugin():
             self.analysis_region = []
             await self.filter_image(config)
             
-        
             # Detection
             api.showStatus(f'Processing file: spot detection')
             await self.calc_local_max(config)
