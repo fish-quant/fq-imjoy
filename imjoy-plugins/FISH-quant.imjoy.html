@@ -42,6 +42,8 @@ import json
 import re
 import base64
 from datetime import datetime
+import urllib.request
+import zipfile
 import numpy as np
 from skimage import io
 import pandas as pd
@@ -58,6 +60,24 @@ from bigfish import stack, plot, detection
 if sys.platform == "darwin":
     import matplotlib
     matplotlib.use('PS')
+
+
+def download_with_url(url_string, name_save, unzip=True):
+    """
+    Download zipped folder and extract in user directory.
+    """
+
+    api.log(f'Downloading dataset from : {url_string}')
+    api.log(f'Download saved as        : {str(name_save)}')
+    with urllib.request.urlopen(url_string) as response, open(str(name_save), "wb") as out_file:
+        data = response.read()  # a `bytes` object
+        out_file.write(data)
+
+    if unzip:
+        folder_extract = str(name_save.parent)
+        api.log(f'Zip extracted to         : {folder_extract}')
+        with zipfile.ZipFile(name_save, "r") as zip_ref:
+            zip_ref.extractall(folder_extract)
 
 
 def log_config(fun_name, config):
@@ -243,6 +263,24 @@ class ImJoyPlugin():
         return api.ENGINE_URL
 
 
+    async def download_test_data(self,url):
+        """
+        Download test data.
+        """
+        # TODO: check that provide url is good
+        # Return path of extracted zip (not sure how to handle this)
+
+        # Get data
+        url = await api.prompt("URL to zipped data", "https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1")
+        api.log(f'Loading data from : {url}')
+        
+        # Download to the user directory
+        user_home = Path.home()
+        name_save = Path.home() / "fq-imjoy-tutorial.zip"
+
+        download_with_url(url, name_save, unzip=True)
+
+
     async def select_analysis_region(self, config):
         """
         Select analysis region in Kaibu.
@@ -315,6 +353,18 @@ class ImJoyPlugin():
                 ],
             })
 
+
+        """
+        await viewer.set_ui({"title": "Utilities",
+                    "elements": [
+                        {"_rintf": True,
+                        "type": "button",
+                        "label": "Return selection to FISH-quant",
+                        "callback": get_geojson_features
+                        },   
+                    ]
+        })    
+        """
 
     async def show_results(self, config):
         """

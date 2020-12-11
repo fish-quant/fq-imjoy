@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -87,7 +87,7 @@ class ImJoyPlugin {
     // Get last used values (if present)
     var reg_exp = await api.getConfig('reg_exp')
     if(! reg_exp) {
-      reg_exp = '(?P<fov>.*)-(?P<file_ident>Exp.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
+      reg_exp = '(?P<file_ident>Exp.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
     }
 
     var data_path = await api.getConfig('data_path')
@@ -203,8 +203,16 @@ class ImJoyPlugin {
               api.utils.openUrl(url)
           },
 
+          // Open URL in external window
+          download_test_data(){
+            let url="https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1"
+            this.reg_exp = '(?P<file_ident>Exp.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
+            this.fq_worker.download_test_data(url)
+          },
+
+  
           // Open docs
-          openDocs(section){
+          open_docs(section){
             api.showDialog({type: "external", src: "https://fq-imjoy.readthedocs.io/en/latest"+section, passive: true})
           },
 
@@ -736,12 +744,15 @@ api.export(new ImJoyPlugin())
       <!-- Actual content -->
       <div class="content">
 
-        <!-- Specify data folder -->
-        <b-field label="DATA folder" horizontal grouped expanded>
-          <b-field expanded>
-            <b-input v-model="data_path" placeholder="paste-path-to-data"></b-input>
+        <!-- Specify results folder -->
+        <b-field horizontal label="DATA folder" >
+          <b-field>
+            <b-input  v-model="data_path" placeholder="paste-path-to-data" expanded></b-input>
+            <p class="control">
+                <b-button type="is-primary" @click="download_test_data">Download test data</b-button>
+            </p>
           </b-field>
-        </b-field> <!-- END: specify data folder -->
+        </b-field> <!-- END: specify results folder -->
 
         <!-- Specify results folder -->
         <b-field horizontal label="RESULTS folder" >
