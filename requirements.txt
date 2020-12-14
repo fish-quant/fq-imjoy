@@ -1,1 +1,2 @@
 big-fish==0.4.0
+imjoy-rpc>=0.2.56
