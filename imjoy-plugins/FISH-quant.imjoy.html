@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -60,24 +60,6 @@ from bigfish import stack, plot, detection
 if sys.platform == "darwin":
     import matplotlib
     matplotlib.use('PS')
-
-
-def download_with_url(url_string, name_save, unzip=True):
-    """
-    Download zipped folder and extract in user directory.
-    """
-
-    api.log(f'Downloading dataset from : {url_string}')
-    api.log(f'Download saved as        : {str(name_save)}')
-    with urllib.request.urlopen(url_string) as response, open(str(name_save), "wb") as out_file:
-        data = response.read()  # a `bytes` object
-        out_file.write(data)
-
-    if unzip:
-        folder_extract = str(name_save.parent)
-        api.log(f'Zip extracted to         : {folder_extract}')
-        with zipfile.ZipFile(name_save, "r") as zip_ref:
-            zip_ref.extractall(folder_extract)
 
 
 def log_config(fun_name, config):
@@ -263,22 +245,49 @@ class ImJoyPlugin():
         return api.ENGINE_URL
 
 
-    async def download_test_data(self,url):
+    async def get_zipped_data(self, url):
         """
         Download test data.
         """
         # TODO: check that provide url is good
-        # Return path of extracted zip (not sure how to handle this)
+
+        path_acquisition = None
 
         # Get data
-        url = await api.prompt("URL to zipped data", "https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1")
+        url = await api.prompt("URL to zipped data", url)
         api.log(f'Loading data from : {url}')
         
         # Download to the user directory
         user_home = Path.home()
         name_save = Path.home() / "fq-imjoy-tutorial.zip"
 
-        download_with_url(url, name_save, unzip=True)
+        # Download zip archive
+        with urllib.request.urlopen(url) as response, open(str(name_save), "wb") as out_file:
+            data = response.read()  # a `bytes` object
+            out_file.write(data)
+
+        # Unzip and find acquisition folder
+        path_extract = name_save.parent
+        with zipfile.ZipFile(name_save, "r") as zip_ref:
+            zip_ref.extractall(path=path_extract)
+
+            extracted_files = zip_ref.namelist()
+            api.alert(f'Zipped data extracted to         : {str(path_extract)}')
+            api.log(f'Following files were extracted:')
+            api.log(*extracted_files, sep="\n") 
+
+            # Find all names with acquisition, shortest should be parental folder
+            sub_folders_acquisition = [i for i in extracted_files if "acquisition" in i] 
+            if len(sub_folders_acquisition) > 0:
+
+                sub_folder_acquisition = min(sub_folders_acquisition, key=len)
+
+                path_acquisition = str(path_extract / sub_folder_acquisition) 
+                api.log(f'\nAcquisition folder: {path_acquisition}')
+            else:
+                api.alert(f'NO acquisition folder found. Please follow required file organization.')
+
+        return path_acquisition
 
 
     async def select_analysis_region(self, config):
