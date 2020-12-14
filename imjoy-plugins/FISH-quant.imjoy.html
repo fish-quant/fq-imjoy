@@ -20,7 +20,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "flags": ["single-instance", "allow-detach"],
   "icon": "extension",
   "api_version": "0.1.8",
-  "env": "",
+  "env": {"type": "binder", "spec": "fish-quant/fq-imjoy/binder", "skip_requirements": true},
   "permissions": [],
   "requirements": { "stable":["big-fish==0.4.0"],
                     "dev": [""]},
@@ -251,6 +251,8 @@ class ImJoyPlugin():
         """
         # TODO: check that provide url is good
 
+        api.showStatus('Getting zipped data ... unzipping might take a bit of time .... ')
+
         path_acquisition = None
 
         # Get data
@@ -286,6 +288,8 @@ class ImJoyPlugin():
                 api.log(f'\nAcquisition folder: {path_acquisition}')
             else:
                 api.alert(f'NO acquisition folder found. Please follow required file organization.')
+
+        api.showStatus('Zipped data obtained. More details in log.')
 
         return path_acquisition
 

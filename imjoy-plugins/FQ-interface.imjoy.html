@@ -206,10 +206,15 @@ class ImJoyPlugin {
           // Open URL in external window
           async get_zipped_data(){
             let url="https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1"
-            this.reg_exp = '(?P<file_ident>Exp.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
             this.data_path = await this.fq_worker.get_zipped_data(url)
+            if (this.data_path.includes('fq-imjoy-tutorial')){
+              this.reg_exp = '(?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)';
+              this.ch_name = "FISH";
+              this.ch_ident = "cy3";
+              this.threshold_range = [10, 140, 75];
+              api.alert('Press on button "Add" to add fish channel for analysis, and button "Scan folder..." to look for images to analyze');
+            }
           },
-
   
           // Open docs
           open_docs(section){
@@ -749,7 +754,7 @@ api.export(new ImJoyPlugin())
           <b-field>
             <b-input  v-model="data_path" placeholder="paste-path-to-data" expanded></b-input>
             <p class="control">
-                <b-button type="is-primary" @click="get_zipped_data">Download test data</b-button>
+                <b-button type="is-primary" @click="get_zipped_data">Get zipped data</b-button>
             </p>
           </b-field>
         </b-field> <!-- END: specify results folder -->
