@@ -34,7 +34,7 @@ User-interface of FISH-quant implemented with buefy.
 <script lang="javascript">
 class ImJoyPlugin {
   async setup() {
-
+    
     const self = this
 
     // For interaction with plot to show detection tests
@@ -726,7 +726,8 @@ class ImJoyPlugin {
    */  
   async download_zipped_results() {
     this.store.downloading_results_zipped=true;
-    await this.fq_worker.download_zipped_results({});
+    let url = await this.fq_worker.download_zipped_results({});
+    api.utils.openUrl(url)
     this.store.downloading_results_zipped=false;
   }
 
@@ -1321,7 +1322,7 @@ api.export(new ImJoyPlugin())
 
       <!-- Navbar -->
       <template>
-          <b-navbar>
+          <b-navbar fixed-top="true">
               <template slot="brand">
                   <b-navbar-item href="#">
                       <a @click="openUrl('https://fq-imjoy.readthedocs.io/en/latest/')" class="btn btn-link">
@@ -1361,7 +1362,7 @@ api.export(new ImJoyPlugin())
 
 
       <!-- Tabs -->
-      <b-tabs type="is-toggle" position="is-centered">
+      <b-tabs type="is-toggle" position="is-centered" expanded="true">
         <b-tab-item label="1. Data specifications" icon="download">
           <div id="cont_data"></div>
         </b-tab-item>

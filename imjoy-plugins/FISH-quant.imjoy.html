@@ -231,7 +231,7 @@ class ImJoyPlugin():
                                   'settings' :{}
                                    }
         }
-                
+        
 
     async def run(self, ctx):
         self.FQ_interface = await api.createWindow(type="FQ-interface",
@@ -299,15 +299,17 @@ class ImJoyPlugin():
         """
         Download zipped results.
         """
+
         # Download only if results have already been otained
         if not self.path_analysis:
             api.alert('No analysis results stored so far')
             return
-
-        # Create zip archive with results
-        name_results_zip = Path.home() / "fq-results.zip"
-        api.log(f'Results will be zipped in file: {name_results_zip}')
-
+ 
+        # Create zip archive with results (in current directory to allow download)
+        name_results_zip = "fq-results.zip"
+        api.log(f'Will zip results stored in folder : {str(self.path_analysis)}')
+        api.log(f'Results will be zipped in file    : {os.path.abspath(name_results_zip)}')
+        
         with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
             for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
                     for filename in filenames:
@@ -318,8 +320,10 @@ class ImJoyPlugin():
 
         # Provide download link
         file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
-        url = await file_manager.getFileUrl({"path": str(name_results_zip)})
-        await api.alert(f'Download results with this link: {url}')
+        url = await file_manager.getFileUrl({"path": name_results_zip})
+        api.log(f'Download results with this link: {url}')
+        #api.utils.openUrl(url)
+        return url
 
 
     async def select_analysis_region(self, config):
