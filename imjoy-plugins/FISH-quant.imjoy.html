@@ -37,6 +37,7 @@ from imjoy import api
 import asyncio
 import sys
 import os
+from os.path import basename
 from pathlib import Path
 import json
 import re
@@ -221,7 +222,7 @@ class ImJoyPlugin():
     async def setup(self):
         api.log('[FISH-QUANT] plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
-        self.cwd = Path.cwd() 
+        self.path_analysis = None
         self.analysis_details = {
                 'date': '',
                 'data_specs': {},
@@ -292,6 +293,33 @@ class ImJoyPlugin():
         api.showStatus('Zipped data obtained. More details in log.')
 
         return path_acquisition
+
+
+    async def download_zipped_results(self, config):
+        """
+        Download zipped results.
+        """
+        # Download only if results have already been otained
+        if not self.path_analysis:
+            api.alert('No analysis results stored so far')
+            return
+
+        # Create zip archive with results
+        name_results_zip = Path.home() / "fq-results.zip"
+        api.log(f'Results will be zipped in file: {name_results_zip}')
+
+        with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
+            for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
+                    for filename in filenames:
+                        #create complete filepath of file in directory
+                        filePath = os.path.join(folderName, filename)
+                        # Add file to zip
+                        zip_ref.write(filePath, basename(filePath))
+
+        # Provide download link
+        file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
+        url = await file_manager.getFileUrl({"path": str(name_results_zip)})
+        await api.alert(f'Download results with this link: {url}')
 
 
     async def select_analysis_region(self, config):

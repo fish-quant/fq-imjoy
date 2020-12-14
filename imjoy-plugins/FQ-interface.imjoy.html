@@ -182,6 +182,7 @@ class ImJoyPlugin {
           running_detect_foci: false,
           running_detect_image: false,
           running_detect_batch: false,
+          downloading_results_zipped: false,
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
@@ -189,6 +190,7 @@ class ImJoyPlugin {
           status_detection_applied: false,
           status_detect_apply: false,
           status_decompose_clusters: false,
+
     },
 
     // Initialize vue app
@@ -354,6 +356,13 @@ class ImJoyPlugin {
             self.detection_file()
           },
 
+          // Callback to plot detections detection
+          btn_download_zipped_results: async function(){
+            self.download_zipped_results()
+          },
+
+
+
       } // END methods vue
     }) // END vue
   } // END SETUP
@@ -388,6 +397,7 @@ class ImJoyPlugin {
       this.store.running_detect_foci = false
       this.store.running_detect_image = false
       this.store.running_detect_batch = false
+      this.store.downloading_results_zipped = false
   }
 
 
@@ -710,6 +720,20 @@ class ImJoyPlugin {
     this.store.running_detect_batch=false
     this.reset_parameters()
   }
+
+  /**
+   * Download analysis folder
+   */  
+  async download_zipped_results() {
+    this.store.downloading_results_zipped=true;
+    await this.fq_worker.download_zipped_results({});
+    this.store.downloading_results_zipped=false;
+  }
+
+
+  /**
+   * Run function
+   */ 
   
   async run(ctx) {
 
@@ -1246,6 +1270,9 @@ api.export(new ImJoyPlugin())
             <b-field>
               <b-checkbox v-model="create_plots" :disabled="status_detection_applied==false">Create plots</b-checkbox>
             </b-field>
+            <b-field>
+              <b-button type="is-primary" :loading="downloading_results_zipped" @click="btn_download_zipped_results">Download zipped results</b-button>
+             </b-field>
           </b-field>
         </section>
 
