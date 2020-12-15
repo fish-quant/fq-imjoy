@@ -253,7 +253,7 @@ class ImJoyPlugin():
         """
         # TODO: check that provide url is good
 
-        api.showStatus('Getting zipped data ... unzipping might take a bit of time .... ')
+        api.showStatus('Getting zipped data ... download & unzipping might take a bit of time .... ')
 
         path_acquisition = None
 
@@ -272,6 +272,7 @@ class ImJoyPlugin():
 
         # Unzip and find acquisition folder
         path_extract = name_save.parent
+
         with zipfile.ZipFile(name_save, "r") as zip_ref:
             zip_ref.extractall(path=path_extract)
 
@@ -311,24 +312,28 @@ class ImJoyPlugin():
         api.log(f'Will zip results stored in folder : {str(self.path_analysis)}')
         api.log(f'Results will be zipped in file    : {os.path.abspath(name_results_zip)}')
         
-        with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
-            for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
-                    for filename in filenames:
+        try:
+            with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
+                for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
+                        for filename in filenames:
 
-                        # Filename and name in zip
-                        filePath = os.path.join(folderName, filename)
-                        zipPath = os.path.relpath(filePath, str(path_zip))
+                            # Filename and name in zip
+                            filePath = os.path.join(folderName, filename)
+                            zipPath = os.path.relpath(filePath, str(path_zip))
 
-                        # Add file to zip
-                        zip_ref.write(filePath, zipPath)
+                            # Add file to zip
+                            zip_ref.write(filePath, zipPath)
 
-        # Provide download link
-        file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
-        url = await file_manager.getFileUrl({"path": name_results_zip})
-        api.log(f'Download results with this link: {url}')
-        #api.utils.openUrl(url)
-        return url
+            # Provide download link
+            file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
+            url = await file_manager.getFileUrl({"path": name_results_zip})
+            api.log(f'Download results with this link: {url}')
+            #api.utils.openUrl(url)
+            return url
 
+        except:
+            api.alert(f"Something else went wrong. Could not store results in file {os.path.abspath(name_results_zip)}")
+            return None
 
     async def select_analysis_region(self, config):
         """
