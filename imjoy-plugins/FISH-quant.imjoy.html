@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -236,6 +236,7 @@ class ImJoyPlugin():
     async def run(self, ctx):
         self.FQ_interface = await api.createWindow(type="FQ-interface",
                                                    name='FISH-quant',
+                                                   fullscreen=True,
                                                    data={'file_manager': api.FILE_MANAGER_URL,
                                                          'engine_url': api.ENGINE_URL,
                                                          'version_FQ': await api.getConfig('_version'),
@@ -313,10 +314,13 @@ class ImJoyPlugin():
         with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
             for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
                     for filename in filenames:
-                        #create complete filepath of file in directory
+
+                        # Filename and name in zip
                         filePath = os.path.join(folderName, filename)
+                        zipPath = os.path.relpath(filePath, str(path_zip))
+
                         # Add file to zip
-                        zip_ref.write(filePath, basename(filePath))
+                        zip_ref.write(filePath, zipPath)
 
         # Provide download link
         file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
