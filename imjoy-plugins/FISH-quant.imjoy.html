@@ -313,13 +313,14 @@ class ImJoyPlugin():
         api.log(f'Results will be zipped in file    : {os.path.abspath(name_results_zip)}')
         
         try:
+            path_to_zip = str(self.path_analysis)
             with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
-                for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
+                for folderName, subfolders, filenames in os.walk(path_to_zip):
                         for filename in filenames:
 
                             # Filename and name in zip
                             filePath = os.path.join(folderName, filename)
-                            zipPath = os.path.relpath(filePath, str(path_zip))
+                            zipPath = os.path.relpath(filePath, path_to_zip)
 
                             # Add file to zip
                             zip_ref.write(filePath, zipPath)

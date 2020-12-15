@@ -721,8 +721,8 @@ class ImJoyPlugin {
   async get_zipped_data(){
     this.store.getting_zipped_data=true;
     let url="https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1"
-    this.data_path = await this.fq_worker.get_zipped_data(url)
-    if (this.data_path.includes('fq-imjoy-tutorial')){
+    this.store.data_path = await this.fq_worker.get_zipped_data(url)
+    if (this.store.data_path.includes('fq-imjoy-tutorial')){
       this.store.reg_exp = '(?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)';
       this.store.ch_name = "FISH";
       this.store.ch_ident = "cy3";
