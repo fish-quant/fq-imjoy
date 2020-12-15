@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -20,7 +20,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "flags": ["single-instance", "allow-detach"],
   "icon": "extension",
   "api_version": "0.1.8",
-  "env": "",
+  "env": {"type": "binder", "spec": "fish-quant/fq-imjoy/binder", "skip_requirements": true},
   "permissions": [],
   "requirements": { "stable":["big-fish==0.4.0"],
                     "dev": [""]},
@@ -37,11 +37,14 @@ from imjoy import api
 import asyncio
 import sys
 import os
+from os.path import basename
 from pathlib import Path
 import json
 import re
 import base64
 from datetime import datetime
+import urllib.request
+import zipfile
 import numpy as np
 from skimage import io
 import pandas as pd
@@ -219,7 +222,7 @@ class ImJoyPlugin():
     async def setup(self):
         api.log('[FISH-QUANT] plugin initialized.')
         self.file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
-        self.cwd = Path.cwd() 
+        self.path_analysis = None
         self.analysis_details = {
                 'date': '',
                 'data_specs': {},
@@ -228,7 +231,7 @@ class ImJoyPlugin():
                                   'settings' :{}
                                    }
         }
-                
+        
 
     async def run(self, ctx):
         self.FQ_interface = await api.createWindow(type="FQ-interface",
@@ -241,6 +244,86 @@ class ImJoyPlugin():
 
     def get_engine_url(self):
         return api.ENGINE_URL
+
+
+    async def get_zipped_data(self, url):
+        """
+        Download test data.
+        """
+        # TODO: check that provide url is good
+
+        api.showStatus('Getting zipped data ... unzipping might take a bit of time .... ')
+
+        path_acquisition = None
+
+        # Get data
+        url = await api.prompt("URL to zipped data", url)
+        api.log(f'Loading data from : {url}')
+        
+        # Download to the user directory
+        user_home = Path.home()
+        name_save = Path.home() / "fq-imjoy-tutorial.zip"
+
+        # Download zip archive
+        with urllib.request.urlopen(url) as response, open(str(name_save), "wb") as out_file:
+            data = response.read()  # a `bytes` object
+            out_file.write(data)
+
+        # Unzip and find acquisition folder
+        path_extract = name_save.parent
+        with zipfile.ZipFile(name_save, "r") as zip_ref:
+            zip_ref.extractall(path=path_extract)
+
+            extracted_files = zip_ref.namelist()
+            api.alert(f'Zipped data extracted to         : {str(path_extract)}')
+            api.log(f'Following files were extracted:')
+            api.log(*extracted_files, sep="\n") 
+
+            # Find all names with acquisition, shortest should be parental folder
+            sub_folders_acquisition = [i for i in extracted_files if "acquisition" in i] 
+            if len(sub_folders_acquisition) > 0:
+
+                sub_folder_acquisition = min(sub_folders_acquisition, key=len)
+
+                path_acquisition = str(path_extract / sub_folder_acquisition) 
+                api.log(f'\nAcquisition folder: {path_acquisition}')
+            else:
+                api.alert(f'NO acquisition folder found. Please follow required file organization.')
+
+        api.showStatus('Zipped data obtained. More details in log.')
+
+        return path_acquisition
+
+
+    async def download_zipped_results(self, config):
+        """
+        Download zipped results.
+        """
+
+        # Download only if results have already been otained
+        if not self.path_analysis:
+            api.alert('No analysis results stored so far')
+            return
+ 
+        # Create zip archive with results (in current directory to allow download)
+        name_results_zip = "fq-results.zip"
+        api.log(f'Will zip results stored in folder : {str(self.path_analysis)}')
+        api.log(f'Results will be zipped in file    : {os.path.abspath(name_results_zip)}')
+        
+        with zipfile.ZipFile(name_results_zip, "w") as zip_ref:
+            for folderName, subfolders, filenames in os.walk(str(self.path_analysis)):
+                    for filename in filenames:
+                        #create complete filepath of file in directory
+                        filePath = os.path.join(folderName, filename)
+                        # Add file to zip
+                        zip_ref.write(filePath, basename(filePath))
+
+        # Provide download link
+        file_manager = await api.getFileManager(api.FILE_MANAGER_URL)
+        url = await file_manager.getFileUrl({"path": name_results_zip})
+        api.log(f'Download results with this link: {url}')
+        #api.utils.openUrl(url)
+        return url
 
 
     async def select_analysis_region(self, config):
@@ -315,6 +398,18 @@ class ImJoyPlugin():
                 ],
             })
 
+
+        """
+        await viewer.set_ui({"title": "Utilities",
+                    "elements": [
+                        {"_rintf": True,
+                        "type": "button",
+                        "label": "Return selection to FISH-quant",
+                        "callback": get_geojson_features
+                        },   
+                    ]
+        })    
+        """
 
     async def show_results(self, config):
         """
