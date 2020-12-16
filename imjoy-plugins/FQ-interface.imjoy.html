@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -716,7 +716,6 @@ class ImJoyPlugin {
   }
 
   /**
-
    * Get zipped data
    */  
   async get_zipped_data(){
@@ -734,15 +733,12 @@ class ImJoyPlugin {
   }
 
   /**
-
    * Download analysis folder
    */  
   async download_zipped_results() {
     this.store.downloading_results_zipped=true;
     let url = await this.fq_worker.download_zipped_results({});
-
     if(url){api.utils.openUrl(url)}
-
     this.store.downloading_results_zipped=false;
   }
 
@@ -1175,15 +1171,12 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">[Optional] decompose RNA aggregates</p>
-
           <b-field grouped>
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
                 <p>
                   <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
           </b-field>
-
-
         </div>
 
         <!-- Actual content -->
@@ -1198,17 +1191,14 @@ api.export(new ImJoyPlugin())
             <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
               <b-button class="button is-primary" :disabled="status_detection_applied==false || analyze_clusters==false" slot="trigger" icon-left="arrow-down-drop-circle" aria-controls="contentIdForClusterPar">Advanced parameters</b-button>
               <div class="notification">
-
                 <b-field>
                   <p class="control"> <span class="button is-static">alpha</span></p>
                   <b-input v-model.number="cluster_alpha"></b-input>
                 </b-field>
-
                 <b-field>
                   <p class="control"> <span class="button is-static">beta</span></p>
                   <b-input v-model.number="cluster_beta"></b-input>
                 </b-field>
-
               </div>
             </b-collapse>
 
@@ -1317,7 +1307,6 @@ api.export(new ImJoyPlugin())
       <!-- Actual content -->
       <div class="content">
 
-
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
@@ -1338,12 +1327,19 @@ api.export(new ImJoyPlugin())
       <!-- Navbar -->
       <template>
           <b-navbar fixed-top="true">
-              <template slot="brand">
-                  <b-navbar-item href="#">
-                      <a @click="openUrl('https://fq-imjoy.readthedocs.io/en/latest/')" class="btn btn-link">
-                      <b-icon icon="help-circle" size="is-small"></b-icon> Documentation</a>
-                  </b-navbar-item>
-                  <b-navbar-dropdown label="Analysis Info">
+              <template slot="brand" expanded>
+                <b-navbar-item tag="div">
+                  <div class="buttons">
+                    <b-button type="is-primary" size="is-medium" icon-left="download">1. Data specifications</b-button>
+                    <b-button type="is-primary is-light" size="is-medium" icon-left="file-find">2. Spot detection</b-button>
+                    <b-button type="is-primary is-light" size="is-medium" icon-left="washing-machine">3. Post-processing</b-button>
+                  </div>
+                </b-navbar-item>
+              </template>
+
+              <template slot="end">
+
+                <b-navbar-dropdown label="Analysis Info">
                     <b-navbar-item href="#">
                         <span> {{ txt_navbar }}</span>
                     </b-navbar-item>
@@ -1351,10 +1347,12 @@ api.export(new ImJoyPlugin())
                         <span> {{ txt_navbar_details }}</span>
                     </b-navbar-item>
                 </b-navbar-dropdown>
-              </template>
 
-              <template slot="end">
-                <b-navbar-dropdown  right=true label=""> 
+                <b-navbar-dropdown  right=true label="FQ Info"> 
+                  <b-navbar-item href="#">
+                      <a @click="openUrl('https://fq-imjoy.readthedocs.io/en/latest/')" class="btn btn-link">
+                      <b-icon icon="help-circle" size="is-small"></b-icon> Documentation</a>
+                  </b-navbar-item>
                   <b-navbar-item href="#">
                       <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link"> 
                       <b-icon icon="github-circle" size="is-small"></b-icon> GitHub</a>
@@ -1362,19 +1360,18 @@ api.export(new ImJoyPlugin())
                   <hr class="navbar-divider">
                   <div class="navbar-item">
                     <span> FQ plugin: v{{ version_FQ }}</span>
-                  </div>  
-                    <div class="navbar-item">
-                  <span> big-fish: v{{ version_bigfish }}</span>
-                  </div>  
+                  </div>
                   <div class="navbar-item">
                     <span> FQ interface: v{{ version_interface }}</span>
-                  </div>
+                  </div>  
+                  <div class="navbar-item">
+                    <span> big-fish: v{{ version_bigfish }}</span>
+                  </div>  
                 </b-navbar-dropdown>
               </template>
 
            </b-navbar>
       </template>
-
 
       <!-- Tabs -->
       <b-tabs type="is-toggle" position="is-centered" expanded="true">
