@@ -23,11 +23,13 @@
    ],
    "icon": "extension",
    "api_version": "0.1.8",
-   "env": {
-    "type": "binder",
-    "spec": "fish-quant/fq-imjoy/binder",
-    "skip_requirements": true
-   },
+   "env": [
+    {
+     "type": "binder",
+     "spec": "fish-quant/fq-imjoy/binder",
+     "skip_requirements": true
+    }
+   ],
    "permissions": [],
    "requirements": {
     "stable": [
@@ -48,7 +50,7 @@
    "type": "window",
    "tags": [],
    "ui": "",
-   "version": "0.0.6",
+   "version": "0.0.7",
    "cover": "",
    "description": "User-interface of FQ.",
    "icon": "extension",
