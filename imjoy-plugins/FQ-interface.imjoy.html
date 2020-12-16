@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -128,6 +128,7 @@ class ImJoyPlugin {
 
     // Initialize parameters
     this.store = {
+          activeTab: 0,
           version_interface: await api.getConfig('_version'),
           version_FQ: '',
           version_bigfish: '',
@@ -508,8 +509,8 @@ class ImJoyPlugin {
                 'display_type': 'dialog',
                 'channel_selected':this.store.channel_selected
                 })
-
   }
+
 
   /**
    * Filter image
@@ -602,6 +603,7 @@ class ImJoyPlugin {
     this.store.running_detect_test = false
   }
 
+
   /**
    * Apply detection threshold
    */
@@ -661,7 +663,6 @@ class ImJoyPlugin {
     api.setConfig('psf_size_z', this.store.psf_size_z)
     this.store.running_decompose_clusters=false
     this.store.status_decompose_clusters=true
-
   }
 
 
@@ -669,7 +670,6 @@ class ImJoyPlugin {
    * Detect foci
    */
   async detect_foci() {
-    
     this.store.running_detect_foci=true
 
     // Detect foci
@@ -683,7 +683,6 @@ class ImJoyPlugin {
     this.store.status_detect_foci=true
     api.setConfig('foci_nb_min_spots', this.store.foci_nb_min_spots)
     api.setConfig('foci_radius', this.store.foci_radius)
-
   }
 
 
@@ -700,6 +699,7 @@ class ImJoyPlugin {
     this.store.running_detect_image=false
   }
 
+
   /**
    * Batch detection
    */
@@ -715,8 +715,8 @@ class ImJoyPlugin {
     this.reset_parameters()
   }
 
-  /**
 
+  /**
    * Get zipped data
    */  
   async get_zipped_data(){
@@ -733,8 +733,8 @@ class ImJoyPlugin {
     this.store.getting_zipped_data=false;
   }
 
-  /**
 
+  /**
    * Download analysis folder
    */  
   async download_zipped_results() {
@@ -774,14 +774,12 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Specify data</p>
-
           <b-field grouped>
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/data')"></button>
             <p>
             <p class="subtitle is-6">Specify images to be loaded and analyzed. </p>
           </b-field>
-
         </div>
       </div>
       <br>
@@ -851,7 +849,6 @@ api.export(new ImJoyPlugin())
 
           <!-- Specify channels -->
           <div class="column">
-
 
             <b-field label="Channels" horizontal grouped>
               <b-field>
@@ -1317,7 +1314,6 @@ api.export(new ImJoyPlugin())
       <!-- Actual content -->
       <div class="content">
 
-
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
@@ -1339,11 +1335,17 @@ api.export(new ImJoyPlugin())
       <template>
           <b-navbar fixed-top="true">
               <template slot="brand">
-                  <b-navbar-item href="#">
-                      <a @click="openUrl('https://fq-imjoy.readthedocs.io/en/latest/')" class="btn btn-link">
-                      <b-icon icon="help-circle" size="is-small"></b-icon> Documentation</a>
-                  </b-navbar-item>
-                  <b-navbar-dropdown label="Analysis Info">
+                  <div class="buttons">
+                    <b-button :type="activeTab==0?'is-dark':' is-light'"  @click="activeTab=0" size="is-medium" icon-left="download">1. Data specifications</b-button>
+                    <b-button :type="activeTab==1?'is-dark':' is-light'" @click="activeTab=1" size="is-medium" icon-left="file-find">2. Spot detection</b-button>
+                    <b-button :type="activeTab==2?'is-dark':' is-light'" @click="activeTab=2" size="is-medium" icon-left="washing-machine">3. Post-processing</b-button>
+                  </div>
+                </b-navbar-item>
+              </template>
+
+              <!-- END -->
+              <template slot="end">
+                <b-navbar-dropdown right=true label="Analysis Info">
                     <b-navbar-item href="#">
                         <span> {{ txt_navbar }}</span>
                     </b-navbar-item>
@@ -1351,10 +1353,12 @@ api.export(new ImJoyPlugin())
                         <span> {{ txt_navbar_details }}</span>
                     </b-navbar-item>
                 </b-navbar-dropdown>
-              </template>
 
-              <template slot="end">
-                <b-navbar-dropdown  right=true label=""> 
+                <b-navbar-dropdown  right=true label="FQ Info"> 
+                  <b-navbar-item href="#">
+                      <a @click="openUrl('https://fq-imjoy.readthedocs.io/en/latest/')" class="btn btn-link">
+                      <b-icon icon="help-circle" size="is-small"></b-icon> Documentation</a>
+                  </b-navbar-item>
                   <b-navbar-item href="#">
                       <a @click="openUrl('https://github.com/fish-quant/fq-imjoy')" class="btn btn-link"> 
                       <b-icon icon="github-circle" size="is-small"></b-icon> GitHub</a>
@@ -1362,13 +1366,13 @@ api.export(new ImJoyPlugin())
                   <hr class="navbar-divider">
                   <div class="navbar-item">
                     <span> FQ plugin: v{{ version_FQ }}</span>
-                  </div>  
-                    <div class="navbar-item">
-                  <span> big-fish: v{{ version_bigfish }}</span>
-                  </div>  
+                  </div>
                   <div class="navbar-item">
                     <span> FQ interface: v{{ version_interface }}</span>
-                  </div>
+                  </div>  
+                  <div class="navbar-item">
+                    <span> big-fish: v{{ version_bigfish }}</span>
+                  </div>  
                 </b-navbar-dropdown>
               </template>
 
@@ -1377,7 +1381,7 @@ api.export(new ImJoyPlugin())
 
 
       <!-- Tabs -->
-      <b-tabs type="is-toggle" position="is-centered" expanded="true">
+      <b-tabs type="is-toggle" v-model="activeTab" position="is-centered" expanded="true">
         <b-tab-item label="1. Data specifications" icon="download">
           <div id="cont_data"></div>
         </b-tab-item>
@@ -1400,4 +1404,8 @@ api.export(new ImJoyPlugin())
 .al img {
     font-weight: bold;
 }
+nav.tabs{
+  display: none;
+}
+
 </style>
