@@ -716,6 +716,7 @@ class ImJoyPlugin {
   }
 
   /**
+
    * Get zipped data
    */  
   async get_zipped_data(){
@@ -733,12 +734,15 @@ class ImJoyPlugin {
   }
 
   /**
+
    * Download analysis folder
    */  
   async download_zipped_results() {
     this.store.downloading_results_zipped=true;
     let url = await this.fq_worker.download_zipped_results({});
+
     if(url){api.utils.openUrl(url)}
+
     this.store.downloading_results_zipped=false;
   }
 
