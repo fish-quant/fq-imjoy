@@ -769,14 +769,14 @@ api.export(new ImJoyPlugin())
   <!-- Card to specify data -->
   <div class="card">
     <div class="card-content">
-
+=
       <!-- Summary -->
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Specify data</p>
           <b-field grouped>
             <p class="control">
-              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/data')"></button>
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/data')"></button>
             <p>
             <p class="subtitle is-6">Specify images to be loaded and analyzed. </p>
           </b-field>
@@ -802,7 +802,7 @@ api.export(new ImJoyPlugin())
           <b-field>
             <b-input  v-model="output_path" placeholder="" expanded></b-input>
             <p class="control">
-                <b-button type="is-primary" outlined icon-left="help-circle" @click="openDocs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
+                <b-button type="is-primary" outlined icon-left="help-circle" @click="open_docs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
             </p>
           </b-field>
         </b-field> <!-- END: specify results folder -->
@@ -815,7 +815,7 @@ api.export(new ImJoyPlugin())
                 <b-button type="is-primary"  @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test expression</b-button>
             </p>
             <p class="control">
-                <b-button type="is-primary" outlined icon-left="help-circle" @click="openDocs('/data/#naming-convention')"></b-button>
+                <b-button type="is-primary" outlined icon-left="help-circle" @click="open_docs('/data/#naming-convention')"></b-button>
             </p>
           </b-field>
         </b-field> <!-- END: specify regular expression -->
@@ -1025,7 +1025,7 @@ api.export(new ImJoyPlugin())
 
           <b-field grouped>
             <p class="control">
-              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#log-filter')"></button>
                 <p>
                   <p class="subtitle is-6">Remove background and enhance spots. </p>
           </b-field>
@@ -1175,7 +1175,7 @@ api.export(new ImJoyPlugin())
 
           <b-field grouped>
             <p class="control">
-              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="openDocs('/fq-spot-detection/#log-filter')"></button>
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#log-filter')"></button>
                 <p>
                   <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
           </b-field>
