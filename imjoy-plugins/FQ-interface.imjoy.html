@@ -1335,6 +1335,12 @@ api.export(new ImJoyPlugin())
       <template>
           <b-navbar fixed-top="true">
               <template slot="brand">
+
+                <b-navbar-item href="#">
+                  <img  src="https://cdn.jsdelivr.net/gh/fish-quant/fq-imjoy/docs/img/fish-quant-logo_200x200.png"
+                        alt="FISH-quant">
+                </b-navbar-item>
+
                   <div class="buttons">
                     <b-button :type="activeTab==0?'is-dark':' is-light'"  @click="activeTab=0" size="is-medium" icon-left="download">1. Data specifications</b-button>
                     <b-button :type="activeTab==1?'is-dark':' is-light'" @click="activeTab=1" size="is-medium" icon-left="file-find">2. Spot detection</b-button>
