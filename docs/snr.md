@@ -36,6 +36,7 @@ You first have to detect spots in your images. Then you can use the SNR plugin:
     `String img ext`     | str  |  File extension of images that should be segmented.
     `Crop size`     | int  | Size of the region cropped around each spots (XYZ). Values are separated by `,`.
     `Width bgd`    | str  |  Widht of the background region, e.g. thickness of outer layer that is used as background. 
+
 2. Pressing on the plugin name `SNR-calculation` will start the SNR calculation.
 3. Results will be stored in the specified folder, by default this folder will be called `snr`. Here a file for each processed spot-detection result
    is saved. For each spots, the SNR, signal, background and noise are stored. Lastly, a summary file with all these values is provided. 
