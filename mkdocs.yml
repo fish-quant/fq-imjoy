@@ -71,7 +71,8 @@ nav:
 
     - Support workflows:
       - Split channels: fiji-split-channels.md 
-
+      - SNR calculation: snr.md
+      
     - Advanced:
       - Developer notes: developer-notes.md
       

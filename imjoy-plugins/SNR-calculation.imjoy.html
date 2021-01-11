@@ -1,0 +1,303 @@
+﻿<docs lang="markdown">
+ImJoy plugin to calculate SNR from spot detection results. 
+</docs>
+
+<config lang="json">
+{
+  "name": "SNR-calculation",
+  "type": "native-python",
+  "version": "0.0.1",
+  "description": "Calculate SNR of all spots in an image.",
+  "tags":  ["stable","dev"],
+  "ui": [
+        "<span style='font-weight: 550; color:#666362'>Path SPOTS</span>: {id: 'path_spots', type: 'string', placeholder: 'paste-path-to-analysis'}",
+        "<span style='font-weight: 550; color:#666362'>Path IMAGES</span>: {id: 'path_images', type: 'string', placeholder: 'analysis˃˃acquisition'}",
+        "<span style='font-weight: 550; color:#666362'>Path SAVE</span>: {id: 'path_save', type: 'string', placeholder: 'spot_detection˃˃snr'}",
+        "<span style='font-weight: 550; color:#666362'>Suffix spots</span>: {id: 'suffix_spots', type: 'string', placeholder: '__spots.csv'}",
+        "<span style='font-weight: 550; color:#666362'>Suffix images</span>: {id: 'suffix_images', type: 'string', placeholder: '.tif'}",
+        "<span style='font-weight: 550; color:#666362'>Crop size (X,Y,Z):</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
+        "<span style='font-weight: 550; color:#666362'>Width bgd (X,Y,Z):</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
+        ],
+  "cover": "",
+  "inputs": null,
+  "outputs": null,
+  "flags": [],
+  "icon": "extension",
+  "api_version": "0.1.8",
+  "env": "",
+  "permissions": [],
+  "requirements": { "stable":["big-fish==0.4.0"],
+                    "dev": [""]},
+  "dependencies": [],
+  "cover": ""
+}
+</config>
+
+<script lang="python">
+from imjoy import api
+from pathlib import Path
+import asyncio
+import re
+import numpy as np
+import bigfish.stack as stack
+
+
+def create_output_path(input_path, replace_strings):
+    """
+    Function to create output path to stored data.
+
+    If the string output_path contains characters '>>' it will not
+    be interpreted as a path name but as an indicator for a string
+    replacement operation for the data_path: old_str>>new_str
+    """
+    
+    # Make sure they are strings
+    input_path = str(input_path)
+    replace_strings = str(replace_strings)
+
+    if (re.search(">>", replace_strings)):
+      str_orig = re.search(r'^(.*)>>(.*)$', replace_strings).group(1)
+      str_rep = re.search(r'^(.*)>>(.*)$', replace_strings).group(2)
+
+      print(f'Replacement parameters found: original string: {str_orig}, replacement string: {str_rep}')
+
+      output_path = input_path.replace(str_orig,str_rep)
+      print(f'Output path: {output_path}')
+
+    else:
+      print("No match")
+      return None
+
+    # Convert back to Path, create, return
+    output_path = Path(output_path)
+    create_folder(output_path)
+    return output_path
+
+
+def create_folder(path_new):
+    """
+    Create new folder. Checks if path `path_new` exisist. If not, create it.
+    """
+    if not path_new.is_dir():
+        path_new.mkdir(parents=True)
+
+
+def compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd):
+    """Extract a 3-d volume aroundthe detected spot. From this volume, 
+    signal (I) is determined as the maximum pixel intensity. The outer most
+    layer(s) are used to calculate background (B) as the mean intensity,
+    and noise (N) as the standard deviation. The signal-to-noise ratio (SNR)
+    is then calculated as SNR = (I-B)/N for each spot.
+
+    Parameters
+    ----------
+    image : np.ndarray
+        Image with shape (z, y, x).
+    spot : np.ndarray, np.int64
+        Coordinate of a spot, with shape (1, 3). One coordinate per dimension
+        (zyx coordinates).
+    crop_spot : Tuple, np.int64
+        Size of cropping area to which analysis will be restricted to. Defined 
+        around each detected spot, one scalar per dimension (z, y, x).
+    w_bgd : Tuple, np.int64
+        Size of outer pixel layer of cropped spot which will be used
+        to determine background.(z, y, x).
+
+    Returns
+    -------
+    snr : float
+        Signal-to-Noise ratio of the spot.
+    signal : np.int64
+        Maximum spot intensity.
+    background : np.int64
+        Mean of background.
+    noise : float
+        Standard deviation of background.
+
+    """
+
+    # get spot coordinate
+    spot_z, spot_y, spot_x = spot
+
+    # get spot and background radii
+    crop_z, crop_yx, crop_yx = crop_spot
+    w_bgd_z, w_bgd_y, w_bgd_x = w_bgd
+
+    # crop a volume around spot
+    z_min = max(0, int(spot_z - crop_z))
+    z_max = min(image.shape[0], int(spot_z + crop_z))
+    y_min = max(0, int(spot_y - crop_yx))
+    y_max = min(image.shape[1], int(spot_y + crop_yx))
+    x_min = max(0, int(spot_x - crop_yx))
+    x_max = min(image.shape[2], int(spot_x + crop_yx))
+
+    # Crop image around detected position
+    image_crop = image[z_min:z_max + 1,
+                       y_min:y_max + 1,
+                       x_min:x_max + 1].copy().astype(np.float64)
+
+    # Measure signal as maxim value in this image
+    signal = image_crop.max()
+
+    # Extract image background as outermost layers of cropped image
+    image_crop[w_bgd_z:-w_bgd_z, w_bgd_y:-w_bgd_y, w_bgd_x:-w_bgd_x] = -1.
+    image_background = image_crop[image_crop > 0]
+
+    # compute background and noise
+    background = image_background.mean()
+    noise = max(image_background.std(), 10e-6)
+
+    # compute SNR
+    snr = max(0, (signal - background)) / noise
+
+    return snr, signal, background, noise
+
+
+def batch_snr_calc(path_spots, path_images, path_save, suffix, crop_spot=(4,4,4), w_bgd=(1,1,1)):
+    """[summary]
+
+    Parameters
+    ----------
+    data_process : [type]
+        [description]
+    """
+
+    snr_results_all = []
+
+    for f_spots in path_spots.glob(f"*{suffix['spots']}"):
+
+        api.log(f'\n   >> Analyzing file : {f_spots.name}')
+        spots = np.loadtxt(str(f_spots), delimiter=',', skiprows=1, dtype=np.int64)
+
+        # Load raw image
+        path_acquisition = Path(str(f_spots.parent).replace('analysis', 'acquisition').replace('spot_detection', ''))
+        name_img = f_spots.name.replace(suffix['spots'], suffix['images'])
+        f_img_full = path_acquisition / name_img
+
+        if f_img_full.is_file():
+            api.log(f'    > Reading image : {f_img_full.name}\n')
+            image = stack.read_image(str(f_img_full))
+
+        else:
+            api.log(f'  smFISH image not found: {str(f_img_full)}')
+            continue
+
+        # compute SNR per spot
+        snr_results_file = []
+
+        for spot in spots:
+
+            snr_result = compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd)
+            snr_results_file.append(snr_result)
+            snr_results_all.append(snr_result)
+
+        # Save as a csv file
+        snr_np = np.array(snr_results_file, dtype=np.float)
+        fname = str(path_save / f'{f_spots.stem}__SNR.csv')
+        np.savetxt(fname, snr_np, fmt='%f', delimiter=',', newline='\n', header=" snr, signal, background, noise", footer='', comments='# ', encoding=None)
+
+    # Save as a csv file
+    snr_np = np.array(snr_results_all, dtype=np.float)
+    fname = str(path_save / '_SNR_all.csv')
+    np.savetxt(fname, snr_np, fmt='%f', delimiter=',', newline='\n', header=" snr, signal, background, noise", footer='', comments='# ', encoding=None)
+
+    api.log('\n\n ANALYSIS FINISHED!')
+
+
+class ImJoyPlugin():
+
+    async def setup(self):
+        api.log('>>> Plugin SNR-calculation initialized')
+        api.log(f" * plugin version: {await api.getConfig('_version')}")
+
+    async def run(self, ctx):
+        
+        api.log('>>> Plugin SNR-calculation running. Called with parameters:')
+        api.log(ctx.config)
+
+        # Path containing data, and to save results
+        path_spots = ctx.config.path_spots
+        path_images = ctx.config.path_images
+        path_save = ctx.config.path_save
+
+        suffix = {'spots': ctx.config.suffix_spots,
+                  'images': ctx.config.suffix_images}
+
+        # Get path for testing
+        api.log(api.TAG)
+        if api.TAG == 'dev':
+            
+            if path_spots == 'paste-path-to-analysis':
+                path_spots = r'D:\Work\Documents\data-test\fish-quant\fq-imjoy-demo\analysis\spot_detection'
+
+        
+
+        # >>> CHECK INPUT PARAMETERS
+
+        # >> Crop size
+
+        crop_spot_str = ctx.config.crop_spot
+        if crop_spot_str.count(',') == 0:
+                api.alert('Specification for crop size has to contain , to separate dimensions!')
+                return
+        else:
+            crop_spot = tuple(int(x) for x in crop_spot_str.split(','))
+        api.log(f'crop_spot: {crop_spot}')
+
+        # >> Background size
+
+        w_bgd_str = ctx.config.w_bgd
+        if w_bgd_str.count(',') == 0:
+            api.alert('Specification for background size has to contain , to separate dimensions!')
+            return
+        else:
+            w_bgd = tuple(int(x) for x in w_bgd_str.split(','))
+        api.log(f'w_bgd: {w_bgd}')
+
+
+        # >> Path containing the data
+        api.log(path_spots)
+        if path_spots == 'paste-path-to-analysis':
+            api.alert('Path containing data to be processed has to be specified.')
+            return
+
+        path_spots = Path(path_spots)
+        if not path_spots.is_dir():
+            api.alert('Path with spot results does not exist.')    
+            return
+        
+        # >> Path to load images, save results
+
+        # This looks a bit weird, but the default string does not contain the greater sign,
+        # but a close unicode replacement (otherwise rendering would not be possible due security risk, strings are sanitised)
+        
+        path_images = path_images.replace('˃˃', '>>')
+        if '>>' in path_images:
+            api.log('Path replacement defined in path_images')
+            path_images = create_output_path(path_spots, path_images)
+        else:
+            path_images = Path(path_images)
+
+        path_save = path_save.replace('˃˃', '>>')
+        if '>>' in path_save:
+            api.log('Path replacement defined in path_save')
+            path_save = create_output_path(path_spots, path_save)
+        else:
+            path_save = Path(path_save)
+
+
+        # Call processing function
+        api.showStatus('Performing segmentation ... see log for details')
+
+        batch_snr_calc(path_spots=path_spots, 
+                       path_images=path_images,
+                       path_save=path_save,
+                       suffix=suffix,
+                       crop_spot=crop_spot, 
+                       w_bgd=w_bgd)
+
+        api.alert(f'SNR calculations finished. Results stored in {path_save}')
+        api.showStatus('SNR caculations finished.')
+
+api.export(ImJoyPlugin())
+</script>

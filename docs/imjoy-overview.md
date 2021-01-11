@@ -15,7 +15,6 @@
 
 ![imjoy-interface](img/imjoy-interface.png)
 
-
 ## Connect ImJoy to the plugin engine
 
 Once you have the ImJoy plugin engine installed ([**installation instructions**](imjoy-installation.md#nstall-jupyter-engine-for-imjoy)), you can connect to it with this easy steps:
@@ -36,14 +35,14 @@ the `install` button.
 
 ![imjoy-plugin-installation](img/install_plugin.png){: style="width:400px"}
 
-These installation links also specify in which [ImJoy workspaces](imjoy-installation.md#opening-a-workspace) the plugin will be installed. 
+These installation links also specify in which [ImJoy workspaces](imjoy-installation.md#opening-a-workspace) the plugin will be installed.
 
 ## Opening a workspace
 
-Once a plugin is installed, ImJoy remembers the workspaces and plugins it contains. 
+Once a plugin is installed, ImJoy remembers the workspaces and plugins it contains.
 
 If you want to redo an analysis, you simply have to open the [ImJoy app](https://imjoy.io/#/app) 
-and select the workspace `fq-main` for this package. 
+and select the workspace `fq-main` for this package.
 
 If **updates** for the installed plugins 
 are available, you will see a corresponding symbol next to the plugin name.
