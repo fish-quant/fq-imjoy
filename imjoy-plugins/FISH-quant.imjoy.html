@@ -579,17 +579,18 @@ class ImJoyPlugin():
 
             if match:
                 match_dict = match.groupdict()
+                ('     ... match against regular expression')
+                api.log(match_dict)
 
                 # Add only if image extension matches
                 if match_dict['img_ext'] == config['img_ext']:
                     match_dict.update({'file_name': file})
                     df_regexp = df_regexp.append(match_dict, ignore_index=True)
-                    api.log('     ... MATCH')
                 else:
-                    api.log(f' Found matches but image extension is wrong')
-                    api.log(match_dict)
+                    api.log(f' ... ups .... image extension is wrong')
+                    
             else:
-                api.log('     ... no match')
+                api.log('     ... no match against regular expression')
                 
         if df_regexp.size == 0:
             api.alert('No images with these specifications found.')
