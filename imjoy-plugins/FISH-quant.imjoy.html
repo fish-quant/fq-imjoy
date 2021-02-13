@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -584,6 +584,10 @@ class ImJoyPlugin():
                 if match_dict['img_ext'] == config['img_ext']:
                     match_dict.update({'file_name': file})
                     df_regexp = df_regexp.append(match_dict, ignore_index=True)
+                    api.log('     ... MATCH')
+                else:
+                    api.log(f' Found matches but image extension is wrong')
+                    api.log(match_dict)
             else:
                 api.log('     ... no match')
                 
@@ -622,6 +626,7 @@ class ImJoyPlugin():
 
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
         api.log('[FISH-QUANT][scan_folder] scan results:')
+        api.log(f'Found {len(scan_results)} images matching the search criteria.')
         api.log(scan_results)
         
         # Save analysis details
