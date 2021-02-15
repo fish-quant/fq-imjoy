@@ -1,4 +1,4 @@
-# Data 
+# Data
 
 ## Organization
 
@@ -12,7 +12,7 @@ The same data organization is also used in the package to perform [cell and nucl
 
 The organization of the provided test data is the following
 
-```
+``` bash
 ├─ fq-imjoy-demo/
 │  ├─ acquisition                          # Folder with raw images
 │  │  ├─ test_pos001_cy3.tif
@@ -31,14 +31,15 @@ The organization of the provided test data is the following
 ```
 
 ## Naming convention
-FISH-quant will extract information directly from the file-names with a **regular expression**. The filenames **MUST** contain an identifier for
 
-* experiment (`file_ident`): string specifying an experiment, e.g. what gene was imaged. Has to be shared by (at least) the images corresponding to the different channels.
-* field of view (`fov`): what position was acquired
-* channel (`channel`): which channel is stored
-* image extension (`img_ext`): image format.
+FISH-quant will extract information directly from the file-names with a **regular expression**. The filenames **MUST** contain an identifier for:
 
-These information are extracted by using regular expression and capture groups. You can either define your own regular expression, or use the **default expression** that assumes a naming scheme as used in the example above, where the different elements are separated by `_` and ordered as `<file_ident>_<fov>_<channel>.<img_ext>`, e.g.
+* experiment (**`file_ident`**): string specifying an experiment, e.g. what gene was imaged. If multiple channel are imaged, this string **has** to be identical for all images.
+* field of view (**`fov`**): what position was acquired. As above, has to be identical for multi-channel images.
+* channel (**`channel`**): which channel was imaged.
+* image extension **(`img_ext`**): image extension.
+
+These information are extracted by using regular expression and capture groups. You can either define your own regular expression, or use the **default expression** that assumes a naming scheme as used in the example above, where the different elements are separated by `_` and ordered as `<file_ident>_<fov>_<channel>.<img_ext>`:
 
 ``` bash
        fov      img_ext
@@ -49,8 +50,12 @@ file_ident   channel
 ```
 
 The corresponding regular expression is `(?P<file_i dent>.*)__(?P<fov>.*)_(?P<channel>.*)\.(?P<img_ext>.*)$`.
-This might look confusing at the beginning. A good website to learn more about regular epxression, and importantly test them on strings is [https://regex101.com/](https://regex101.com/). 
+This might look confusing at the beginning. A good website to learn more about regular epxression, and importantly test them on strings is [https://regex101.com/](https://regex101.com/).
 
+__IMPORTANT__: if you have multiple images, e.g. different channels, of the same field of view, and you want to load them at the same
+time into the interfacem you **have** to guarantee that the **fov** and **file_ident** are identical for these images. If they are not, 
+the images will not be matched, and the images will not show up. Construct your regular expression accordingly!
 
 ## Test data
+
 Already processed test data can be downloaded from [**Dropbox**](https://www.dropbox.com/sh/yr1s5olqwkvyx0i/AADH0QQtdNuWWq7z9wgQpLiOa?dl=0). With these data, you can verify if the different analysis steps are properly executed.

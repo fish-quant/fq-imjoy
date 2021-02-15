@@ -579,7 +579,7 @@ class ImJoyPlugin():
 
             if match:
                 match_dict = match.groupdict()
-                ('     ... match against regular expression')
+                api.log('     ... match against regular expression')
                 api.log(match_dict)
 
                 # Add only if image extension matches
@@ -602,6 +602,7 @@ class ImJoyPlugin():
 
         # Iterate over the Dataframe rows as named tuples
         df_scan = pd.DataFrame()
+        
         for pos_unique in df_pos_unique.itertuples(index=False):
             file_ident_loop = getattr(pos_unique, 'file_ident')
             fov_loop = getattr(pos_unique, 'fov')
