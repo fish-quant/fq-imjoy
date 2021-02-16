@@ -1,11 +1,13 @@
 
 # Loading data
+
 In the tab, you can define where your data is located, its naming convention, and load selected images
 to test the analysis.
 
 ![fq-ui-data-specification.png](img/fq-ui-data-specification.png)
 
 ## Specify folder to save results
+
 Two possibilities are provided to specify the folder to save the analysis results. You can either:
 
 1. Directly define a **full path** where the results should be stored. If the folder doesn't exist, it will be created.
@@ -15,8 +17,8 @@ Two possibilities are provided to specify the folder to save the analysis result
    where 'str_orig' is the orginal string, 'str_new' is the new string.
 
 !!! example "Example for default replacement string"
-    Using the default string `acquisition>>analysis` implies that in the folder name 
-    
+    Using the default string `acquisition>>analysis` implies that in the folder name
+
     `D:\example_data\acquisition`, 
     
     `acquisition` will be replaced with `analysis`, yielding 
@@ -29,12 +31,13 @@ Two possibilities are provided to specify the folder to save the analysis result
     Most specified parameters (except the channel list), will be stored and reused when you launch ImJoy the next time.
 
 ### Specification of your data
+
 1. **`Folder with data`**: copy & paste the name of the folder containing your data into the field 
 2. **`Folder to save data`**: specify where you data is stored (see above).
 3. **`Regular expression`**: define the naming convention of your files with a regular expression. For more details, see
    the dedicated [section](data.md#naming-convention).
 4. **`Pixel size`**: provide the pixel-size in XY, and for 3D images the spacing of the individual z-planes. Both values are provided in nmm.
-5.  **`Channels`**: Specify channel(s) to be analyzed. Here you have to specify a name you want to use for a channel, e.g. `fish`,
+5. **`Channels`**: Specify channel(s) to be analyzed. Here you have to specify a name you want to use for a channel, e.g. `fish`,
    and the string (as defined in the regular expression) for the channel in the file-name.
 
 ### Scan folder and load one image
@@ -49,7 +52,6 @@ Two possibilities are provided to specify the folder to save the analysis result
     Double-clicking on an image will show it in the [**image viewer**](fq-overview.md#image-viewer).
 
     ![fq-ui-scan-folder.png](img/fq-ui-scan-folder.png){: style="width:500px"}
-
 
 ## Troubleshooting
 

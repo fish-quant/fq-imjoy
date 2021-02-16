@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -579,13 +579,18 @@ class ImJoyPlugin():
 
             if match:
                 match_dict = match.groupdict()
+                api.log('     ... match against regular expression')
+                api.log(match_dict)
 
                 # Add only if image extension matches
                 if match_dict['img_ext'] == config['img_ext']:
                     match_dict.update({'file_name': file})
                     df_regexp = df_regexp.append(match_dict, ignore_index=True)
+                else:
+                    api.log(f' ... ups .... image extension is wrong')
+                    
             else:
-                api.log('     ... no match')
+                api.log('     ... no match against regular expression')
                 
         if df_regexp.size == 0:
             api.alert('No images with these specifications found.')
@@ -597,6 +602,7 @@ class ImJoyPlugin():
 
         # Iterate over the Dataframe rows as named tuples
         df_scan = pd.DataFrame()
+        
         for pos_unique in df_pos_unique.itertuples(index=False):
             file_ident_loop = getattr(pos_unique, 'file_ident')
             fov_loop = getattr(pos_unique, 'fov')
@@ -622,6 +628,7 @@ class ImJoyPlugin():
 
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
         api.log('[FISH-QUANT][scan_folder] scan results:')
+        api.log(f'Found {len(scan_results)} images matching the search criteria.')
         api.log(scan_results)
         
         # Save analysis details
