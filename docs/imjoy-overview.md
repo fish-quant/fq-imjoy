@@ -2,7 +2,7 @@
 
 [ImJoy](https://imjoy.io/docs/#/) is image processing platform with an easy to use interface running in your browser.  
 
-* While ImJoy is a browser app, **NO** user data will be transferred over the internet. 
+* While ImJoy is a browser app, **NO** user data will be transferred over the internet.
 * For best stability, we recommend using [**Chrome**](https://www.google.com/chrome/) to run the ImJoy app.  
 * Some of its main **features** are:
 
