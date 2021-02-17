@@ -1,5 +1,10 @@
 # Data
 
+Here we describe how data has to be
+
+* **... organized**: data processing can be done for a batch of images, but for this data has to be organized as specified below.
+* **...named**: FISH-quant extracts important information from the file-names. This requires a certain naming convention described below. 
+
 ## Organization
 
 We strongly recommend the following data-organization on which this workflow has been tested. 
@@ -30,16 +35,19 @@ The organization of the provided test data is the following
 
 ```
 
-## Naming convention
+## Naming convention & regular expression
 
-FISH-quant will extract information directly from the file-names with a **regular expression**. The filenames **MUST** contain an identifier for:
+FISH-quant will extract important information about the images, such as the field of view or the imaged channel, directly from the file-names. For this, we use a **regular expression**. Such an expression permits to define search pattern to identify strings. They might look a bit
+complicated, but they provide a lot of flexibility to read images with different naming conventions. 
+
+The filenames **MUST** contain an identifier for:
 
 * experiment (**`file_ident`**): string specifying an experiment, e.g. what gene was imaged. If multiple channel are imaged, this string **has** to be identical for all images.
 * field of view (**`fov`**): what position was acquired. As above, has to be identical for multi-channel images.
 * channel (**`channel`**): which channel was imaged.
-* image extension **(`img_ext`**): image extension.
+* image extension **(`img_ext`**): image extension, e.g. `tif`. Only images with this extension will be loaded.
 
-These information are extracted by using regular expression and capture groups. You can either define your own regular expression, or use the **default expression** that assumes a naming scheme as used in the example above, where the different elements are separated by `_` and ordered as `<file_ident>_<fov>_<channel>.<img_ext>`:
+These information are extracted by using **regular expression and capture groups**. You can either define your own regular expression, or use the **default expression** that assumes a naming scheme as used in the example above, where the different elements are separated by `_` and ordered as `<file_ident>_<fov>_<channel>.<img_ext>`:
 
 ``` bash
        fov      img_ext
@@ -49,8 +57,7 @@ These information are extracted by using regular expression and capture groups. 
 file_ident   channel
 ```
 
-The corresponding regular expression is `(?P<file_i dent>.*)__(?P<fov>.*)_(?P<channel>.*)\.(?P<img_ext>.*)$`.
-This might look confusing at the beginning. A good website to learn more about regular epxression, and importantly test them on strings is [https://regex101.com/](https://regex101.com/).
+The corresponding regular expression is `(?P<file_i dent>.*)__(?P<fov>.*)_(?P<channel>.*)\.(?P<img_ext>.*)$`. This might look confusing at the beginning. A good website to learn more about regular epxression, and importantly test them on strings is [https://regex101.com/](https://regex101.com/).
 
 __IMPORTANT__: if you have multiple images, e.g. different channels, of the same field of view, and you want to load them at the same
 time into the interfacem you **have** to guarantee that the **fov** and **file_ident** are identical for these images. If they are not, 
