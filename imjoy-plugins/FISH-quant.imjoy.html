@@ -53,9 +53,9 @@ import bigfish  # Is there a way to get the version without import?
 from bigfish import stack, plot, detection
 
 # TEMPORARY BUG FIX 
-# 1. fix_1: bad orientation in kaibu:
+# 1. fix_1: flipped orientation of images in kaibu:
 #     * 'np.flipud': correct orientation of image in Kaibu. 
-#     * Flip y corrdinates
+#     * Flip y coordinates
 
 # For MAC
 if sys.platform == "darwin":
@@ -367,7 +367,9 @@ class ImJoyPlugin():
         await viewer.view_image(np.flipud(image_array), type="itk-vtk", name='image')   # fix_1
 
         # Add annotation layer
-        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", draw_edge_color='#db2307',  draw_face_color='#eb9d91AA', draw_shape_type="Rectangle",draw_enable=True)
+        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", 
+                                        draw_edge_color='#db2307',  draw_face_color='#eb9d91AA', draw_shape_type="Rectangle",draw_enable=True,
+                                        draw_label="analysis_region", draw_max_label_count=1)
 
         # get the annotation in geojson format
 
