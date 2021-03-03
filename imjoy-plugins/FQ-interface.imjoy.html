@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -159,7 +159,7 @@ class ImJoyPlugin {
           images: [],
           current_index: 0,
           channel_selected: null,
-          sigma: [sigma_z, sigma_xy, sigma_xy],  // ZYX
+          sigma: [sigma_z, sigma_xy],  // ZYX
           threshold_range: [0, 5000, 50 ], // min, max, n_bins
           minimum_distance: [2, 2], // xy, z
           detection_plot: [],
@@ -449,6 +449,10 @@ class ImJoyPlugin {
         })
         this.store.files.push(file_info)
       }
+
+      //
+      var elmnt = document.getElementById("card_images");
+      elmnt.scrollIntoView(false);
 
   }
 
@@ -792,7 +796,7 @@ api.export(new ImJoyPlugin())
           <b-field>
             <b-input  v-model="data_path" placeholder="paste-path-to-data" expanded></b-input>
             <p class="control">
-                <b-button type="is-primary" :loading="getting_zipped_data" @click="btn_get_zipped_data">Get zipped data</b-button>
+                <b-button type="is-primary is-light" outlined :loading="getting_zipped_data" @click="btn_get_zipped_data">Get zipped (demo) data</b-button>
             </p>
           </b-field>
         </b-field> <!-- END: specify results folder -->
@@ -802,7 +806,7 @@ api.export(new ImJoyPlugin())
           <b-field>
             <b-input  v-model="output_path" placeholder="" expanded></b-input>
             <p class="control">
-                <b-button type="is-primary" outlined icon-left="help-circle" @click="open_docs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
+                <b-button type="is-primary is-light" outlined icon-left="help-circle" @click="open_docs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
             </p>
           </b-field>
         </b-field> <!-- END: specify results folder -->
@@ -812,10 +816,10 @@ api.export(new ImJoyPlugin())
           <b-field >
             <b-input  v-model="reg_exp" expanded></b-input>
             <p class="control">
-                <b-button type="is-primary"  @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test expression</b-button>
+                <b-button type="is-primary is-light" outlined @click="openUrl('https://pythex.org/?regex='+reg_exp)">Test expression</b-button>
             </p>
             <p class="control">
-                <b-button type="is-primary" outlined icon-left="help-circle" @click="open_docs('/data/#naming-convention')"></b-button>
+                <b-button type="is-primary is-light" outlined icon-left="help-circle" @click="open_docs('/data/#naming-convention')"></b-button>
             </p>
           </b-field>
         </b-field> <!-- END: specify regular expression -->
@@ -906,7 +910,7 @@ api.export(new ImJoyPlugin())
   <br>
 
   <!-- Card to specify data -->
-  <div class="card">
+  <div class="card" id="card_images">
     <div class="card-content">
 
       <!-- Summary -->
@@ -927,7 +931,7 @@ api.export(new ImJoyPlugin())
         <div class="columns is-desktop">
 
           <!-- Table with files that can be loaded -->
-          <div class="column">
+          <div class="column" >
             <table class="table is-striped is-hoverable is-narrow">
               <thead>
                 <tr>
@@ -1004,7 +1008,7 @@ api.export(new ImJoyPlugin())
 
           <div class="column">
             <section>
-              <b-button type="is-primary" outlined @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
+              <b-button type="is-primary is-light" outlined @click="btn_select_analysis_region" :disabled="status_image_loaded==false || channel_selected==null">Select smaller region for testing</b-button>
             </section>
           </div>
         </div>

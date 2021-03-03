@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -53,9 +53,9 @@ import bigfish  # Is there a way to get the version without import?
 from bigfish import stack, plot, detection
 
 # TEMPORARY BUG FIX 
-# 1. fix_1: bad orientation in kaibu:
+# 1. fix_1: flipped orientation of images in kaibu:
 #     * 'np.flipud': correct orientation of image in Kaibu. 
-#     * Flip y corrdinates
+#     * Flip y coordinates
 
 # For MAC
 if sys.platform == "darwin":
@@ -367,7 +367,9 @@ class ImJoyPlugin():
         await viewer.view_image(np.flipud(image_array), type="itk-vtk", name='image')   # fix_1
 
         # Add annotation layer
-        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", draw_edge_color='#db2307',  draw_face_color='#eb9d91AA', draw_shape_type="Rectangle",draw_enable=True)
+        layer = await viewer.add_shapes([ ], shape_type="polygon", name="analysis region", 
+                                        draw_edge_color='#db2307',  draw_face_color='#eb9d91AA', draw_shape_type="Rectangle",draw_enable=True,
+                                        draw_label="analysis_region", draw_max_label_count=1)
 
         # get the annotation in geojson format
 
@@ -759,8 +761,6 @@ class ImJoyPlugin():
 
         # Crop image if specified
         x_min = None
-        
-        api.log(self.image.shape)
 
         if len(self.analysis_region) > 0:
             analysis_region = self.analysis_region
@@ -768,9 +768,6 @@ class ImJoyPlugin():
             # Size of full image
             n_y = self.image.shape[2]-1
             n_x = self.image.shape[3]-1
-
-            api.log(self.image.shape)
-            api.log(str(analysis_region))
 
             x_min = analysis_region[0]
             y_min = analysis_region[1]
@@ -793,7 +790,6 @@ class ImJoyPlugin():
             img = self.image[channel_index, :,y_min:y_max, x_min:x_max]
             api.log(img.shape)
             self.image_raw = img
-            self.image_raw_mip = stack.maximum_projection(img)
             self.filter_full = False
         
         else:
@@ -805,12 +801,20 @@ class ImJoyPlugin():
             api.alert('Please select which channel should be processed!')
             return
 
-        img_filt = stack.log_filter(img, sigma)
+        # Set sigmas depending on image size
+        if img.shape[0] == 1:
+            sigma_log = (sigma[1])
+        else:
+            sigma_log = (sigma[0], sigma[1], sigma[1])
+
+        api.log(sigma_log)
+        img_filt = stack.log_filter(img, sigma_log)
 
         # Get name-base of loaded image
         image_name = image_names[channel_selected]["image_name"]
         name_base, file_extension = os.path.splitext(image_name)
 
+        self.image_raw_mip = stack.maximum_projection(img)
         self.image_filt = img_filt
         self.mask_lm = []
         self.channel_selected = channel_selected
@@ -821,7 +825,7 @@ class ImJoyPlugin():
         # Save settings of spot detection
         self.analysis_details['spot_detection']['settings']['filter'] = {
             'method' : 'LoG',
-            'sigma': sigma
+            'sigma': sigma_log
         }
 
         # Save some image properties
@@ -962,14 +966,31 @@ class ImJoyPlugin():
             'spots': len(spots)
         }
 
-        # Save image (filtered, contrasted) with detections
+        # Save image (filtered & raw, contrasted) with detections
         if name_save:
+
+            api.log(f'[FISH-QUANT][detect_apply] plot with detection results: {name_save}.')
+
+            # Spot detection with filtered image
             img_filt_mip = stack.maximum_projection(self.image_filt)
             pa, pb = np.percentile(img_filt_mip, (0.1,99.99))
             img_filt_mip = rescale_intensity(img_filt_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
             
-            plot.plot_detection(img_filt_mip, spots, radius=2, framesize=(40, 21), remove_frame=True,path_output=name_save)
-            api.log(f'[FISH-QUANT][detect_apply] plot with detection results: {name_save}.')
+            plot.plot_detection(img_filt_mip, spots, 
+                                radius=2, framesize=(40, 21), 
+                                remove_frame=True,
+                                path_output=name_save+'_filt.png')
+            
+
+            # Spot detection with raw image
+            img_mip = self.image_raw_mip
+            pa, pb = np.percentile(img_mip, (0.1,99.99))
+            img_mip = rescale_intensity(img_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
+            
+            plot.plot_detection(img_mip, spots, 
+                                radius=2, framesize=(40, 21), 
+                                remove_frame=True,
+                                path_output=name_save+'_raw.png')
 
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
@@ -1130,7 +1151,7 @@ class ImJoyPlugin():
         name_base = self.name_base
 
         if config['create_plots']:
-            config['name_save'] = str(path_plots_detection / f'{name_base}__detection.png')
+            config['name_save'] = str(path_plots_detection / f'{name_base}__detection')
         else:
             config['name_save'] = False
 

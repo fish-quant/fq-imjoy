@@ -2,7 +2,7 @@
 
 [ImJoy](https://imjoy.io/docs/#/) is image processing platform with an easy to use interface running in your browser.  
 
-* While ImJoy is a browser app, **NO** user data will be transferred over the internet. 
+* While ImJoy is a browser app, **NO** user data will be transferred over the internet.
 * For best stability, we recommend using [**Chrome**](https://www.google.com/chrome/) to run the ImJoy app.  
 * Some of its main **features** are:
 
@@ -15,19 +15,19 @@
 
 ![imjoy-interface](img/imjoy-interface.png)
 
-## Connect ImJoy to the plugin engine
+## Connect to the plugin engine
 
 Once you have the ImJoy plugin engine installed ([**installation instructions**](imjoy-installation.md#nstall-jupyter-engine-for-imjoy)), you can connect to it with this easy steps:
 
 !!! abstract "Connect ImJoy to Jupyter engine."
-    1. Open **anaconda terminal**. 
+    1. Open **anaconda terminal**.
     2. **Activate environment**: `conda activate fq-imjoy`
     3. **Start Jupyter engine**: `imjoy --jupyter`
     4. **Connect** ImJoy app to Jupyter Engine with 🚀 button.
 
 ## Installing plugins
 
-We provide links to install ImJoy plugins for the different workflows. 
+We provide links to install ImJoy plugins for the different workflows.
 
 If you press on the installation link, the ImJoy app will open and display a
 dialog asking if you want to install the specified plugin. To confirm, press 
@@ -44,7 +44,6 @@ Once a plugin is installed, ImJoy remembers the workspaces and plugins it contai
 If you want to redo an analysis, you simply have to open the [ImJoy app](https://imjoy.io/#/app) 
 and select the workspace `fq-main` for this package.
 
-If **updates** for the installed plugins 
-are available, you will see a corresponding symbol next to the plugin name.
+If **updates** for the installed plugins are available, you will see a corresponding symbol next to the plugin name.
 
 ![imjoy-workspacer.gif](img/imjoy-workspace.gif){: style="width:500px"}
