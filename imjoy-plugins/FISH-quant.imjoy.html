@@ -801,7 +801,14 @@ class ImJoyPlugin():
             api.alert('Please select which channel should be processed!')
             return
 
-        img_filt = stack.log_filter(img, sigma)
+        # Set sigmas depending on image size
+        if img.shape[0] == 1:
+            sigma_log = (sigma[1])
+        else:
+            sigma_log = (sigma[0], sigma[1], sigma[1])
+
+        api.log(sigma_log)
+        img_filt = stack.log_filter(img, sigma_log)
 
         # Get name-base of loaded image
         image_name = image_names[channel_selected]["image_name"]
@@ -818,7 +825,7 @@ class ImJoyPlugin():
         # Save settings of spot detection
         self.analysis_details['spot_detection']['settings']['filter'] = {
             'method' : 'LoG',
-            'sigma': sigma
+            'sigma': sigma_log
         }
 
         # Save some image properties

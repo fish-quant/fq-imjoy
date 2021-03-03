@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -159,7 +159,7 @@ class ImJoyPlugin {
           images: [],
           current_index: 0,
           channel_selected: null,
-          sigma: [sigma_z, sigma_xy, sigma_xy],  // ZYX
+          sigma: [sigma_z, sigma_xy],  // ZYX
           threshold_range: [0, 5000, 50 ], // min, max, n_bins
           minimum_distance: [2, 2], // xy, z
           detection_plot: [],
@@ -449,6 +449,10 @@ class ImJoyPlugin {
         })
         this.store.files.push(file_info)
       }
+
+      //
+      var elmnt = document.getElementById("card_images");
+      elmnt.scrollIntoView(false);
 
   }
 
@@ -906,7 +910,7 @@ api.export(new ImJoyPlugin())
   <br>
 
   <!-- Card to specify data -->
-  <div class="card">
+  <div class="card" id="card_images">
     <div class="card-content">
 
       <!-- Summary -->
@@ -927,7 +931,7 @@ api.export(new ImJoyPlugin())
         <div class="columns is-desktop">
 
           <!-- Table with files that can be loaded -->
-          <div class="column">
+          <div class="column" >
             <table class="table is-striped is-hoverable is-narrow">
               <thead>
                 <tr>
