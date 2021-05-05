@@ -115,7 +115,7 @@
   {
    "name": "SNR-calculation",
    "type": "native-python",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "description": "Calculate SNR of all spots in an image.",
    "tags": [
     "stable",
@@ -127,8 +127,8 @@
     "<span style='font-weight: 550; color:#666362'>Path SAVE</span>: {id: 'path_save', type: 'string', placeholder: 'spot_detection˃˃snr'}",
     "<span style='font-weight: 550; color:#666362'>Suffix spots</span>: {id: 'suffix_spots', type: 'string', placeholder: '__spots.csv'}",
     "<span style='font-weight: 550; color:#666362'>Suffix images</span>: {id: 'suffix_images', type: 'string', placeholder: '.tif'}",
-    "<span style='font-weight: 550; color:#666362'>Crop size (X,Y,Z):</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
-    "<span style='font-weight: 550; color:#666362'>Width bgd (X,Y,Z):</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
+    "<span style='font-weight: 550; color:#666362'>Crop size [X,Y,(Z)]:</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
+    "<span style='font-weight: 550; color:#666362'>Width bgd [X,Y,(Z)]:</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
    ],
    "cover": "",
    "inputs": null,
