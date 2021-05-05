@@ -6,17 +6,17 @@ ImJoy plugin to calculate SNR from spot detection results.
 {
   "name": "SNR-calculation",
   "type": "native-python",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Calculate SNR of all spots in an image.",
   "tags":  ["stable","dev"],
   "ui": [
-        "<span style='font-weight: 550; color:#666362'>Path SPOTS</span>: {id: 'path_spots', type: 'string', placeholder: 'paste-path-to-analysis'}",
+        "<span style='font-weight: 550; color:#666362'>Path SPOTS</span>: {id: 'path_spots', type: 'string', placeholder: 'paste-path-to-spot-results'}",
         "<span style='font-weight: 550; color:#666362'>Path IMAGES</span>: {id: 'path_images', type: 'string', placeholder: 'analysis˃˃acquisition'}",
         "<span style='font-weight: 550; color:#666362'>Path SAVE</span>: {id: 'path_save', type: 'string', placeholder: 'spot_detection˃˃snr'}",
         "<span style='font-weight: 550; color:#666362'>Suffix spots</span>: {id: 'suffix_spots', type: 'string', placeholder: '__spots.csv'}",
         "<span style='font-weight: 550; color:#666362'>Suffix images</span>: {id: 'suffix_images', type: 'string', placeholder: '.tif'}",
-        "<span style='font-weight: 550; color:#666362'>Crop size (X,Y,Z):</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
-        "<span style='font-weight: 550; color:#666362'>Width bgd (X,Y,Z):</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
+        "<span style='font-weight: 550; color:#666362'>Crop size [(Z),Y,X]:</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
+        "<span style='font-weight: 550; color:#666362'>Width bgd [(Z),Y,X]:</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
         ],
   "cover": "",
   "inputs": null,
@@ -83,7 +83,7 @@ def create_folder(path_new):
 
 
 def compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd):
-    """Extract a 3-d volume aroundthe detected spot. From this volume, 
+    """Extract a 3-d volume around the detected spot. From this volume, 
     signal (I) is determined as the maximum pixel intensity. The outer most
     layer(s) are used to calculate background (B) as the mean intensity,
     and noise (N) as the standard deviation. The signal-to-noise ratio (SNR)
@@ -92,7 +92,7 @@ def compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd):
     Parameters
     ----------
     image : np.ndarray
-        Image with shape (z, y, x).
+        Image with shape (y, x).
     spot : np.ndarray, np.int64
         Coordinate of a spot, with shape (1, 3). One coordinate per dimension
         (zyx coordinates).
@@ -153,6 +153,73 @@ def compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd):
     return snr, signal, background, noise
 
 
+def compute_snr_per_spot_2d(image, spot, crop_spot, w_bgd):
+    """Extract a 3-d are around the detected spot. From this area, 
+    signal (I) is determined as the maximum pixel intensity. The outer most
+    layer(s) are used to calculate background (B) as the mean intensity,
+    and noise (N) as the standard deviation. The signal-to-noise ratio (SNR)
+    is then calculated as SNR = (I-B)/N for each spot.
+
+    Parameters
+    ----------
+    image : np.ndarray
+        Image with shape (y, x).
+    spot : np.ndarray, np.int64
+        Coordinate of a spot, with shape (1, 3). One coordinate per dimension
+        (zyx coordinates). z=0.
+    crop_spot : Tuple, np.int64
+        Size of cropping area to which analysis will be restricted to. Defined 
+        around each detected spot, one scalar per dimension (y, x).
+    w_bgd : Tuple, np.int64
+        Size of outer pixel layer of cropped spot which will be used
+        to determine background.(y, x).
+
+    Returns
+    -------
+    snr : float
+        Signal-to-Noise ratio of the spot.
+    signal : np.int64
+        Maximum spot intensity.
+    background : np.int64
+        Mean of background.
+    noise : float
+        Standard deviation of background.
+
+    """
+
+    # get spot coordinate
+    spot_z, spot_y, spot_x = spot
+
+    # get spot and background radii
+    crop_yx, crop_yx = crop_spot
+    w_bgd_y, w_bgd_x = w_bgd
+
+    # crop a volume around spot
+    y_min = max(0, int(spot_y - crop_yx))
+    y_max = min(image.shape[0], int(spot_y + crop_yx))
+    x_min = max(0, int(spot_x - crop_yx))
+    x_max = min(image.shape[1], int(spot_x + crop_yx))
+
+    # Crop image around detected position
+    image_crop = image[y_min:y_max + 1,
+                       x_min:x_max + 1].copy().astype(np.float64)
+
+    # Measure signal as maxim value in this image
+    signal = image_crop.max()
+
+    # Extract image background as outermost layers of cropped image
+    image_crop[w_bgd_y:-w_bgd_y, w_bgd_x:-w_bgd_x] = -1.
+    image_background = image_crop[image_crop > 0]
+
+    # compute background and noise
+    background = image_background.mean()
+    noise = max(image_background.std(), 10e-6)
+
+    # compute SNR
+    snr = max(0, (signal - background)) / noise
+
+    return snr, signal, background, noise
+
 def batch_snr_calc(path_spots, path_images, path_save, suffix, crop_spot=(4,4,4), w_bgd=(1,1,1)):
     """[summary]
 
@@ -186,8 +253,12 @@ def batch_snr_calc(path_spots, path_images, path_save, suffix, crop_spot=(4,4,4)
         snr_results_file = []
 
         for spot in spots:
+            
+            if image.ndim ==2:
+                snr_result = compute_snr_per_spot_2d(image, spot, crop_spot, w_bgd)
+            if image.ndim ==3:
+                snr_result = compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd)
 
-            snr_result = compute_snr_per_spot_3d(image, spot, crop_spot, w_bgd)
             snr_results_file.append(snr_result)
             snr_results_all.append(snr_result)
 
@@ -227,10 +298,8 @@ class ImJoyPlugin():
         api.log(api.TAG)
         if api.TAG == 'dev':
             
-            if path_spots == 'paste-path-to-analysis':
+            if path_spots == 'paste-path-to-spot-results':
                 path_spots = r'D:\Work\Documents\data-test\fish-quant\fq-imjoy-demo\analysis\spot_detection'
-
-        
 
         # >>> CHECK INPUT PARAMETERS
 
@@ -257,7 +326,7 @@ class ImJoyPlugin():
 
         # >> Path containing the data
         api.log(path_spots)
-        if path_spots == 'paste-path-to-analysis':
+        if path_spots == 'paste-path-to-spot-results':
             api.alert('Path containing data to be processed has to be specified.')
             return
 
@@ -287,7 +356,7 @@ class ImJoyPlugin():
 
 
         # Call processing function
-        api.showStatus('Performing segmentation ... see log for details')
+        api.showStatus('Performing SNR calculation ... see log for details')
 
         batch_snr_calc(path_spots=path_spots, 
                        path_images=path_images,
