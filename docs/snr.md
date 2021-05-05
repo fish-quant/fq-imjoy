@@ -9,10 +9,9 @@ local background flucutations.
 Plugin is available <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:SNR-calculation@stable&upgrade=1" target="_blank">**here.**</a> 
 
 Here, we provide an ImJoy plugin that calculates the **SNR** for each detected
-spots. In short, the plugin extracts a small 3-d volume aroundthe detected spot. 
-From this volume signal (`I`) is determined as the maximum pixel intensity. The outer most
-layer(s) are used to calculate background (`B`) as the mean intensity,
-and noise (`N`) as the standard deviation. The signal-to-noise ratio (`SNR`)
+spot in 2D or 3D images. In short, the plugin extracts a small 2D area or 3D volume around the detected spot. 
+From this area/volume the signal intensity (`I`) is determined as the maximum pixel intensity. The background ('B') is
+calculated as the mean intensity from the outer most layer, the noise (`N`) as the standard deviation of these layer. The signal-to-noise ratio (`SNR`)
 is then calculated as `SNR = (I-B)/N` for each spot.
 
 ## Usage
@@ -34,8 +33,8 @@ You first have to detect spots in your images. Then you can use the SNR plugin:
     `Suffix spots`    | str  |  Last part of the file-names of the spot detection results (`__spots.csv`). This part has to be replaced with suffix_images to obtained the name of the images.
     `Suffix images`    | str  |   Last part of file-name of the images. See suffix spots.
     `String img ext`     | str  |  File extension of images that should be segmented.
-    `Crop size`     | int  | Size of the region cropped around each spots (XYZ). Values are separated by `,`.
-    `Width bgd`    | str  |  Widht of the background region, e.g. thickness of outer layer that is used as background. 
+    `Crop size`     | int  | Size of the region cropped around each spots (ZYX). Values are separated by `,`.
+    `Width bgd`    | str  |  Width of the background region, e.g. thickness of outer layer that is used as background. 
 
 2. Pressing on the plugin name `SNR-calculation` will start the SNR calculation.
 3. Results will be stored in the specified folder, by default this folder will be called `snr`. Here a file for each processed spot-detection result
