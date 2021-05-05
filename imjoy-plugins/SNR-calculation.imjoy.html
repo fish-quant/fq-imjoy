@@ -10,13 +10,13 @@ ImJoy plugin to calculate SNR from spot detection results.
   "description": "Calculate SNR of all spots in an image.",
   "tags":  ["stable","dev"],
   "ui": [
-        "<span style='font-weight: 550; color:#666362'>Path SPOTS</span>: {id: 'path_spots', type: 'string', placeholder: 'paste-path-to-analysis'}",
+        "<span style='font-weight: 550; color:#666362'>Path SPOTS</span>: {id: 'path_spots', type: 'string', placeholder: 'paste-path-to-spot-results'}",
         "<span style='font-weight: 550; color:#666362'>Path IMAGES</span>: {id: 'path_images', type: 'string', placeholder: 'analysis˃˃acquisition'}",
         "<span style='font-weight: 550; color:#666362'>Path SAVE</span>: {id: 'path_save', type: 'string', placeholder: 'spot_detection˃˃snr'}",
         "<span style='font-weight: 550; color:#666362'>Suffix spots</span>: {id: 'suffix_spots', type: 'string', placeholder: '__spots.csv'}",
         "<span style='font-weight: 550; color:#666362'>Suffix images</span>: {id: 'suffix_images', type: 'string', placeholder: '.tif'}",
-        "<span style='font-weight: 550; color:#666362'>Crop size [X,Y,(Z)]:</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
-        "<span style='font-weight: 550; color:#666362'>Width bgd [X,Y,(Z)]:</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
+        "<span style='font-weight: 550; color:#666362'>Crop size [(Z),Y,X]:</span>: {id: 'crop_spot', type: 'string', placeholder: '4,4,4'}",
+        "<span style='font-weight: 550; color:#666362'>Width bgd [(Z),Y,X]:</span>: {id: 'w_bgd', type: 'string', placeholder: '1,1,1'}"
         ],
   "cover": "",
   "inputs": null,
@@ -298,7 +298,7 @@ class ImJoyPlugin():
         api.log(api.TAG)
         if api.TAG == 'dev':
             
-            if path_spots == 'paste-path-to-analysis':
+            if path_spots == 'paste-path-to-spot-results':
                 path_spots = r'D:\Work\Documents\data-test\fish-quant\fq-imjoy-demo\analysis\spot_detection'
 
         # >>> CHECK INPUT PARAMETERS
@@ -326,7 +326,7 @@ class ImJoyPlugin():
 
         # >> Path containing the data
         api.log(path_spots)
-        if path_spots == 'paste-path-to-analysis':
+        if path_spots == 'paste-path-to-spot-results':
             api.alert('Path containing data to be processed has to be specified.')
             return
 
