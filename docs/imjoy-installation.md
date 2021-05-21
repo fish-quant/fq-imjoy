@@ -27,7 +27,7 @@ conda activate fq-imjoy
 **Install code Jupyter optimized for ImJoy**:
 
 ``` bash
-pip install -U imjoy
+pip install -U imjoy[jupyter]
 ```
 
 ## Connect Jupyter engine
