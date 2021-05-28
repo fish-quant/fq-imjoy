@@ -7,7 +7,7 @@
   {
    "name": "FISH-QUANT",
    "type": "native-python",
-   "version": "0.0.13",
+   "version": "0.0.14",
    "description": "Process smFISH images.",
    "tags": [
     "stable",
