@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -348,10 +348,10 @@ class ImJoyPlugin():
 
         # Show image
         if display_type == 'window':
-            viewer = await api.createWindow(src="https://kaibu.org")
+            viewer = await api.createWindow(src="https://kaibu.org", config = {'mode': 'full'})
     
         elif display_type == 'dialog':
-            viewer = await api.showDialog(src="https://kaibu.org")
+            viewer = await api.showDialog(src="https://kaibu.org", config = {'mode': 'full'})
     
         # Check if channel was selected
         if len(channel_selected) == 0:
@@ -437,10 +437,10 @@ class ImJoyPlugin():
         # Could also be viewer = await api.createWindow(type="Kaibu")
 
         if display_type == 'window':
-            viewer = await api.createWindow(src="https://kaibu.org")
+            viewer = await api.createWindow(src="https://kaibu.org", config = {'mode': 'full'})
   
         elif display_type == 'dialog':
-            viewer = await api.showDialog(src="https://kaibu.org")
+            viewer = await api.showDialog(src="https://kaibu.org", config = {'mode': 'full'})
    
         # Loop over provided layers that should be displayed
         for data_add in data_show:
