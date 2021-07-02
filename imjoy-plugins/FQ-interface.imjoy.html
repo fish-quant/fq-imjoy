@@ -1218,7 +1218,7 @@ api.export(new ImJoyPlugin())
           <!-- Decompose clusters -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_decompose_dense_regions" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_dense_regions">Decompose aggregates</b-button>
+              <b-button type="is-primary" :loading="running_decompose_dense_regions" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_dense_regions">Decompose dense regions</b-button>
             </b-field>
 
             <!-- Specify spot size -->
@@ -1237,7 +1237,7 @@ api.export(new ImJoyPlugin())
           <!-- Foci calling -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_detect_clusters" :disabled="status_decompose_dense_regions==false || analyze_clusters==false" @click="btn_detect_clusters">Define foci</b-button>
+              <b-button type="is-primary" :loading="running_detect_clusters" :disabled="status_decompose_dense_regions==false || analyze_clusters==false" @click="btn_detect_clusters">Define clusters</b-button>
             </b-field>
 
             <!-- Specify pixel size -->
