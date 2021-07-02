@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -180,8 +180,8 @@ class ImJoyPlugin {
           running_filter: false,
           running_detect_test: false,
           running_detect_apply: false,
-          running_decompose_clusters: false,
-          running_detect_foci: false,
+          running_decompose_dense_regions: false,
+          running_detect_clusters: false,
           running_detect_image: false,
           running_detect_batch: false,
           downloading_results_zipped: false,
@@ -191,7 +191,7 @@ class ImJoyPlugin {
           status_thresholds_tested: false,
           status_detection_applied: false,
           status_detect_apply: false,
-          status_decompose_clusters: false,
+          status_decompose_dense_regions: false,
 
     },
 
@@ -331,13 +331,13 @@ class ImJoyPlugin {
           },
 
           // Callback to plot detections detection
-          btn_decompose_clusters: async function(){
-            self.decompose_clusters()
+          btn_decompose_dense_regions: async function(){
+            self.decompose_dense_regions()
           },
 
           // Callback to plot detections detection
-          btn_detect_foci: async function(){
-            self.detect_foci()
+          btn_detect_clusters: async function(){
+            self.detect_clusters()
           },
           
           // Callback to plot detections detection
@@ -381,15 +381,15 @@ class ImJoyPlugin {
       this.store.status_thresholds_tested = false
       this.store.status_detection_applied = false
       this.store.status_detect_apply = false
-      this.store.status_decompose_clusters = false
+      this.store.status_decompose_dense_regions = false
 
       this.store.getting_zipped_data =  false
       this.store.running_load = false
       this.store.running_filter = false
       this.store.running_detect_test = false
       this.store.running_detect_apply = false
-      this.store.running_decompose_clusters = false
-      this.store.running_detect_foci = false
+      this.store.running_decompose_dense_regions = false
+      this.store.running_detect_clusters = false
       this.store.running_detect_image = false
       this.store.running_detect_batch = false
       this.store.downloading_results_zipped = false
@@ -640,14 +640,14 @@ class ImJoyPlugin {
   /**
    * Decompose clusters
    */
-  async decompose_clusters() {
+  async decompose_dense_regions() {
     
-    this.store.running_decompose_clusters=true
+    this.store.running_decompose_dense_regions=true
 
     // Decompose clusters
     let config = await this.params_for_python();
     config.show_status = true;
-    await this.fq_worker.decompose_clusters(config)
+    await this.fq_worker.decompose_dense_regions(config)
 
     // Display results
     let data_show = [];
@@ -665,26 +665,26 @@ class ImJoyPlugin {
     // Update interface
     api.setConfig('psf_size_xy', this.store.psf_size_xy)
     api.setConfig('psf_size_z', this.store.psf_size_z)
-    this.store.running_decompose_clusters=false
-    this.store.status_decompose_clusters=true
+    this.store.running_decompose_dense_regions=false
+    this.store.status_decompose_dense_regions=true
   }
 
 
   /**
    * Detect foci
    */
-  async detect_foci() {
-    this.store.running_detect_foci=true
+  async detect_clusters() {
+    this.store.running_detect_clusters=true
 
     // Detect foci
     let config = await this.params_for_python();
     config.show_status = true;
     config.name_save = 'tmp';
-    var spots = await this.fq_worker.detect_foci(config)
+    var spots = await this.fq_worker.detect_clusters(config)
 
     // Update interface
-    this.store.running_detect_foci=false
-    this.store.status_detect_foci=true
+    this.store.running_detect_clusters=false
+    this.store.status_detect_clusters=true
     api.setConfig('foci_nb_min_spots', this.store.foci_nb_min_spots)
     api.setConfig('foci_radius', this.store.foci_radius)
   }
@@ -1167,7 +1167,7 @@ api.export(new ImJoyPlugin())
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
 
-  <!-- Card to Decompose foci -->
+  <!-- Card to decompose clusters -->
   <br>
   <div class="card">
     <div class="card-content">
@@ -1175,13 +1175,13 @@ api.export(new ImJoyPlugin())
       <!-- Summary -->
       <div class="summary">
         <div class="summary-content">
-          <p class="title is-4">[Optional] decompose RNA aggregates</p>
+          <p class="title is-4">[Optional] Decompose dense RNA aggregations</p>
 
           <b-field grouped>
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#log-filter')"></button>
                 <p>
-                  <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
+                  <p class="subtitle is-6">Decompose regions with high RNA concentrations and find localized RNA clusters. </p>
           </b-field>
 
 
@@ -1193,7 +1193,7 @@ api.export(new ImJoyPlugin())
 
           <b-field grouped>
             <b-field>
-              <b-checkbox v-model="analyze_clusters"> Decompose RNA clusters</b-checkbox>
+              <b-checkbox v-model="analyze_clusters"> Apply RNA cluster decomposition & detection</b-checkbox>
             </b-field>
 
             <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
@@ -1218,7 +1218,7 @@ api.export(new ImJoyPlugin())
           <!-- Decompose clusters -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_decompose_clusters" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_clusters">Decompose aggregates</b-button>
+              <b-button type="is-primary" :loading="running_decompose_dense_regions" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_dense_regions">Decompose aggregates</b-button>
             </b-field>
 
             <!-- Specify spot size -->
@@ -1237,7 +1237,7 @@ api.export(new ImJoyPlugin())
           <!-- Foci calling -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_detect_foci" :disabled="status_decompose_clusters==false || analyze_clusters==false" @click="btn_detect_foci">Define foci</b-button>
+              <b-button type="is-primary" :loading="running_detect_clusters" :disabled="status_decompose_dense_regions==false || analyze_clusters==false" @click="btn_detect_clusters">Define foci</b-button>
             </b-field>
 
             <!-- Specify pixel size -->

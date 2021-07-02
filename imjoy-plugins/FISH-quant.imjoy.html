@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -997,13 +997,13 @@ class ImJoyPlugin():
         self.spots = spots
 
 
-    async def decompose_clusters(self,config):
+    async def decompose_dense_regions(self,config):
         """
         Decompose clusters.
         For more details see bigfish: detection.decompose_cluster
         """
         # Parameters
-        log_config('[FISH-QUANT][decompose_clusters]', config)
+        log_config('[FISH-QUANT][decompose_dense_regions]', config)
         show_status = config['show_status']
   
         # Get image
@@ -1012,7 +1012,7 @@ class ImJoyPlugin():
         else:
             img = self.image[self.channel_index, :, :, :]
         
-        spots_post_decomposition, clusters, reference_spot = detection.decompose_cluster(
+        spots_post_decomposition, clusters, reference_spot = detection.decompose_dense(
             img, 
             spots=self.spots, 
             voxel_size_z = config['voxel_size_z'], 
@@ -1028,13 +1028,13 @@ class ImJoyPlugin():
         self.spots_post_decomposition = spots_post_decomposition
 
 
-    async def detect_foci(self,config):
+    async def detect_clusters(self,config):
         """
         Detect foci.
-        For more details see bigfish: detection.detect_foci
+        For more details see bigfish: detection.detect_clusters
         """
         # Parameters
-        log_config('[FISH-QUANT][detect_foci]', config)
+        log_config('[FISH-QUANT][detect_clusters]', config)
         name_save = config['name_save']
 
         # Generate name for temporary image
@@ -1042,17 +1042,17 @@ class ImJoyPlugin():
             name_base = self.name_base
             path_save = self.path_analysis / 'imjoy-tmp' 
             create_folder(path_save)
-            name_save = str(path_save / f'{name_base}__foci_calling')
+            name_save = str(path_save / f'{name_base}__cluster_calling')
 
         # Detect foci
-        spots_post_clustering, foci = detection.detect_foci(
+        spots_post_clustering, foci = detection.detect_clusters(
             spots =  self.spots_post_decomposition, 
             voxel_size_z = config['voxel_size_z'], 
             voxel_size_yx = config['voxel_size_yx'],
             radius = config['foci_radius'], 
             nb_min_spots = config['foci_nb_min_spots'])
 
-        api.log(f'[FISH-QUANT][detect_foci] found {len(foci)} foci for {len(self.spots_post_decomposition)} spots')
+        api.log(f'[FISH-QUANT][detect_clusters] found {len(foci)} foci for {len(self.spots_post_decomposition)} spots')
         
         self.spots_post_clustering = spots_post_clustering
         self.foci = foci
@@ -1087,7 +1087,7 @@ class ImJoyPlugin():
                 ext = 'png',
                 show = False)
 
-            api.log(f'[FISH-QUANT][detect_foci] foci plot saved as {name_save}.png')
+            api.log(f'[FISH-QUANT][detect_clusters] foci plot saved as {name_save}.png')
 
         if config['show_status']:
             show_png(name_save+'.png')
@@ -1166,14 +1166,14 @@ class ImJoyPlugin():
 
         # >>> Cluster decomposition
         if config['analyze_clusters']:
-            await self.decompose_clusters(config)
+            await self.decompose_dense_regions(config)
 
             if config['create_plots']:
                 config['name_save'] = str(path_plots_foci / f'{name_base}__foci_calling')
             else:
                 config['name_save'] = False
 
-            await self.detect_foci(config)
+            await self.detect_clusters(config)
 
             save_spots(self.spots_post_clustering, 'ZYXF',  path_save / f'{name_base}__spots_foci.csv')
             save_foci(self.foci,  path_save / f'{name_base}__foci.csv')
