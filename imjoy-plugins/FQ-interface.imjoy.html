@@ -90,8 +90,14 @@ class ImJoyPlugin {
       reg_exp = '(?P<file_ident>Exp.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
     }
 
-    var data_path = await api.getConfig('data_path')
-    if(! data_path) {data_path = 'paste-path-to-data'}
+    var path_root = await api.getConfig('path_root')
+    if(! path_root) {path_root = 'paste-root-path'}
+
+    var path_sub_acquisition = await api.getConfig('path_sub_acquisition')
+    if(! path_sub_acquisition) {path_sub_acquisition = 'acquisition'}
+
+    var path_sub_analysis = await api.getConfig('path_sub_analysis')
+    if(! path_sub_analysis) {path_sub_analysis = 'analysis'}
 
     var img_ext = await api.getConfig('img_ext')
     if(! img_ext) {img_ext = 'tif'}
@@ -139,8 +145,10 @@ class ImJoyPlugin {
           fq_worker_url: fq_worker_url,
           files: [],
           file_loaded: '',
-          data_path: data_path, 
-          output_path:"acquisition>>analysis",
+          path_root: path_root, 
+          path_sub_acquisition: path_sub_acquisition,
+          path_sub_analysis: path_sub_analysis,
+          //output_path:"acquisition>>analysis",
           z_first: true,
           img_ext: img_ext,
           channels: [],
@@ -176,6 +184,17 @@ class ImJoyPlugin {
           show_filtered: true,
           show_detection: true,
           getting_zipped_data: false,
+
+          // For post-processing
+          segment_subfolder_old: 'segmentation-results',
+          segment_subfolder_new: 'segmentation-bigfish',
+          segment_ident_cell: 'mask__cells',
+          segment_ident_nuc: 'mask__nuclei',          
+          segment_ch_cell: '',
+          segment_ch_nuc: '',  
+
+          
+          // Indicators for ongoing processing tasks
           running_load: false,
           running_filter: false,
           running_detect_test: false,
@@ -185,6 +204,9 @@ class ImJoyPlugin {
           running_detect_image: false,
           running_detect_batch: false,
           downloading_results_zipped: false,
+          cleaning_segmentation: false,
+
+          // Status indicators
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
@@ -192,6 +214,8 @@ class ImJoyPlugin {
           status_detection_applied: false,
           status_detect_apply: false,
           status_decompose_dense_regions: false,
+
+          
 
     },
 
@@ -355,7 +379,10 @@ class ImJoyPlugin {
             self.download_zipped_results()
           },
 
-
+          // Clean segmentation masks
+          btn_clean_segmentation: async function(){
+            self.clean_segmentation()
+          },
 
       } // END methods vue
     }) // END vue
@@ -393,6 +420,7 @@ class ImJoyPlugin {
       this.store.running_detect_image = false
       this.store.running_detect_batch = false
       this.store.downloading_results_zipped = false
+      this.store.cleaning_segmentation = false
   }
 
 
@@ -493,7 +521,9 @@ class ImJoyPlugin {
       this.store.status_image_loaded = true;
       
       // Store parameters for next launch
-      api.setConfig('data_path', this.store.data_path)
+      api.setConfig('path_root', this.store.path_root)
+      api.setConfig('path_sub_acquisition', this.store.path_sub_acquisition)
+      api.setConfig('path_sub_analysis', this.store.path_sub_analysis)
       api.setConfig('reg_exp', this.store.reg_exp)
       api.setConfig('img_ext', this.store.img_ext)
       api.setConfig('voxel_size_yx', this.store.voxel_size_yx)
@@ -726,12 +756,19 @@ class ImJoyPlugin {
   async get_zipped_data(){
     this.store.getting_zipped_data=true;
     let url="https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1"
-    this.store.data_path = await this.fq_worker.get_zipped_data(url)
-    if (this.store.data_path.includes('fq-imjoy-tutorial')){
+    this.store.path_root = await this.fq_worker.get_zipped_data(url)
+    if (this.store.path_root.includes('fq-imjoy-tutorial')){
+      // For RNA detection
       this.store.reg_exp = '(?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)';
       this.store.ch_name = "FISH";
       this.store.ch_ident = "cy3";
-      this.store.threshold_range = [10, 140, 75];
+      this.store.threshold_range = [20, 220, 75];
+      // For post-prossing of segmentation results
+      this.store.segment_ident_cell = 'mask__cells';
+      this.store.segment_ident_nuc = 'mask__nuclei';          
+      this.store.segment_ch_cell = 'cy3';
+      this.store.segment_ch_nuc = 'dapi';  
+      // Some user interaction
       api.alert('Press on button "Add" to add fish channel for analysis, and button "Scan folder..." to look for images to analyze');
     }
     this.store.getting_zipped_data=false;
@@ -749,6 +786,24 @@ class ImJoyPlugin {
 
     this.store.downloading_results_zipped=false;
   }
+
+  /**
+   * Clean segmentation masks
+   */  
+  async clean_segmentation() {
+    this.store.cleaning_segmentation=true;
+    let config = await this.params_for_python()
+    let url = await this.fq_worker.clean_segmentation(config);
+
+    if(url){api.utils.openUrl(url)}
+
+    this.store.cleaning_segmentation=false;
+  }
+
+
+
+
+
 
 
   /**
@@ -792,9 +847,9 @@ api.export(new ImJoyPlugin())
       <div class="content">
 
         <!-- Specify results folder -->
-        <b-field horizontal label="DATA folder" >
+        <b-field horizontal label="ROOT folder" >
           <b-field>
-            <b-input  v-model="data_path" placeholder="paste-path-to-data" expanded></b-input>
+            <b-input  v-model="path_root" expanded></b-input>
             <p class="control">
                 <b-button type="is-primary is-light" outlined :loading="getting_zipped_data" @click="btn_get_zipped_data">Get zipped (demo) data</b-button>
             </p>
@@ -802,9 +857,16 @@ api.export(new ImJoyPlugin())
         </b-field> <!-- END: specify results folder -->
 
         <!-- Specify results folder -->
-        <b-field horizontal label="RESULTS folder" >
+        <b-field horizontal label="SUB folders" >
           <b-field>
-            <b-input  v-model="output_path" placeholder="" expanded></b-input>
+            <p class="control"> <span class="button is-static">Acquisition</span></p>
+            <b-input placeholder="107" v-model.number="path_sub_acquisition"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Analysis</span></p>
+            <b-input placeholder="300" v-model.number="path_sub_analysis"></b-input>
+          </b-field>
+          <b-field>
             <p class="control">
                 <b-button type="is-primary is-light" outlined icon-left="help-circle" @click="open_docs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
             </p>
@@ -1309,14 +1371,54 @@ api.export(new ImJoyPlugin())
       <!-- Summary -->
       <div class="summary">
         <div class="summary-content">
-          <p class="title is-4">Postprocessing</p>
-          <p class="subtitle is-6">coming soon. </p>
+          <p class="title is-4">[Optiona] Clean up nuclei/cell segmentation</p>
+          <p class="subtitle is-6">Post-processing of segmentation results to guarantee that each cell has only one nucleus. </p>
         </div>
       </div>
       <br>
 
       <!-- Actual content -->
       <div class="content">
+
+        <!-- Specify Folders containing segmentation results -->
+        <b-field label="Subfolders" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Old results</span></p>
+            <b-input v-model="segment_subfolder_old"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">New results</span></p>
+            <b-input v-model="segment_subfolder_new"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify Folders containing segmentation results -->
+
+        <!-- Specify identifiers in file name for masks -->
+        <b-field label="Mask identifiers" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Cells</span></p>
+            <b-input v-model="segment_ident_cell"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Nuclei</span></p>
+            <b-input v-model="segment_ident_nuc"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify identifiers in file name for masks-->
+
+
+        <!-- Specify identifiers in file name for channels -->
+        <b-field label="Channel identifiers" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Cells</span></p>
+            <b-input v-model="segment_ch_cell"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Nuclei</span></p>
+            <b-input v-model="segment_ch_nuc"></b-input>
+          </b-field>
+        </b-field> <!-- END: Specify identifiers in file name for channels -->
+
+        <b-button expanded type="is-primary" :disabled="segment_ch_cell.length==0||segment_ch_nuc.length==0" @click="btn_clean_segmentation">Clean up segmentation results</b-button>
+       
 
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->

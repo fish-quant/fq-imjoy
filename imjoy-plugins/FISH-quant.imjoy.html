@@ -22,7 +22,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "api_version": "0.1.8",
   "env": [{"type": "binder", "spec": "fish-quant/fq-imjoy/binder", "skip_requirements": true}],
   "permissions": [],
-  "requirements": { "stable":["big-fish==0.4.0"],
+  "requirements": { "stable":[""],
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface"
@@ -50,7 +50,7 @@ from skimage import io
 import pandas as pd
 from skimage.exposure import rescale_intensity
 import bigfish  # Is there a way to get the version without import?
-from bigfish import stack, plot, detection
+from bigfish import stack, plot, detection, segmentation
 
 # TEMPORARY BUG FIX 
 # 1. fix_1: flipped orientation of images in kaibu:
@@ -139,39 +139,6 @@ def create_folder(path_new):
     """
     if not path_new.is_dir():
         path_new.mkdir(parents=True)
-
-
-def create_output_path(data_path, output_path):
-    """
-    Function to create output path to stored data.
-
-    If the string output_path contains characters '>>' it will not
-    be interpreted as a path name but as an indicator for a string
-    replacement operation for the data_path: old_str>>new_str
-    """
-    
-    # Make sure they are strings
-    data_path = str(data_path)
-    output_path = str(output_path)
-
-    if (re.search(">>", output_path)):
-      str_orig = re.search(r'^(.*)>>(.*)$', output_path).group(1)
-      str_rep = re.search(r'^(.*)>>(.*)$', output_path).group(2)
-
-      print(f'Replacement parameters found: original string: {str_orig}, replacement string: {str_rep}')
-
-      output_path_return = data_path.replace(str_orig,str_rep)
-      print(f'Output path: {output_path_return}')
-
-    else:
-      print("No match")
-      output_path_return = output_path
-
-    # Convert back to Path
-    output_path_return = Path(output_path_return)
-    create_folder(output_path_return)
-
-    return output_path_return
 
 
 async def create_mip(img, name_save, file_manager, create_url=False, rescale=True):
@@ -263,7 +230,7 @@ class ImJoyPlugin():
         
         # Download to the user directory
         user_home = Path.home()
-        name_save = Path.home() / "fq-imjoy-tutorial.zip"
+        name_save = Path.home() / "fq-imjoy-download-data.zip"
 
         # Download zip archive
         with urllib.request.urlopen(url) as response, open(str(name_save), "wb") as out_file:
@@ -284,17 +251,15 @@ class ImJoyPlugin():
             # Find all names with acquisition, shortest should be parental folder
             sub_folders_acquisition = [i for i in extracted_files if "acquisition" in i] 
             if len(sub_folders_acquisition) > 0:
-
                 sub_folder_acquisition = min(sub_folders_acquisition, key=len)
-
-                path_acquisition = str(path_extract / sub_folder_acquisition) 
-                api.log(f'\nAcquisition folder: {path_acquisition}')
+                path_acquisition = path_extract / sub_folder_acquisition
+                api.log(f'\nAcquisition folder: {str(path_acquisition)}')
             else:
-                api.alert(f'NO acquisition folder found. Please follow required file organization.')
+                api.alert(f'NO acquisition folder found. Could not set root folder automatically. Please follow required file organization, or set root manually.')
 
         api.showStatus('Zipped data obtained. More details in log.')
 
-        return path_acquisition
+        return str(path_acquisition.parent)
 
 
     async def download_zipped_results(self, config):
@@ -302,7 +267,7 @@ class ImJoyPlugin():
         Download zipped results.
         """
 
-        # Download only if results have already been otained
+        # Download only if results have already been obtained
         if not self.path_analysis:
             api.alert('No analysis results stored so far')
             return
@@ -335,6 +300,7 @@ class ImJoyPlugin():
         except:
             api.alert(f"Something else went wrong. Could not store results in file {os.path.abspath(name_results_zip)}")
             return None
+
 
     async def select_analysis_region(self, config):
         """
@@ -559,9 +525,9 @@ class ImJoyPlugin():
         log_config('[FISH-QUANT][scan_folder]', config)
         channels  = config['channels']
         reg_exp   = config['reg_exp']
-        path_data_full = Path(config['data_path'])
-        
-        if not path_data_full.is_dir():
+        path_acquisition = Path(config['path_root']) / config['path_sub_acquisition']
+
+        if not path_acquisition.is_dir():
             api.alert('Specified data path does not EXIST. No images found.')
             return
 
@@ -573,8 +539,7 @@ class ImJoyPlugin():
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
-        #for file in os.listdir(str(path_data_full)):
-        for file_full in path_data_full.rglob(f"*.{config['img_ext']}"):  
+        for file_full in path_acquisition.glob(f"*.{config['img_ext']}"):  
             api.log(f'Checking file: {str(file_full)}')
             file = file_full.name
             match = re.search(reg_exp, file)
@@ -625,7 +590,9 @@ class ImJoyPlugin():
 
                 df_scan = df_scan.append(data_dict, ignore_index=True)
 
-        self.path_data_full = path_data_full
+        self.path_root = config['path_root']
+        self.path_acquisition = path_acquisition
+
         scan_results = df_scan.to_dict('records')
 
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
@@ -634,7 +601,8 @@ class ImJoyPlugin():
         api.log(scan_results)
         
         # Save analysis details
-        self.analysis_details['data_specs']['data_path'] = str(path_data_full)
+        self.analysis_details['data_specs']['path_root'] = str(config['path_root'])
+        self.analysis_details['data_specs']['path_acquisition'] = str(path_acquisition)
         self.analysis_details['data_specs']['channels'] = channels
         self.analysis_details['data_specs']['reg_exp'] = reg_exp
 
@@ -652,10 +620,10 @@ class ImJoyPlugin():
         if show_status: api.showStatus('Loading images. Please wait .... ')
 
         # Folder containing data
-        path_data_full = self.path_data_full
+        path_acquisition = self.path_acquisition
 
         # Output path
-        self.path_analysis = create_output_path(path_data_full, config['output_path'])
+        self.path_analysis = Path(config['path_root']) / config['path_sub_analysis']
         create_folder(self.path_analysis)
 
         # Get channel names
@@ -679,7 +647,7 @@ class ImJoyPlugin():
         for index, channel_name in enumerate(channel_names):
         
             image_name = config['file'][channel_name]
-            image_name_full = str(path_data_full / image_name)
+            image_name_full = str(path_acquisition / image_name)
             api.log(f'[FISH-QUANT][load_image] reading image: {image_name_full}')
 
             img_channel = io.imread(image_name_full)
@@ -714,7 +682,7 @@ class ImJoyPlugin():
         image = np.stack(imgs_3d, axis=0)
         
         # Save some image properties
-        self.analysis_details['data_specs']['output_path'] = config['output_path']
+        self.analysis_details['data_specs']['path_analysis'] = str(self.path_analysis)
         self.analysis_details['image_properties']['image_names'] = image_names
         self.analysis_details['image_properties']['size'] = image.shape
 
@@ -750,7 +718,7 @@ class ImJoyPlugin():
         sigma = config['sigma']
         channel_selected = config['channel_selected']
         show_status = config['show_status']
-        path_data_full = self.path_data_full
+        path_acquisition = self.path_acquisition
         image_names = self.image_names
 
         if show_status: api.showStatus('Filtering image ....')
@@ -1232,6 +1200,58 @@ class ImJoyPlugin():
 
         api.alert('Batch processing finished!')
         api.showStatus('Batch processing finished!')
+
+
+    async def clean_segmentation(self,config):
+        '''
+        Clean up segmentation results.
+        '''
+
+        # Parameters
+        log_config('[FISH-QUANT][clean_segmentation]', config)
+        sub_path_old = config['segment_subfolder_old']
+        sub_path_new = config['segment_subfolder_new']
+        ident_cell = config['segment_ident_cell']
+        ident_nuc = config['segment_ident_nuc']       
+        ch_cell = config['segment_ch_cell']
+        ch_nuc = config['segment_ch_nuc']  
+
+        # Path to segmentation results
+        self.path_analysis = Path(config['path_root']) / config['path_sub_analysis']
+        create_folder(self.path_analysis)
+        path_analysis = self.path_analysis
+        path_segmentation = path_analysis / sub_path_old
+
+        # Loop over segmentation results
+        api.showStatus(f'Cleaning up segmentation results (see log for details)')
+        for f_cell in path_segmentation.glob(f'*{ident_cell}*'):
+
+            api.log(f'\n\n >>>> Analyzing segmentation result for: {f_cell}\n')
+
+            # Get file with cell segmentationFQ-
+            f_nuc = Path(str(f_cell).replace(ident_cell, ident_nuc).replace(ch_cell, ch_nuc))
+            if not f_nuc.is_file():
+                api.log(f'File with nuclear segmentation not found: {f_nuc}')
+
+            # Load label images
+            nuc_label = io.imread(str(f_nuc))
+            cell_label = io.imread(str(f_cell))
+
+            # Path to save results
+            path_save = Path(str(f_nuc.parent).replace(sub_path_old, sub_path_new))
+            if not path_save.is_dir():
+                path_save.mkdir(parents=True)
+                api.log(f'Created path to save new segmentation masks: {path_save}')
+
+            new_nuc_label, new_cell_label = segmentation.match_nuc_cell(nuc_label, cell_label, single_nuc=False, cell_alone=False)
+
+            # Save new label images
+            nuc_name = Path(str(f_nuc).replace(sub_path_old, sub_path_new))
+            cell_name = Path(str(f_cell).replace(sub_path_old, sub_path_new))
+            io.imsave(nuc_name, new_nuc_label)
+            io.imsave(cell_name, new_cell_label)
+
+        api.showStatus(f'Cleaning up segmentation results (see log for details)')
 
 api.export(ImJoyPlugin())
 </script>
