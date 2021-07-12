@@ -1209,18 +1209,23 @@ class ImJoyPlugin():
 
         # Parameters
         log_config('[FISH-QUANT][clean_segmentation]', config)
-        sub_path_old = config['segment_subfolder_old']
-        sub_path_new = config['segment_subfolder_new']
-        ident_cell = config['segment_ident_cell']
-        ident_nuc = config['segment_ident_nuc']       
-        ch_cell = config['segment_ch_cell']
-        ch_nuc = config['segment_ch_nuc']  
+        sub_path_old = config['assign_subfolder']
+        sub_path_new = config['assign_subfolder_new']
+        ident_cell = config['assign_ident_cell']
+        ident_nuc = config['assign_ident_nuc']       
+        ch_cell = config['assign_ch_cell']
+        ch_nuc = config['assign_ch_nuc']  
 
         # Path to segmentation results
-        self.path_analysis = Path(config['path_root']) / config['path_sub_analysis']
-        create_folder(self.path_analysis)
-        path_analysis = self.path_analysis
+        path_analysis = Path(config['path_root']) / config['path_sub_analysis']
+        if not path_analysis.is_dir():
+            api.alert(f'NO ANALYSIS FOLDER FOUND: {str(path_analysis)}')
+            return
+
         path_segmentation = path_analysis / sub_path_old
+        if not path_segmentation.is_dir(): 
+            api.alert(f'NO FOLDER WITH SEGMENTATION RESULTS FOUND: {str(self.path_segmentation)}')
+            return
 
         # Loop over segmentation results
         api.showStatus(f'Cleaning up segmentation results (see log for details)')
@@ -1252,6 +1257,167 @@ class ImJoyPlugin():
             io.imsave(cell_name, new_cell_label)
 
         api.showStatus(f'Cleaning up segmentation results (see log for details)')
+
+
+    def assign_rnas_cells(self,config):
+        '''
+        Assing RNAs to cells
+        '''
+
+        # Parameters
+        log_config('[FISH-QUANT][clean_segmentation]', config)
+
+        plot_individual_cells = config['plot_individual_cells_enable']
+
+        # Path for analysis
+        path_analysis = Path(config['path_root']) / config['path_sub_analysis']
+        if not path_analysis.is_dir():
+            api.alert(f'NO ANALYSIS FOLDER FOUND: {str(path_analysis)}')
+            return
+
+        path_acquisition = Path(config['path_root']) / config['path_sub_acquisition']
+        if not path_acquisition.is_dir():
+            api.alert(f'NO ACQUISITION FOLDER FOUND: {str(path_acquisition)}')
+            return
+
+        # >> Specify spot detection and segmentation results
+        path_spot_detection = path_analysis / 'spot_detection'
+        
+        path_save = path_spot_detection / 'results_per_fov'
+        if not path_save.is_dir():
+                path_save.mkdir(parents=True)
+
+        if  config['clean_segmentation_enable']:
+            path_segmentation = path_analysis / config['assign_subfolder_new']
+        else:
+            path_segmentation = path_analysis / config['assign_subfolder']
+
+        # Channel specifiers
+        channels = {'spots': config['assign_ch_spots'],
+                    'cells': config['assign_ch_cell'],
+                    'nuclei': config['assign_ch_nuc']
+                    }
+
+        # Diverse suffix in file names
+        suffix = {'spots': config['assign_ident_spots'],
+                  'fish_image': config['img_ext'],
+                  'segment_nuclei': config['assign_ident_nuc'],    
+                  'segment_cells': config['assign_ident_cell'],
+                  'foci': '__foci.csv',
+                  'summary': '_SPOTS_SUMMARY.csv',
+                  'fov_results': '__fov_results.json',
+                }
+
+        #  Read all relevant files
+        for f_spots in path_spot_detection.glob(f"*{suffix['spots']}"):
+
+            api.log(f'Analyzing spots detection file {str(f_spots)}')
+            spots_all = np.loadtxt(str(f_spots), delimiter=',', skiprows=1, dtype=np.int64)
+
+            # Files with foci detection
+            f_foci = Path(str(f_spots).replace(suffix['spots'], suffix['foci']))
+            if f_foci.is_file():    
+                foci_all = np.loadtxt(str(f_foci), delimiter=',', skiprows=1, dtype=np.int64)
+            else:
+                api.log(f'  File with foci not found: {str(f_foci)}')
+                foci_all = None
+
+            # File with masks of cells
+            name_mask_cells = f_spots.name.replace(suffix['spots'], suffix['segment_cells']).replace(channels['spots'], channels['cells'])
+            f_mask_cells = path_segmentation / name_mask_cells
+            if f_mask_cells.is_file():
+                cell_label = stack.read_image(str(f_mask_cells))
+            else:
+                api.log(f'  File with mask of cells not found: {str(f_mask_cells)}')    
+                continue
+
+            # File with masks of nuclei
+            name_mask_nuc = f_spots.name.replace(suffix['spots'], suffix['segment_nuclei']).replace(channels['spots'], channels['nuclei'])
+            f_mask_nuc = path_segmentation / name_mask_nuc
+            if f_mask_nuc.is_file():
+                nuc_label = stack.read_image(str(f_mask_nuc))
+            else:
+                api.log(f'  File with mask of nuclei not found: {str(f_mask_nuc)}')
+                continue
+
+            # Load raw image
+            name_img = f_spots.name.replace(suffix['spots'], f'.{suffix["fish_image"]}')
+            f_img_full = path_acquisition / name_img
+            api.log(str(f_img_full))
+
+            if f_img_full.is_file():
+                smfish = stack.read_image(str(f_img_full))
+                smfish_mip = stack.rescale(smfish, channel_to_stretch=0)
+                smfish_mip = stack.maximum_projection(smfish_mip)   
+            else:
+                api.log(f'  smFISH image not found: {str(f_img_full)}')
+                continue
+
+            # >> Verify localization of spots and nuclei
+
+            # Spots & nuclei
+            if spots_all is not None and nuc_label is not None:
+                spots_in_nuc, spots_out_nuc = stack.identify_objects_in_region(nuc_label, spots_all, ndim=3)
+                print(f"Spots (total/cyto/nucleus): {spots_all.shape[0]}/{spots_out_nuc.shape[0]}/{spots_in_nuc.shape[0]}")
+            else:
+                spots_in_nuc = None
+                spots_out_nuc = None 
+                
+            # Clusters & nuclei
+            if spots_all is not None and nuc_label is not None and foci_all is not None:
+                spots_no_ts, foci_no_ts, ts = stack.remove_transcription_site(spots_all, foci_all, nuc_label, ndim=3)
+                print(f"Detected spots (without transcription sites): {spots_no_ts.shape[0]}")
+            else:
+                spots_no_ts = None
+                foci_no_ts = None
+                ts = None
+
+            # >>> Extract detailed results for image
+            fov_results = stack.extract_cell(
+                rna_coord=spots_all,
+                cell_label=cell_label, 
+                nuc_label=nuc_label,
+                ndim=smfish.ndim, 
+                others_coord={"foci": foci_no_ts, "transcription_site": ts},
+                image=smfish_mip)
+
+            api.log("number of cells identified: {0}".format(len(fov_results)))
+
+            # >>> Save summary file
+            # TODO: once added, add option: delimiter=','
+            f_results = path_save / f_spots.name.replace(suffix['spots'],suffix['summary'])
+            stack.summarize_extraction_results(fov_results, 
+                                               ndim=smfish.ndim,  
+                                               path_output=str(f_results))
+
+            # >>> Plot results of individual cells
+            if plot_individual_cells:
+
+                # Create folder
+                path_save_cells = path_save / f_img_full.stem
+                if not path_save_cells.is_dir():
+                    path_save_cells.mkdir(parents=True)
+
+                # Loop over cells
+                for i, cell_results in enumerate(fov_results):
+
+                    cell_id = cell_results["cell_id"]
+
+                    cell_coord = cell_results["cell_coord"]
+                    cell_mask = cell_results["cell_mask"]
+                    nuc_coord = cell_results["nuc_coord"]
+                    nuc_mask = cell_results["nuc_mask"]
+                    rna_coord = cell_results["rna_coord"]
+                    foci_coord = cell_results["foci"]
+                    ts_coord = cell_results["transcription_site"]
+                    smfish_mip = cell_results["image"]
+
+                    name_save = path_save_cells / f'plot_cell_{cell_id}'
+                    plot.plot_cell(ndim=smfish.ndim, cell_coord=cell_coord, nuc_coord=nuc_coord, 
+                        rna_coord=rna_coord, foci_coord=foci_coord, other_coord=ts_coord, 
+                        image=smfish_mip, cell_mask=cell_mask, nuc_mask=nuc_mask, 
+                        title="Cell {0}".format(cell_id), framesize=(12, 10), show=False,
+                        path_output=str(name_save), ext="png")
 
 api.export(ImJoyPlugin())
 </script>

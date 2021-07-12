@@ -148,7 +148,6 @@ class ImJoyPlugin {
           path_root: path_root, 
           path_sub_acquisition: path_sub_acquisition,
           path_sub_analysis: path_sub_analysis,
-          //output_path:"acquisition>>analysis",
           z_first: true,
           img_ext: img_ext,
           channels: [],
@@ -185,14 +184,17 @@ class ImJoyPlugin {
           show_detection: true,
           getting_zipped_data: false,
 
-          // For post-processing
-          segment_subfolder_old: 'segmentation-results',
-          segment_subfolder_new: 'segmentation-bigfish',
-          segment_ident_cell: 'mask__cells',
-          segment_ident_nuc: 'mask__nuclei',          
-          segment_ch_cell: '',
-          segment_ch_nuc: '',  
-
+          // For spots-cells assignment & segmentation post-processing
+          assign_subfolder: 'segmentation-results',
+          assign_subfolder_new: 'segmentation-bigfish',
+          assign_ident_spots: '__spots_foci.csv',
+          assign_ident_cell: '__mask__cells.png',
+          assign_ident_nuc: '__mask__nuclei.png',          
+          assign_ch_cell: 'cy3',
+          assign_ch_nuc: 'dapi',  
+          assign_ch_spots: 'cy3',
+          clean_segmentation_enable: false,
+          plot_individual_cells_enable: false,
           
           // Indicators for ongoing processing tasks
           running_load: false,
@@ -205,6 +207,7 @@ class ImJoyPlugin {
           running_detect_batch: false,
           downloading_results_zipped: false,
           cleaning_segmentation: false,
+          assigning_rnas: false,
 
           // Status indicators
           status_image_loaded: false,
@@ -214,8 +217,6 @@ class ImJoyPlugin {
           status_detection_applied: false,
           status_detect_apply: false,
           status_decompose_dense_regions: false,
-
-          
 
     },
 
@@ -384,6 +385,11 @@ class ImJoyPlugin {
             self.clean_segmentation()
           },
 
+          // Assign RNAs to cells
+          btn_assign_rnas_cells: async function(){
+            self.assign_rnas_cells()
+          },
+
       } // END methods vue
     }) // END vue
   } // END SETUP
@@ -421,6 +427,7 @@ class ImJoyPlugin {
       this.store.running_detect_batch = false
       this.store.downloading_results_zipped = false
       this.store.cleaning_segmentation = false
+      this.store.assigning_rnas = false
   }
 
 
@@ -764,10 +771,11 @@ class ImJoyPlugin {
       this.store.ch_ident = "cy3";
       this.store.threshold_range = [20, 220, 75];
       // For post-prossing of segmentation results
-      this.store.segment_ident_cell = 'mask__cells';
-      this.store.segment_ident_nuc = 'mask__nuclei';          
-      this.store.segment_ch_cell = 'cy3';
-      this.store.segment_ch_nuc = 'dapi';  
+      this.store.assign_ident_cell = 'mask__cells.png';
+      this.store.assign_ident_nuc = 'mask__nuclei.png';          
+      this.store.assign_ch_cell = 'cy3';
+      this.store.assign_ch_nuc = 'dapi';  
+      this.store.assign_ch_spots = 'cy3';
       // Some user interaction
       api.alert('Press on button "Add" to add fish channel for analysis, and button "Scan folder..." to look for images to analyze');
     }
@@ -781,9 +789,7 @@ class ImJoyPlugin {
   async download_zipped_results() {
     this.store.downloading_results_zipped=true;
     let url = await this.fq_worker.download_zipped_results({});
-
     if(url){api.utils.openUrl(url)}
-
     this.store.downloading_results_zipped=false;
   }
 
@@ -793,17 +799,19 @@ class ImJoyPlugin {
   async clean_segmentation() {
     this.store.cleaning_segmentation=true;
     let config = await this.params_for_python()
-    let url = await this.fq_worker.clean_segmentation(config);
-
-    if(url){api.utils.openUrl(url)}
-
+    await this.fq_worker.clean_segmentation(config);
     this.store.cleaning_segmentation=false;
   }
 
-
-
-
-
+  /**
+   * Assign RNAs to cells
+   */  
+  async assign_rnas_cells() {
+    this.store.assigning_rnas=true;
+    let config = await this.params_for_python()
+    await this.fq_worker.assign_rnas_cells(config);
+    this.store.assigning_rnas=false;
+  }
 
 
   /**
@@ -1364,67 +1372,116 @@ api.export(new ImJoyPlugin())
 
 <attachment name="postprocessing">
 
-  <!-- Card to specify channel -->
+
+
+  <!-- Card to assing spots to cells -->
   <div class="card">
     <div class="card-content">
-
+  
       <!-- Summary -->
       <div class="summary">
         <div class="summary-content">
-          <p class="title is-4">[Optiona] Clean up nuclei/cell segmentation</p>
-          <p class="subtitle is-6">Post-processing of segmentation results to guarantee that each cell has only one nucleus. </p>
+          <p class="title is-4">Assign RNAs to cells/nuclei</p>
+          <p class="subtitle is-6">An optional processing step of segmentation results guarantees that each cell has only one nucleus. </p>
         </div>
       </div>
       <br>
-
+  
       <!-- Actual content -->
       <div class="content">
-
-        <!-- Specify Folders containing segmentation results -->
-        <b-field label="Subfolders" horizontal grouped>
-          <b-field>
-            <p class="control"> <span class="button is-static">Old results</span></p>
-            <b-input v-model="segment_subfolder_old"></b-input>
-          </b-field>
-          <b-field>
-            <p class="control"> <span class="button is-static">New results</span></p>
-            <b-input v-model="segment_subfolder_new"></b-input>
-          </b-field>
-        </b-field> <!-- END: specify Folders containing segmentation results -->
-
+  
         <!-- Specify identifiers in file name for masks -->
         <b-field label="Mask identifiers" horizontal grouped>
           <b-field>
+            <p class="control"> <span class="button is-static">Spots</span></p>
+            <b-input v-model="assign_ident_spots"></b-input>
+          </b-field>
+          <b-field>
             <p class="control"> <span class="button is-static">Cells</span></p>
-            <b-input v-model="segment_ident_cell"></b-input>
+            <b-input v-model="assign_ident_cell"></b-input>
           </b-field>
           <b-field>
             <p class="control"> <span class="button is-static">Nuclei</span></p>
-            <b-input v-model="segment_ident_nuc"></b-input>
+            <b-input v-model="assign_ident_nuc"></b-input>
           </b-field>
         </b-field> <!-- END: specify identifiers in file name for masks-->
-
-
+  
         <!-- Specify identifiers in file name for channels -->
         <b-field label="Channel identifiers" horizontal grouped>
           <b-field>
+            <p class="control"> <span class="button is-static">Spots</span></p>
+            <b-input v-model="assign_ch_spots"></b-input>
+          </b-field>
+          <b-field>
             <p class="control"> <span class="button is-static">Cells</span></p>
-            <b-input v-model="segment_ch_cell"></b-input>
+            <b-input v-model="assign_ch_cell"></b-input>
           </b-field>
           <b-field>
             <p class="control"> <span class="button is-static">Nuclei</span></p>
-            <b-input v-model="segment_ch_nuc"></b-input>
+            <b-input v-model="assign_ch_nuc"></b-input>
           </b-field>
         </b-field> <!-- END: Specify identifiers in file name for channels -->
+  
+        <!-- Specify Folders containing segmentation results -->
+        <b-field label="Subfolders" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Segmentation</span></p>
+            <b-input v-model="assign_subfolder"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify Folders containing segmentation results -->
 
-        <b-button expanded type="is-primary" :disabled="segment_ch_cell.length==0||segment_ch_nuc.length==0" @click="btn_clean_segmentation">Clean up segmentation results</b-button>
-       
+
+        <!-- Clean up segmentation results -->
+        <b-collapse class="card" open="false" animation="slide" aria-id="contentIdForA11y3">
+            <template #trigger="props">
+                <div
+                    class="card-header"
+                    role="button"
+                    aria-controls="contentIdForA11y3">
+                    <p class="card-header-title">
+                        Clean segmentation results (guarantee one nucleus per cell)
+                    </p>
+                    <a class="card-header-icon">
+                        <b-icon
+                            :icon="props.open ? 'menu-down' : 'menu-up'">
+                        </b-icon>
+                    </a>
+                </div>
+            </template>
+
+            <div class="card-content">
+              <div class="columns">
+                <div class="column">
+                  <b-checkbox v-model="clean_segmentation_enable"> Clean segmentation results</b-checkbox>
+                </div>
+                <div class="column">
+                  <b-field>
+                    <p class="control"> <span class="button is-static">New subfolder</span></p>
+                    <b-input :disabled="clean_segmentation_enable==false" v-model="assign_subfolder_new"></b-input>
+                  </b-field>     
+                </div>
+                <div class="column">
+                  <b-button type="is-primary" expanded :disabled="clean_segmentation_enable==false||assign_ch_cell.length==0||assign_ch_nuc.length==0" @click="btn_clean_segmentation">Get it done.</b-button>
+                </div>
+              </div>
+            </div>
+        </b-collapse> <!-- END: Clean up segmentation results -->
+
+        <!-- Button to assign RNAs to cells -->
+        <br>
+        <div class="columns">
+          <div class="column is-two-thirds">
+              <b-button expanded type="is-primary" :loading="assigning_rnas" :disabled="assign_ch_spots.length==0||assign_ch_nuc.length==0||assign_ch_nuc.length==0" @click="btn_assign_rnas_cells">Assign RNAs to cells</b-button>
+          </div>
+          <div class="column">
+            <b-checkbox v-model="plot_individual_cells_enable"> Create plots of individual cells</b-checkbox>
+          </div>
+        </div> <!-- END: button to assign RNAs to cells -->
 
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
-
-
+ 
 </attachment>
 
 <window lang="html">
