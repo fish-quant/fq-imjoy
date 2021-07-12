@@ -1,44 +1,27 @@
 
 # Loading data
 
-In the tab, you can define where your data is located, its naming convention, and load selected images
-to test the analysis.
-
-![fq-ui-data-specification.png](img/fq-ui-data-specification.png)
-
-## Specify folder to save results
-
-Two possibilities are provided to specify the folder to save the analysis results. You can either:
-
-1. Directly define a **full path** where the results should be stored. If the folder doesn't exist, it will be created.
-2. Define a folder with a **text replacement**. This option can be useful if many folders are processed, e.g. when a recursive search is performed.
-
-   Such a replacement operation is indicated with a string in the format  `str_orig>>str_new`,
-   where 'str_orig' is the orginal string, 'str_new' is the new string.
-
-!!! example "Example for default replacement string"
-    Using the default string `acquisition>>analysis` implies that in the folder name
-
-    `D:\example_data\acquisition`, 
-    
-    `acquisition` will be replaced with `analysis`, yielding 
-    
-    `D:\example_data\analysis`.
-
-## Typical workflow
+In the tab, you can define where your data is located, its naming convention, and load selected images to test the analysis.
 
 !!! info
     Most specified parameters (except the channel list), will be stored and reused when you launch ImJoy the next time.
 
-### Specification of your data
+## Typical workflow
 
-1. **`Folder with data`**: copy & paste the name of the folder containing your data into the field 
-2. **`Folder to save data`**: specify where you data is stored (see above).
+### Data specifications
+
+In this dialog, you can specify
+
+1. The **ROOT folder**. This is the folder containing both the imaging data, as well as the analysis results. 
+2. Names of the **subfolders** containing images (by default `acquisition`) and analysis results (by default `analysis`)
 3. **`Regular expression`**: define the naming convention of your files with a regular expression. For more details, see
    the dedicated [section](data.md#naming-convention).
 4. **`Pixel size`**: provide the pixel-size in XY, and for 3D images the spacing of the individual z-planes. Both values are provided in nmm.
-5. **`Channels`**: Specify channel(s) to be analyzed. Here you have to specify a name you want to use for a channel, e.g. `fish`,
+5. [optional] z-first. In some rare cases, 3d images are read in the wrong order, and the z-axis is confused with the X or Y axis. Diabling this option usually helps to prevent this issue.
+6. **`Channels`**: Specify channel(s) to be analyzed. Here you have to specify a name you want to use for a channel, e.g. `fish`,
    and the string (as defined in the regular expression) for the channel in the file-name.
+
+![fq-ui-data-specification.png](img/fq-ui-data-specification.png)
 
 ### Scan folder and load one image
 
