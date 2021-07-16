@@ -173,7 +173,7 @@ This will create a new folder `results_per_fov`, where several files are created
 
 ### Parameters
 
-![fq-assign-rnas-cells.png](img/fq-assign-rnas-cells.png){: style="width:450px"}
+![fq-assign-rnas-cells.png](img/fq-assign-rnas-cells.png){: style="width:600px"}
 
 **File identifiers**: suffix to determine which files will be considered
 
