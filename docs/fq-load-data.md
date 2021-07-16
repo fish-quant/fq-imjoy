@@ -12,7 +12,7 @@ In the tab, you can define where your data is located, its naming convention, an
 
 In this dialog, you can specify
 
-1. The **ROOT folder**. This is the folder containing both the imaging data, as well as the analysis results. 
+1. The **ROOT folder**. This is the folder with both the imaging data (`acquisition`) and the analysis results (`analysis`). 
 2. Names of the **subfolders** containing images (by default `acquisition`) and analysis results (by default `analysis`)
 3. **`Regular expression`**: define the naming convention of your files with a regular expression. For more details, see
    the dedicated [section](data.md#naming-convention).

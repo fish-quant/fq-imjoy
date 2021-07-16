@@ -61,11 +61,10 @@ nav:
     - ImJoy:
       - Overview: imjoy-overview.md
       - Plugin engine: imjoy-installation.md
-      - FAQ: imjoy-faq.md
 
-    - Image analysis:
+    - RNA detection:
       - Overview: fq-overview.md
-      - Data: data.md
+      - Data specifications: data.md
       - Loading data: fq-load-data.md
       - Spot detection: fq-spot-detection.md
 
@@ -76,7 +75,6 @@ nav:
     - Advanced:
       - Developer notes: developer-notes.md
       
-
     - More:
       - Licence: licence.md
       - Contact: contact.md

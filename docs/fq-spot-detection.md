@@ -188,8 +188,6 @@ segment cells and nuclei
 If you want to clean the segmentation results and assign nuclei to cells, you can enable the dropdown menu, and specify the new
 subfolder were the cleaned masks should be stored. 
 
-
-
 ## Some background
 
 ### LoG filter
