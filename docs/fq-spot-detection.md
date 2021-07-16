@@ -75,18 +75,79 @@ Spot detection is performed with a local maximum detection on the filtered image
     For each analysed images, results files will be created in the specified results folder. 
     More details on the results files can be found below.
 
-## RNA decomposition and foci detection
+## Decompositon of dense areas and cluster detection
 
-TODO: To be added.
+The implemented RNA detection approach works well for reasonably separated spots. However, it fails once
+spots are too close or even overlapping, e.g. in transcription sites. Such denser areas are usually only 
+detected once and lead thus to an underdetection.
 
-## Results
+For such cases, we implemented an additional module that allows to 
+1. Decompose such dense areas, i.e. we attempt to place indidivual RNA molecules to reproduce the signal.
+2. Cluster calling. We use a spatial cluster approach (DBscan), where you can specify under which criteria 
+   you consider an accumulation a cluster. 
 
-For each analyzed image, two files will be created and stored under the orginal image name with a suffix
+### Decompose such dense areas
+
+The basic idea is simple
+
+1. From all detections, we calculated a reference spots. This is done by calculating the median image, which is then fit with a Gaussian function (A Gaussian function
+  describes rather accurately a spot like signal)
+2. We then identify all regions that appear to be brighter or bigger than this median reference spot. 
+3. For each candidate region, we implemented an iterative approach 
+   to create an image that matches best the identified candidate regions. Starting with an empty image, 
+   we compare at each iteration the simulated image with the actual image, and place a reference spot 
+   at the location with the maximum difference. Iteration is stopped once the the images match best. 
+
+You can controll this behavior with several parameters
+
+- `psf_xy` and `psf_z`: estimated size of the spots in nanometer. Used to determine cropping size around reference spot.
+
+**Advanced**
+
+- `alpha`: Intensity percentile used to compute the reference spots. Value betweon 0 and 1. Higher values mean that the reference spot is brighter, and fewer spots will be needed to describe the dense region. Default is 0.5, meaning the reference spot considered is the median spot.
+- `beta`: Multiplicative factor for the intensity threshold of a dense region. Calculated from the max intensity of the reference spots. Default is 1. Higher values will results in a more restrictive selection of candidate regions. 
+
+When clicking on the button `Decompose dense regions`, the specified settings will be applied. A Kaibu window image will be shown
+with the decomposed results. You can also zoom in to inspect the results further.
+
+![fq-dense-area.png](img/fq-dense-area.png){: style="width:300px"}
+
+For more information see the detailed documentation [here](https://big-fish.readthedocs.io/en/stable/detection/dense.html?highlight=decompose_cluster#bigfish.detection.decompose_dense).
+
+### Cluster calling
+
+Once the dense areas are decomposed in individual RNA molecules, you can specify what you consider to be a cluster.
+For this, you can set two parameters
+
+1. `Min. number of spots`: what's the minimum number of RNAs a cluster has to contain
+2. `Max. distance [nm]`: what's the maximum distance two spots can be separated and still be considered to belong together.
+
+Pressing the button `Call clusters` will shown an image wiht the individual RNAs and the identified clusters. The number next 
+to each cluster indicates how many RNAs are found there.  
+
+## Processing of one or several images
+
+Once you are satisfied with the parameters, you can either process one image (`Analyse current image`) or all 
+images that were found in your acquisition folder (`Launch batch processing`).
+
+For each analyzed image, several files will be created and stored under the orginal image name with a suffix
+
+### Results for standard spot detection
 
 * **`__analysis_details.json`**: file with details about the analysis: all settings, and some basic image properties.
 * **`___spots.csv`**: csv file with the position of all detected spots (in pixel).
+
+Further, a folder `plots_detection` will be created containing the spot detection results for each image.
+
 * **`__detection.png`**: 2d (filtered) image with detected spots.
-  
+
+### Results for cluster calling
+
+* **`__foci.csv`**: file with positions of all clusters, a unique index, and how many RNAs they contain.
+* **`___spots_foci.csv`**: csv file with the position of all detected spots (in pixel) and to which cluster they belong (0=none).
+
+Further, a folder `plots_foci` will be created containing the spot detection results for each imag  
+
 ## Some background
 
 ### LoG filter
