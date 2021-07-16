@@ -1356,17 +1356,17 @@ api.export(new ImJoyPlugin())
           <!-- Foci calling -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_detect_clusters" :disabled="status_decompose_dense_regions==false || analyze_clusters==false" @click="btn_detect_clusters">Call clusters</b-button>
+              <b-button type="is-primary" :loading="running_detect_clusters" :disabled="status_decompose_dense_regions==false || analyze_clusters==false" @click="btn_detect_clusters">Define clusters</b-button>
             </b-field>
 
             <!-- Specify pixel size -->
             <b-field label="" horizontal grouped>
               <b-field>
-                <p class="control"> <span class="button is-static">Min. number of spots</span></p>
+                <p class="control"> <span class="button is-static">Min nb of spots</span></p>
                 <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
               </b-field>
               <b-field>
-                <p class="control"> <span class="button is-static">Max. distance [nm]</span></p>
+                <p class="control"> <span class="button is-static">Radius [nm]</span></p>
                 <b-input placeholder="400" v-model.number="foci_radius"></b-input>
               </b-field>
             </b-field> <!-- END: specify pixel size -->
@@ -1421,8 +1421,6 @@ api.export(new ImJoyPlugin())
 
 <attachment name="postprocessing">
 
-
-
   <!-- Card to assing spots to cells -->
   <div class="card">
     <div class="card-content">
@@ -1431,7 +1429,12 @@ api.export(new ImJoyPlugin())
       <div class="summary">
         <div class="summary-content">
           <p class="title is-4">Assign RNAs to cells/nuclei</p>
-          <p class="subtitle is-6">An optional processing step of segmentation results guarantees that each cell has only one nucleus. </p>
+          <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#assign-rna-detection-results-to-cells-and-nuclei')"></button>
+            <p>
+            <p class="subtitle is-6">An optional processing step of segmentation results guarantees that each cell has only one nucleus. </p>
+          </b-field>
         </div>
       </div>
       <br>
@@ -1440,7 +1443,7 @@ api.export(new ImJoyPlugin())
       <div class="content">
   
         <!-- Specify identifiers in file name for masks -->
-        <b-field label="Mask identifiers" horizontal grouped>
+        <b-field label="File identifiers" horizontal grouped>
           <b-field>
             <p class="control"> <span class="button is-static">Spots</span></p>
             <b-input v-model="assign_ident_spots"></b-input>
@@ -1472,7 +1475,7 @@ api.export(new ImJoyPlugin())
         </b-field> <!-- END: Specify identifiers in file name for channels -->
   
         <!-- Specify Folders containing segmentation results -->
-        <b-field label="Subfolders" horizontal grouped>
+        <b-field label="Subfolder" horizontal grouped>
           <b-field>
             <p class="control"> <span class="button is-static">Segmentation</span></p>
             <b-input v-model="assign_subfolder"></b-input>

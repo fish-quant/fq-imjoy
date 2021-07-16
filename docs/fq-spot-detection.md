@@ -148,6 +148,48 @@ Further, a folder `plots_detection` will be created containing the spot detectio
 
 Further, a folder `plots_foci` will be created containing the spot detection results for each imag  
 
+## Assign RNA detection results to cells and nuclei
+
+The RNA detection is performed on the entire image. If you want to obtained results for individual cells and nuclei, 
+we provide a dedicated processing module under `Post-processing`.
+
+You first need to segment your cells/nuclei, we provide a dedicated deep-learning based tool for this, which is described [**here**](https://fq-segmentation.readthedocs.io/en/latest/). But you can also use your own tools if you prefer. 
+
+The results, however, segmentation results have to follow **certain requirements**:
+
+- Segmentation results have to be stored in a dedicated subfolder in the analysis folder, usually called `segmentation-results`
+- Segmentations are stored as a label image (png), where each object is a filled mask with a constant value. 0 is reserved for background. 
+- These masks are identified with the name of the image, followed by a suffix, e.g. `__mask__cells.png`
+
+Lastly, in order to know that a cell and a nucleus belong together, they have to have the same constant value. If this is not the case, 
+we provide a little processing script that goes over all cells, looks for the corresponding nucleus, gives them the same index, and stores
+the results in new folder. 
+
+Once you specified all parameters permitting to identify the spot detection and segmentation results, you can press on `Assign RNAs to cells`. 
+This will create a new folder `results_per_fov`, where several files are created for each image
+
+- `_SPOTS_SUMMARY.csv`: containes RNA counts for each cell (how many total, in cytoplasm or nuclei, in foci transcription sites)
+- if you enable the option `Create plots ...`, a folder with the name of the image will be created containing a plot for each cell. 
+
+### Parameters
+
+![fq-assign-rnas-cells.png](img/fq-assign-rnas-cells.png){: style="width:450px"}
+
+**File identifiers**: suffix to determine which files will be considered
+
+- `Spots`: this can either be the detection results of individual spots `__spots.csv` or after cluster detection `__spots_foci.csv`
+-  `Cells`, `Nuclei: what's the suffix used to save the label images for cells and nuclei.
+
+**Channel identifiers**: unique string in the file-name for the different channels containing the detected spots and were used to
+segment cells and nuclei
+
+**Subfolder**: folder in the analysis folder containing the segmentation results. 
+
+If you want to clean the segmentation results and assign nuclei to cells, you can enable the dropdown menu, and specify the new
+subfolder were the cleaned masks should be stored. 
+
+
+
 ## Some background
 
 ### LoG filter
