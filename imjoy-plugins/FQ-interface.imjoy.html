@@ -437,13 +437,63 @@ class ImJoyPlugin {
    */
   async params_for_python(config={}){
 
-    let  params = Object.assign({}, this.store);
+    //let  params = Object.assign({}, this.store);
+    let params = {
 
+      // Parameters to specify data
+      files: this.store.files,
+      file_loaded: this.store.file_loaded,
+      path_root: this.store.path_root,
+      path_sub_acquisition: this.store.path_sub_acquisition,
+      path_sub_analysis: this.store.path_sub_analysis,
+      z_first: this.store.z_first,
+      img_ext: this.store.img_ext,
+      channels: this.store.channels,
+      ch_name: this.store.ch_name,
+      ch_ident: this.store.ch_ident,
+      reg_exp: this.store.reg_exp,
+
+      // Filter and spot detection
+      current_index: this.store.current_index,
+      channel_selected: this.store.channel_selected,
+      sigma: this.store.sigma,
+      threshold_range: this.store.threshold_range,
+      minimum_distance: this.store.minimum_distance,
+      detection_plot: this.store.detection_plot,
+      detection_threshold: this.store.detection_threshold,
+      th_range_min: this.store.th_range_min,
+      th_range_max: this.store.th_range_max,
+      th_range_nbins: this.store.th_range_nbins,
+      analyze_clusters: this.store.analyze_clusters,
+      create_plots: this.store.create_plots,
+      show_filtered: this.store.show_filtered,
+      show_detection: this.store.show_detection,
+      detection_plot: this.store.detection_plot,    
+
+      // Cluster decomposition
+      voxel_size_yx: this.store.voxel_size_yx,
+      voxel_size_z: this.store.voxel_size_z,
+      psf_size_xy: this.store.psf_size_xy,
+      psf_size_z: this.store.psf_size_z,
+      cluster_alpha: this.store.cluster_alpha,
+      cluster_beta: this.store.cluster_beta,
+      foci_radius: this.store.foci_radius,
+      foci_nb_min_spots: this.store.foci_nb_min_spots,
+
+      // For spots-cells assignment & segmentation post-processing
+      assign_subfolder: this.store.assign_subfolder,
+      assign_subfolder_new: this.store.assign_subfolder_new,
+      assign_ident_spots: this.store.assign_ident_spots,
+      assign_ident_cell: this.store.assign_ident_cell,
+      assign_ident_nuc: this.store.assign_ident_nuc,        
+      assign_ch_cell: this.store.assign_ch_cell,
+      assign_ch_nuc: this.store.assign_ch_nuc,  
+      assign_ch_spots: this.store.assign_ch_spots,
+      clean_segmentation_enable: this.store.clean_segmentation_enable,
+      plot_individual_cells_enable: this.store.plot_individual_cells_enable,
+    }
+  
     // Remove properties that are not needed in Python
-    delete params.images;
-    delete params.img_filt;
-    delete params.img_filt_load;
-    console.log(config)
     if (!("keep_detection_plot" in config && config.keep_detection_plot == true)) {
       delete params.detection_plot;
     }
@@ -460,10 +510,9 @@ class ImJoyPlugin {
   async scan_folder(){
 
       // Call python function to scan folder
-       this.store.files = []
+      this.store.files = []
       let config = await this.params_for_python()
       let file_list = await this.fq_worker.scan_folder(config)
-
       // Get all channel names
       let ch_names = this.store.channels.map(channel => channel['name'])
 

@@ -518,7 +518,6 @@ class ImJoyPlugin():
         """
         Scan folder for images to be analyzed.
         """
-
         api.showStatus('Scanning folder for images with specified configuration ... ')
 
         # Parameters
@@ -526,16 +525,14 @@ class ImJoyPlugin():
         channels  = config['channels']
         reg_exp   = config['reg_exp']
         path_acquisition = Path(config['path_root']) / config['path_sub_acquisition']
-
         if not path_acquisition.is_dir():
-            api.alert('Specified data path does not EXIST. No images found.')
+            api.alert(f'Specified data path does not EXIST. No images found. {path_acquisition}')
             return
 
         # Get channels as dict
         ch_dict = {channel['identifier']: channel['name'] for channel in channels}
         ch_identifier = list(ch_dict.keys())
         api.log(f'[FISH-QUANT][scan_folder] channel dictionary: {ch_dict}')
-
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
