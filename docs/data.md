@@ -1,4 +1,4 @@
-# Data
+# Data specifications
 
 Here we describe how data has to be
 

@@ -3,14 +3,14 @@
 ## Installation
 
 * If you use FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a> 
-    
-    First time installation can take a few minutes, since several Python libraries are installed.
+    - First time installation can take a few minutes, since several Python libraries are installed.
+    - More details about installing plugins are [here](imjoy-overview.md/#installing-plugins)).
 
 * Once installed, the plugin will be saved in the  **workspace `fq-main`** as described [here](imjoy-overview.md#opening-a-workspace).  
 
-In the ImJoy app, you have **main plugin** `FISH-QUANT`, as wells as several helper plugins.
+In the ImJoy app, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins.
 
-!!! info "The most important additionaln plugin that's installed is  `FISH-QUANT`."
+!!! info "The main important plugin is `FISH-QUANT`."
 
     This **Python plugin** performs the actual data analysis and 
     runs on a Juypter engine, as described in the [installation instructions](imjoy-overview.md#connect-jupyter-engine). 
@@ -20,9 +20,7 @@ In the ImJoy app, you have **main plugin** `FISH-QUANT`, as wells as several hel
 
     ![fq-plugins.png](img/fq-plugins.png){: style="width:200px"}
 
-## General use
-
-### Start FISH-QUANT
+## Starting FISH-QUANT
 
 After connecting ImJoy to a Jupyter engine, press on the FISH-QUANT plugin name. This will open an interface with different tabs, that 
 allow to control the main workflows. Controls will only be enabled, when all necessary parameters
@@ -68,9 +66,11 @@ __Navigate__:
 * **Pan** with pressed mouse button, or corresponding gestures on a touch screen.
 
 In order to see pixel values of an image layer, minimize the Kaibu side-bar.
+
 * When **hoovering** over a pixel you will see relevant information such as its position and importantly intensity value.
 
 __Appearance__:
 For an image layer, you can  
+
 * Change the **lookup table**.
 * Change the **contrast of the image**.

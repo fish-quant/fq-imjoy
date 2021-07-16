@@ -17,21 +17,23 @@
 
 ## Connect to the plugin engine
 
-Once you have the ImJoy plugin engine installed ([**installation instructions**](imjoy-installation.md#nstall-jupyter-engine-for-imjoy)), you can connect to it with this easy steps:
+Once you have the ImJoy plugin engine installed ([**installation instructions**](imjoy-installation.md#nstall-jupyter-engine-for-imjoy)), you can connect to it with this simple steps:
 
 !!! abstract "Connect ImJoy to Jupyter engine."
     1. Open **anaconda terminal**.
     2. **Activate environment**: `conda activate fq-imjoy`
-    3. **Start Jupyter engine**: `imjoy --jupyter`
+    3. **Start Jupyter engine**: `imjoy --jupyter`. Copy the provide URL+token.
     4. **Connect** ImJoy app to Jupyter Engine with 🚀 button.
 
 ## Installing plugins
 
-We provide links to install ImJoy plugins for the different workflows.
+We provide installation links to install for the different ImJoy plugins.
 
-If you press on the installation link, the ImJoy app will open and display a
-dialog asking if you want to install the specified plugin. To confirm, press 
-the `install` button.
+If you press on the installation link,
+
+1. The ImJoy app will open and display a dialog asking if you want to install the specified plugin. 
+2. To confirm installation, press the `install` button.
+3. If you have no engine connected, you will see a pop window. It informs you that if you don't specify an PLugin engine, the plugin will be launched on binder. 
 
 ![imjoy-plugin-installation](img/install_plugin.png){: style="width:400px"}
 
