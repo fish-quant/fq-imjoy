@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -90,8 +90,14 @@ class ImJoyPlugin {
       reg_exp = '(?P<file_ident>Exp.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)'
     }
 
-    var data_path = await api.getConfig('data_path')
-    if(! data_path) {data_path = 'paste-path-to-data'}
+    var path_root = await api.getConfig('path_root')
+    if(! path_root) {path_root = 'paste-root-path'}
+
+    var path_sub_acquisition = await api.getConfig('path_sub_acquisition')
+    if(! path_sub_acquisition) {path_sub_acquisition = 'acquisition'}
+
+    var path_sub_analysis = await api.getConfig('path_sub_analysis')
+    if(! path_sub_analysis) {path_sub_analysis = 'analysis'}
 
     var img_ext = await api.getConfig('img_ext')
     if(! img_ext) {img_ext = 'tif'}
@@ -139,8 +145,9 @@ class ImJoyPlugin {
           fq_worker_url: fq_worker_url,
           files: [],
           file_loaded: '',
-          data_path: data_path, 
-          output_path:"acquisition>>analysis",
+          path_root: path_root, 
+          path_sub_acquisition: path_sub_acquisition,
+          path_sub_analysis: path_sub_analysis,
           z_first: true,
           img_ext: img_ext,
           channels: [],
@@ -176,22 +183,40 @@ class ImJoyPlugin {
           show_filtered: true,
           show_detection: true,
           getting_zipped_data: false,
+
+          // For spots-cells assignment & segmentation post-processing
+          assign_subfolder: 'segmentation-results',
+          assign_subfolder_new: 'segmentation-bigfish',
+          assign_ident_spots: '__spots_foci.csv',
+          assign_ident_cell: '__mask__cells.png',
+          assign_ident_nuc: '__mask__nuclei.png',          
+          assign_ch_cell: 'cy3',
+          assign_ch_nuc: 'dapi',  
+          assign_ch_spots: 'cy3',
+          clean_segmentation_enable: false,
+          plot_individual_cells_enable: false,
+          
+          // Indicators for ongoing processing tasks
           running_load: false,
           running_filter: false,
           running_detect_test: false,
           running_detect_apply: false,
-          running_decompose_clusters: false,
-          running_detect_foci: false,
+          running_decompose_dense_regions: false,
+          running_detect_clusters: false,
           running_detect_image: false,
           running_detect_batch: false,
           downloading_results_zipped: false,
+          cleaning_segmentation: false,
+          assigning_rnas: false,
+
+          // Status indicators
           status_image_loaded: false,
           status_image_filtered: false,
           status_channel_selected: false,
           status_thresholds_tested: false,
           status_detection_applied: false,
           status_detect_apply: false,
-          status_decompose_clusters: false,
+          status_decompose_dense_regions: false,
 
     },
 
@@ -331,13 +356,13 @@ class ImJoyPlugin {
           },
 
           // Callback to plot detections detection
-          btn_decompose_clusters: async function(){
-            self.decompose_clusters()
+          btn_decompose_dense_regions: async function(){
+            self.decompose_dense_regions()
           },
 
           // Callback to plot detections detection
-          btn_detect_foci: async function(){
-            self.detect_foci()
+          btn_detect_clusters: async function(){
+            self.detect_clusters()
           },
           
           // Callback to plot detections detection
@@ -355,7 +380,15 @@ class ImJoyPlugin {
             self.download_zipped_results()
           },
 
+          // Clean segmentation masks
+          btn_clean_segmentation: async function(){
+            self.clean_segmentation()
+          },
 
+          // Assign RNAs to cells
+          btn_assign_rnas_cells: async function(){
+            self.assign_rnas_cells()
+          },
 
       } // END methods vue
     }) // END vue
@@ -381,18 +414,20 @@ class ImJoyPlugin {
       this.store.status_thresholds_tested = false
       this.store.status_detection_applied = false
       this.store.status_detect_apply = false
-      this.store.status_decompose_clusters = false
+      this.store.status_decompose_dense_regions = false
 
       this.store.getting_zipped_data =  false
       this.store.running_load = false
       this.store.running_filter = false
       this.store.running_detect_test = false
       this.store.running_detect_apply = false
-      this.store.running_decompose_clusters = false
-      this.store.running_detect_foci = false
+      this.store.running_decompose_dense_regions = false
+      this.store.running_detect_clusters = false
       this.store.running_detect_image = false
       this.store.running_detect_batch = false
       this.store.downloading_results_zipped = false
+      this.store.cleaning_segmentation = false
+      this.store.assigning_rnas = false
   }
 
 
@@ -402,13 +437,63 @@ class ImJoyPlugin {
    */
   async params_for_python(config={}){
 
-    let  params = Object.assign({}, this.store);
+    //let  params = Object.assign({}, this.store);
+    let params = {
 
+      // Parameters to specify data
+      files: this.store.files,
+      file_loaded: this.store.file_loaded,
+      path_root: this.store.path_root,
+      path_sub_acquisition: this.store.path_sub_acquisition,
+      path_sub_analysis: this.store.path_sub_analysis,
+      z_first: this.store.z_first,
+      img_ext: this.store.img_ext,
+      channels: this.store.channels,
+      ch_name: this.store.ch_name,
+      ch_ident: this.store.ch_ident,
+      reg_exp: this.store.reg_exp,
+
+      // Filter and spot detection
+      current_index: this.store.current_index,
+      channel_selected: this.store.channel_selected,
+      sigma: this.store.sigma,
+      threshold_range: this.store.threshold_range,
+      minimum_distance: this.store.minimum_distance,
+      detection_plot: this.store.detection_plot,
+      detection_threshold: this.store.detection_threshold,
+      th_range_min: this.store.th_range_min,
+      th_range_max: this.store.th_range_max,
+      th_range_nbins: this.store.th_range_nbins,
+      analyze_clusters: this.store.analyze_clusters,
+      create_plots: this.store.create_plots,
+      show_filtered: this.store.show_filtered,
+      show_detection: this.store.show_detection,
+      detection_plot: this.store.detection_plot,    
+
+      // Cluster decomposition
+      voxel_size_yx: this.store.voxel_size_yx,
+      voxel_size_z: this.store.voxel_size_z,
+      psf_size_xy: this.store.psf_size_xy,
+      psf_size_z: this.store.psf_size_z,
+      cluster_alpha: this.store.cluster_alpha,
+      cluster_beta: this.store.cluster_beta,
+      foci_radius: this.store.foci_radius,
+      foci_nb_min_spots: this.store.foci_nb_min_spots,
+
+      // For spots-cells assignment & segmentation post-processing
+      assign_subfolder: this.store.assign_subfolder,
+      assign_subfolder_new: this.store.assign_subfolder_new,
+      assign_ident_spots: this.store.assign_ident_spots,
+      assign_ident_cell: this.store.assign_ident_cell,
+      assign_ident_nuc: this.store.assign_ident_nuc,        
+      assign_ch_cell: this.store.assign_ch_cell,
+      assign_ch_nuc: this.store.assign_ch_nuc,  
+      assign_ch_spots: this.store.assign_ch_spots,
+      clean_segmentation_enable: this.store.clean_segmentation_enable,
+      plot_individual_cells_enable: this.store.plot_individual_cells_enable,
+    }
+  
     // Remove properties that are not needed in Python
-    delete params.images;
-    delete params.img_filt;
-    delete params.img_filt_load;
-    console.log(config)
     if (!("keep_detection_plot" in config && config.keep_detection_plot == true)) {
       delete params.detection_plot;
     }
@@ -425,10 +510,9 @@ class ImJoyPlugin {
   async scan_folder(){
 
       // Call python function to scan folder
-       this.store.files = []
+      this.store.files = []
       let config = await this.params_for_python()
       let file_list = await this.fq_worker.scan_folder(config)
-
       // Get all channel names
       let ch_names = this.store.channels.map(channel => channel['name'])
 
@@ -493,7 +577,9 @@ class ImJoyPlugin {
       this.store.status_image_loaded = true;
       
       // Store parameters for next launch
-      api.setConfig('data_path', this.store.data_path)
+      api.setConfig('path_root', this.store.path_root)
+      api.setConfig('path_sub_acquisition', this.store.path_sub_acquisition)
+      api.setConfig('path_sub_analysis', this.store.path_sub_analysis)
       api.setConfig('reg_exp', this.store.reg_exp)
       api.setConfig('img_ext', this.store.img_ext)
       api.setConfig('voxel_size_yx', this.store.voxel_size_yx)
@@ -640,14 +726,14 @@ class ImJoyPlugin {
   /**
    * Decompose clusters
    */
-  async decompose_clusters() {
+  async decompose_dense_regions() {
     
-    this.store.running_decompose_clusters=true
+    this.store.running_decompose_dense_regions=true
 
     // Decompose clusters
     let config = await this.params_for_python();
     config.show_status = true;
-    await this.fq_worker.decompose_clusters(config)
+    await this.fq_worker.decompose_dense_regions(config)
 
     // Display results
     let data_show = [];
@@ -665,26 +751,26 @@ class ImJoyPlugin {
     // Update interface
     api.setConfig('psf_size_xy', this.store.psf_size_xy)
     api.setConfig('psf_size_z', this.store.psf_size_z)
-    this.store.running_decompose_clusters=false
-    this.store.status_decompose_clusters=true
+    this.store.running_decompose_dense_regions=false
+    this.store.status_decompose_dense_regions=true
   }
 
 
   /**
    * Detect foci
    */
-  async detect_foci() {
-    this.store.running_detect_foci=true
+  async detect_clusters() {
+    this.store.running_detect_clusters=true
 
     // Detect foci
     let config = await this.params_for_python();
     config.show_status = true;
     config.name_save = 'tmp';
-    var spots = await this.fq_worker.detect_foci(config)
+    var spots = await this.fq_worker.detect_clusters(config)
 
     // Update interface
-    this.store.running_detect_foci=false
-    this.store.status_detect_foci=true
+    this.store.running_detect_clusters=false
+    this.store.status_detect_clusters=true
     api.setConfig('foci_nb_min_spots', this.store.foci_nb_min_spots)
     api.setConfig('foci_radius', this.store.foci_radius)
   }
@@ -726,12 +812,20 @@ class ImJoyPlugin {
   async get_zipped_data(){
     this.store.getting_zipped_data=true;
     let url="https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=1"
-    this.store.data_path = await this.fq_worker.get_zipped_data(url)
-    if (this.store.data_path.includes('fq-imjoy-tutorial')){
+    this.store.path_root = await this.fq_worker.get_zipped_data(url)
+    if (this.store.path_root.includes('fq-imjoy-tutorial')){
+      // For RNA detection
       this.store.reg_exp = '(?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\\.(?P<img_ext>.*)';
       this.store.ch_name = "FISH";
       this.store.ch_ident = "cy3";
-      this.store.threshold_range = [10, 140, 75];
+      this.store.threshold_range = [20, 220, 75];
+      // For post-prossing of segmentation results
+      this.store.assign_ident_cell = 'mask__cells.png';
+      this.store.assign_ident_nuc = 'mask__nuclei.png';          
+      this.store.assign_ch_cell = 'cy3';
+      this.store.assign_ch_nuc = 'dapi';  
+      this.store.assign_ch_spots = 'cy3';
+      // Some user interaction
       api.alert('Press on button "Add" to add fish channel for analysis, and button "Scan folder..." to look for images to analyze');
     }
     this.store.getting_zipped_data=false;
@@ -744,10 +838,28 @@ class ImJoyPlugin {
   async download_zipped_results() {
     this.store.downloading_results_zipped=true;
     let url = await this.fq_worker.download_zipped_results({});
-
     if(url){api.utils.openUrl(url)}
-
     this.store.downloading_results_zipped=false;
+  }
+
+  /**
+   * Clean segmentation masks
+   */  
+  async clean_segmentation() {
+    this.store.cleaning_segmentation=true;
+    let config = await this.params_for_python()
+    await this.fq_worker.clean_segmentation(config);
+    this.store.cleaning_segmentation=false;
+  }
+
+  /**
+   * Assign RNAs to cells
+   */  
+  async assign_rnas_cells() {
+    this.store.assigning_rnas=true;
+    let config = await this.params_for_python()
+    await this.fq_worker.assign_rnas_cells(config);
+    this.store.assigning_rnas=false;
   }
 
 
@@ -792,9 +904,9 @@ api.export(new ImJoyPlugin())
       <div class="content">
 
         <!-- Specify results folder -->
-        <b-field horizontal label="DATA folder" >
+        <b-field horizontal label="ROOT folder" >
           <b-field>
-            <b-input  v-model="data_path" placeholder="paste-path-to-data" expanded></b-input>
+            <b-input  v-model="path_root" expanded></b-input>
             <p class="control">
                 <b-button type="is-primary is-light" outlined :loading="getting_zipped_data" @click="btn_get_zipped_data">Get zipped (demo) data</b-button>
             </p>
@@ -802,9 +914,16 @@ api.export(new ImJoyPlugin())
         </b-field> <!-- END: specify results folder -->
 
         <!-- Specify results folder -->
-        <b-field horizontal label="RESULTS folder" >
+        <b-field horizontal label="SUB folders" >
           <b-field>
-            <b-input  v-model="output_path" placeholder="" expanded></b-input>
+            <p class="control"> <span class="button is-static">Acquisition</span></p>
+            <b-input placeholder="107" v-model.number="path_sub_acquisition"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Analysis</span></p>
+            <b-input placeholder="300" v-model.number="path_sub_analysis"></b-input>
+          </b-field>
+          <b-field>
             <p class="control">
                 <b-button type="is-primary is-light" outlined icon-left="help-circle" @click="open_docs('/fq-load-data/#specify-folder-to-save-results')"></b-button>
             </p>
@@ -1167,7 +1286,7 @@ api.export(new ImJoyPlugin())
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
 
-  <!-- Card to Decompose foci -->
+  <!-- Card to decompose clusters -->
   <br>
   <div class="card">
     <div class="card-content">
@@ -1175,13 +1294,13 @@ api.export(new ImJoyPlugin())
       <!-- Summary -->
       <div class="summary">
         <div class="summary-content">
-          <p class="title is-4">[Optional] decompose RNA aggregates</p>
+          <p class="title is-4">[Optional] Decompose dense RNA aggregations</p>
 
           <b-field grouped>
             <p class="control">
-              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#log-filter')"></button>
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#decompositon-of-dense-areas-and cluster-detection')"></button>
                 <p>
-                  <p class="subtitle is-6">Decompose RNA aggregates and define local concentrations as foci. </p>
+                  <p class="subtitle is-6">Decompose regions with high RNA concentrations and find localized RNA clusters. </p>
           </b-field>
 
 
@@ -1193,7 +1312,7 @@ api.export(new ImJoyPlugin())
 
           <b-field grouped>
             <b-field>
-              <b-checkbox v-model="analyze_clusters"> Decompose RNA clusters</b-checkbox>
+              <b-checkbox v-model="analyze_clusters"> Apply RNA cluster decomposition & detection</b-checkbox>
             </b-field>
 
             <b-collapse :open="false" aria-id="contentIdForClusterPar" :disabled="status_detection_applied==false || analyze_clusters==false">
@@ -1218,7 +1337,7 @@ api.export(new ImJoyPlugin())
           <!-- Decompose clusters -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_decompose_clusters" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_clusters">Decompose aggregates</b-button>
+              <b-button type="is-primary" :loading="running_decompose_dense_regions" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_dense_regions">Decompose dense regions</b-button>
             </b-field>
 
             <!-- Specify spot size -->
@@ -1237,7 +1356,7 @@ api.export(new ImJoyPlugin())
           <!-- Foci calling -->
           <b-field grouped group-multiline>
             <b-field>
-              <b-button type="is-primary" :loading="running_detect_foci" :disabled="status_decompose_clusters==false || analyze_clusters==false" @click="btn_detect_foci">Define foci</b-button>
+              <b-button type="is-primary" :loading="running_detect_clusters" :disabled="status_decompose_dense_regions==false || analyze_clusters==false" @click="btn_detect_clusters">Define clusters</b-button>
             </b-field>
 
             <!-- Specify pixel size -->
@@ -1302,27 +1421,119 @@ api.export(new ImJoyPlugin())
 
 <attachment name="postprocessing">
 
-  <!-- Card to specify channel -->
+  <!-- Card to assing spots to cells -->
   <div class="card">
     <div class="card-content">
-
+  
       <!-- Summary -->
       <div class="summary">
         <div class="summary-content">
-          <p class="title is-4">Postprocessing</p>
-          <p class="subtitle is-6">coming soon. </p>
+          <p class="title is-4">Assign RNAs to cells/nuclei</p>
+          <b-field grouped>
+            <p class="control">
+              <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#assign-rna-detection-results-to-cells-and-nuclei')"></button>
+            <p>
+            <p class="subtitle is-6">An optional processing step of segmentation results guarantees that each cell has only one nucleus. </p>
+          </b-field>
         </div>
       </div>
       <br>
-
+  
       <!-- Actual content -->
       <div class="content">
+  
+        <!-- Specify identifiers in file name for masks -->
+        <b-field label="File identifiers" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Spots</span></p>
+            <b-input v-model="assign_ident_spots"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Cells</span></p>
+            <b-input v-model="assign_ident_cell"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Nuclei</span></p>
+            <b-input v-model="assign_ident_nuc"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify identifiers in file name for masks-->
+  
+        <!-- Specify identifiers in file name for channels -->
+        <b-field label="Channel identifiers" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Spots</span></p>
+            <b-input v-model="assign_ch_spots"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Cells</span></p>
+            <b-input v-model="assign_ch_cell"></b-input>
+          </b-field>
+          <b-field>
+            <p class="control"> <span class="button is-static">Nuclei</span></p>
+            <b-input v-model="assign_ch_nuc"></b-input>
+          </b-field>
+        </b-field> <!-- END: Specify identifiers in file name for channels -->
+  
+        <!-- Specify Folders containing segmentation results -->
+        <b-field label="Subfolder" horizontal grouped>
+          <b-field>
+            <p class="control"> <span class="button is-static">Segmentation</span></p>
+            <b-input v-model="assign_subfolder"></b-input>
+          </b-field>
+        </b-field> <!-- END: specify Folders containing segmentation results -->
+
+
+        <!-- Clean up segmentation results -->
+        <b-collapse class="card" animation="slide" :open="false" aria-id="contentIdForA11y3">
+            <template #trigger="props">
+                <div
+                    class="card-header"
+                    role="button"
+                    aria-controls="contentIdForA11y3">
+                    <p class="card-header-title">
+                        Clean segmentation results (guarantee one nucleus per cell)
+                    </p>
+                    <a class="card-header-icon">
+                        <b-icon
+                            :icon="props.open ? 'menu-up':'menu-down' ">
+                        </b-icon>
+                    </a>
+                </div>
+            </template>
+
+            <div class="card-content">
+              <div class="columns">
+                <div class="column">
+                  <b-checkbox v-model="clean_segmentation_enable"> Clean segmentation results</b-checkbox>
+                </div>
+                <div class="column">
+                  <b-field>
+                    <p class="control"> <span class="button is-static">New subfolder</span></p>
+                    <b-input :disabled="clean_segmentation_enable==false" v-model="assign_subfolder_new"></b-input>
+                  </b-field>     
+                </div>
+                <div class="column">
+                  <b-button type="is-primary" expanded :disabled="clean_segmentation_enable==false||assign_ch_cell.length==0||assign_ch_nuc.length==0" @click="btn_clean_segmentation">Get it done.</b-button>
+                </div>
+              </div>
+            </div>
+        </b-collapse> <!-- END: Clean up segmentation results -->
+
+        <!-- Button to assign RNAs to cells -->
+        <br>
+        <div class="columns">
+          <div class="column is-two-thirds">
+              <b-button expanded type="is-primary" :loading="assigning_rnas" :disabled="assign_ch_spots.length==0||assign_ch_nuc.length==0||assign_ch_nuc.length==0" @click="btn_assign_rnas_cells">Assign RNAs to cells</b-button>
+          </div>
+          <div class="column">
+            <b-checkbox v-model="plot_individual_cells_enable"> Create plots of individual cells</b-checkbox>
+          </div>
+        </div> <!-- END: button to assign RNAs to cells -->
 
       </div> <!-- END Class content -->
     </div> <!-- END class card-content -->
   </div> <!-- END class card -->
-
-
+ 
 </attachment>
 
 <window lang="html">

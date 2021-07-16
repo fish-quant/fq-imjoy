@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -22,7 +22,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "api_version": "0.1.8",
   "env": [{"type": "binder", "spec": "fish-quant/fq-imjoy/binder", "skip_requirements": true}],
   "permissions": [],
-  "requirements": { "stable":["big-fish==0.4.0"],
+  "requirements": { "stable":["big-fish==0.5.0"],
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface"
@@ -50,7 +50,7 @@ from skimage import io
 import pandas as pd
 from skimage.exposure import rescale_intensity
 import bigfish  # Is there a way to get the version without import?
-from bigfish import stack, plot, detection
+from bigfish import stack, plot, detection, segmentation
 
 # TEMPORARY BUG FIX 
 # 1. fix_1: flipped orientation of images in kaibu:
@@ -139,39 +139,6 @@ def create_folder(path_new):
     """
     if not path_new.is_dir():
         path_new.mkdir(parents=True)
-
-
-def create_output_path(data_path, output_path):
-    """
-    Function to create output path to stored data.
-
-    If the string output_path contains characters '>>' it will not
-    be interpreted as a path name but as an indicator for a string
-    replacement operation for the data_path: old_str>>new_str
-    """
-    
-    # Make sure they are strings
-    data_path = str(data_path)
-    output_path = str(output_path)
-
-    if (re.search(">>", output_path)):
-      str_orig = re.search(r'^(.*)>>(.*)$', output_path).group(1)
-      str_rep = re.search(r'^(.*)>>(.*)$', output_path).group(2)
-
-      print(f'Replacement parameters found: original string: {str_orig}, replacement string: {str_rep}')
-
-      output_path_return = data_path.replace(str_orig,str_rep)
-      print(f'Output path: {output_path_return}')
-
-    else:
-      print("No match")
-      output_path_return = output_path
-
-    # Convert back to Path
-    output_path_return = Path(output_path_return)
-    create_folder(output_path_return)
-
-    return output_path_return
 
 
 async def create_mip(img, name_save, file_manager, create_url=False, rescale=True):
@@ -263,7 +230,7 @@ class ImJoyPlugin():
         
         # Download to the user directory
         user_home = Path.home()
-        name_save = Path.home() / "fq-imjoy-tutorial.zip"
+        name_save = Path.home() / "fq-imjoy-download-data.zip"
 
         # Download zip archive
         with urllib.request.urlopen(url) as response, open(str(name_save), "wb") as out_file:
@@ -284,17 +251,15 @@ class ImJoyPlugin():
             # Find all names with acquisition, shortest should be parental folder
             sub_folders_acquisition = [i for i in extracted_files if "acquisition" in i] 
             if len(sub_folders_acquisition) > 0:
-
                 sub_folder_acquisition = min(sub_folders_acquisition, key=len)
-
-                path_acquisition = str(path_extract / sub_folder_acquisition) 
-                api.log(f'\nAcquisition folder: {path_acquisition}')
+                path_acquisition = path_extract / sub_folder_acquisition
+                api.log(f'\nAcquisition folder: {str(path_acquisition)}')
             else:
-                api.alert(f'NO acquisition folder found. Please follow required file organization.')
+                api.alert(f'NO acquisition folder found. Could not set root folder automatically. Please follow required file organization, or set root manually.')
 
         api.showStatus('Zipped data obtained. More details in log.')
 
-        return path_acquisition
+        return str(path_acquisition.parent)
 
 
     async def download_zipped_results(self, config):
@@ -302,7 +267,7 @@ class ImJoyPlugin():
         Download zipped results.
         """
 
-        # Download only if results have already been otained
+        # Download only if results have already been obtained
         if not self.path_analysis:
             api.alert('No analysis results stored so far')
             return
@@ -335,6 +300,7 @@ class ImJoyPlugin():
         except:
             api.alert(f"Something else went wrong. Could not store results in file {os.path.abspath(name_results_zip)}")
             return None
+
 
     async def select_analysis_region(self, config):
         """
@@ -552,29 +518,25 @@ class ImJoyPlugin():
         """
         Scan folder for images to be analyzed.
         """
-
         api.showStatus('Scanning folder for images with specified configuration ... ')
 
         # Parameters
         log_config('[FISH-QUANT][scan_folder]', config)
         channels  = config['channels']
         reg_exp   = config['reg_exp']
-        path_data_full = Path(config['data_path'])
-        
-        if not path_data_full.is_dir():
-            api.alert('Specified data path does not EXIST. No images found.')
+        path_acquisition = Path(config['path_root']) / config['path_sub_acquisition']
+        if not path_acquisition.is_dir():
+            api.alert(f'Specified data path does not EXIST. No images found. {path_acquisition}')
             return
 
         # Get channels as dict
         ch_dict = {channel['identifier']: channel['name'] for channel in channels}
         ch_identifier = list(ch_dict.keys())
         api.log(f'[FISH-QUANT][scan_folder] channel dictionary: {ch_dict}')
-
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
-        #for file in os.listdir(str(path_data_full)):
-        for file_full in path_data_full.rglob(f"*.{config['img_ext']}"):  
+        for file_full in path_acquisition.glob(f"*.{config['img_ext']}"):  
             api.log(f'Checking file: {str(file_full)}')
             file = file_full.name
             match = re.search(reg_exp, file)
@@ -625,7 +587,9 @@ class ImJoyPlugin():
 
                 df_scan = df_scan.append(data_dict, ignore_index=True)
 
-        self.path_data_full = path_data_full
+        self.path_root = config['path_root']
+        self.path_acquisition = path_acquisition
+
         scan_results = df_scan.to_dict('records')
 
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
@@ -634,7 +598,8 @@ class ImJoyPlugin():
         api.log(scan_results)
         
         # Save analysis details
-        self.analysis_details['data_specs']['data_path'] = str(path_data_full)
+        self.analysis_details['data_specs']['path_root'] = str(config['path_root'])
+        self.analysis_details['data_specs']['path_acquisition'] = str(path_acquisition)
         self.analysis_details['data_specs']['channels'] = channels
         self.analysis_details['data_specs']['reg_exp'] = reg_exp
 
@@ -652,10 +617,10 @@ class ImJoyPlugin():
         if show_status: api.showStatus('Loading images. Please wait .... ')
 
         # Folder containing data
-        path_data_full = self.path_data_full
+        path_acquisition = self.path_acquisition
 
         # Output path
-        self.path_analysis = create_output_path(path_data_full, config['output_path'])
+        self.path_analysis = Path(config['path_root']) / config['path_sub_analysis']
         create_folder(self.path_analysis)
 
         # Get channel names
@@ -679,7 +644,7 @@ class ImJoyPlugin():
         for index, channel_name in enumerate(channel_names):
         
             image_name = config['file'][channel_name]
-            image_name_full = str(path_data_full / image_name)
+            image_name_full = str(path_acquisition / image_name)
             api.log(f'[FISH-QUANT][load_image] reading image: {image_name_full}')
 
             img_channel = io.imread(image_name_full)
@@ -714,7 +679,7 @@ class ImJoyPlugin():
         image = np.stack(imgs_3d, axis=0)
         
         # Save some image properties
-        self.analysis_details['data_specs']['output_path'] = config['output_path']
+        self.analysis_details['data_specs']['path_analysis'] = str(self.path_analysis)
         self.analysis_details['image_properties']['image_names'] = image_names
         self.analysis_details['image_properties']['size'] = image.shape
 
@@ -750,7 +715,7 @@ class ImJoyPlugin():
         sigma = config['sigma']
         channel_selected = config['channel_selected']
         show_status = config['show_status']
-        path_data_full = self.path_data_full
+        path_acquisition = self.path_acquisition
         image_names = self.image_names
 
         if show_status: api.showStatus('Filtering image ....')
@@ -969,41 +934,45 @@ class ImJoyPlugin():
         # Save image (filtered & raw, contrasted) with detections
         if name_save:
 
-            api.log(f'[FISH-QUANT][detect_apply] plot with detection results: {name_save}.')
+            api.log(f'[FISH-QUANT][detect_apply] save plots with detection results: {name_save}.')
 
-            # Spot detection with filtered image
-            img_filt_mip = stack.maximum_projection(self.image_filt)
-            pa, pb = np.percentile(img_filt_mip, (0.1,99.99))
-            img_filt_mip = rescale_intensity(img_filt_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
-            
-            plot.plot_detection(img_filt_mip, spots, 
-                                radius=2, framesize=(40, 21), 
-                                remove_frame=True,
-                                path_output=name_save+'_filt.png')
-            
+            try: 
+                # Spot detection with filtered image
+                img_filt_mip = stack.maximum_projection(self.image_filt)
+                pa, pb = np.percentile(img_filt_mip, (0.1,99.99))
+                img_filt_mip = rescale_intensity(img_filt_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
+                
+                plot.plot_detection(img_filt_mip, spots, 
+                                    radius=2, framesize=(40, 21), 
+                                    remove_frame=True,
+                                    path_output=name_save+'_filt.png')
+                
 
-            # Spot detection with raw image
-            img_mip = self.image_raw_mip
-            pa, pb = np.percentile(img_mip, (0.1,99.99))
-            img_mip = rescale_intensity(img_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
-            
-            plot.plot_detection(img_mip, spots, 
-                                radius=2, framesize=(40, 21), 
-                                remove_frame=True,
-                                path_output=name_save+'_raw.png')
+                # Spot detection with raw image
+                img_mip = self.image_raw_mip
+                pa, pb = np.percentile(img_mip, (0.1,99.99))
+                img_mip = rescale_intensity(img_mip, in_range=(pa, pb), out_range=np.uint8).astype('uint8')
+                
+                plot.plot_detection(img_mip, spots, 
+                                    radius=2, framesize=(40, 21), 
+                                    remove_frame=True,
+                                    path_output=name_save+'_raw.png')
+            except AttributeError as e:
+                api.log(f'[FISH-QUANT][detect_apply] ERROR. Could not save plots. Known error in MacOS')
+                api.log(e)
 
         api.log(f'[FISH-QUANT][detect_apply] detection with threshold {threshold} detects {len(spots)} spots.')  
         api.showStatus(f'Detection with threshold {threshold} detects {len(spots)} spots.')
         self.spots = spots
 
 
-    async def decompose_clusters(self,config):
+    async def decompose_dense_regions(self,config):
         """
         Decompose clusters.
         For more details see bigfish: detection.decompose_cluster
         """
         # Parameters
-        log_config('[FISH-QUANT][decompose_clusters]', config)
+        log_config('[FISH-QUANT][decompose_dense_regions]', config)
         show_status = config['show_status']
   
         # Get image
@@ -1012,7 +981,7 @@ class ImJoyPlugin():
         else:
             img = self.image[self.channel_index, :, :, :]
         
-        spots_post_decomposition, clusters, reference_spot = detection.decompose_cluster(
+        spots_post_decomposition, clusters, reference_spot = detection.decompose_dense(
             img, 
             spots=self.spots, 
             voxel_size_z = config['voxel_size_z'], 
@@ -1028,13 +997,13 @@ class ImJoyPlugin():
         self.spots_post_decomposition = spots_post_decomposition
 
 
-    async def detect_foci(self,config):
+    async def detect_clusters(self,config):
         """
         Detect foci.
-        For more details see bigfish: detection.detect_foci
+        For more details see bigfish: detection.detect_clusters
         """
         # Parameters
-        log_config('[FISH-QUANT][detect_foci]', config)
+        log_config('[FISH-QUANT][detect_clusters]', config)
         name_save = config['name_save']
 
         # Generate name for temporary image
@@ -1042,52 +1011,56 @@ class ImJoyPlugin():
             name_base = self.name_base
             path_save = self.path_analysis / 'imjoy-tmp' 
             create_folder(path_save)
-            name_save = str(path_save / f'{name_base}__foci_calling')
+            name_save = str(path_save / f'{name_base}__cluster_calling')
 
         # Detect foci
-        spots_post_clustering, foci = detection.detect_foci(
+        spots_post_clustering, foci = detection.detect_clusters(
             spots =  self.spots_post_decomposition, 
             voxel_size_z = config['voxel_size_z'], 
             voxel_size_yx = config['voxel_size_yx'],
             radius = config['foci_radius'], 
             nb_min_spots = config['foci_nb_min_spots'])
 
-        api.log(f'[FISH-QUANT][detect_foci] found {len(foci)} foci for {len(self.spots_post_decomposition)} spots')
+        api.log(f'[FISH-QUANT][detect_clusters] found {len(foci)} foci for {len(self.spots_post_decomposition)} spots')
         
         self.spots_post_clustering = spots_post_clustering
         self.foci = foci
 
         # Save image with detections
         if name_save:
+            api.log(f'[FISH-QUANT][detect_clusters] saving cluster detection results as {name_save}.png')
 
-            # Create contrasted image
-            image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
-            image_contrasted = stack.maximum_projection(image_contrasted)
+            try: 
+                # Create contrasted image
+                image_contrasted = stack.rescale(self.image_filt, channel_to_stretch=0)
+                image_contrasted = stack.maximum_projection(image_contrasted)
 
-            # Consider entire image as a cell
-            fov_results = stack.extract_cell(
-                cell_label=np.ones(image_contrasted.shape).astype('uint8'),   # Consider entire image as a cell
-                ndim=3, 
-                rna_coord=spots_post_clustering, 
-                others_coord={"foci": foci},
-                image=image_contrasted,
-                remove_cropped_cell=False)
+                # Consider entire image as a cell
+                fov_results = stack.extract_cell(
+                    cell_label=np.ones(image_contrasted.shape).astype('uint8'),   # Consider entire image as a cell
+                    ndim=3, 
+                    rna_coord=spots_post_clustering, 
+                    others_coord={"foci": foci},
+                    image=image_contrasted,
+                    remove_cropped_cell=False)
 
-            # Plot image as one cell with foci
-            plot.plot_cell(
-                ndim=3, 
-                cell_coord=fov_results[0]["cell_coord"],  
-                rna_coord=fov_results[0]["rna_coord"], 
-                foci_coord=fov_results[0]["foci"],  
-                image=image_contrasted, 
-                cell_mask=fov_results[0]["cell_mask"],  
-                title="", 
-                remove_frame=True, framesize=(10, 8),
-                path_output=name_save,
-                ext = 'png',
-                show = False)
-
-            api.log(f'[FISH-QUANT][detect_foci] foci plot saved as {name_save}.png')
+                # Plot image as one cell with foci
+                plot.plot_cell(
+                    ndim=3, 
+                    cell_coord=fov_results[0]["cell_coord"],  
+                    rna_coord=fov_results[0]["rna_coord"], 
+                    foci_coord=fov_results[0]["foci"],  
+                    image=image_contrasted, 
+                    cell_mask=fov_results[0]["cell_mask"],  
+                    title="", 
+                    remove_frame=True, framesize=(10, 8),
+                    path_output=name_save,
+                    ext = 'png',
+                    show = False)
+            except AttributeError as e:
+                api.log(f'[FISH-QUANT][detect_apply] ERROR. Could not save plots. Known error in MacOS')
+                api.log(e)
+            
 
         if config['show_status']:
             show_png(name_save+'.png')
@@ -1166,14 +1139,14 @@ class ImJoyPlugin():
 
         # >>> Cluster decomposition
         if config['analyze_clusters']:
-            await self.decompose_clusters(config)
+            await self.decompose_dense_regions(config)
 
             if config['create_plots']:
                 config['name_save'] = str(path_plots_foci / f'{name_base}__foci_calling')
             else:
                 config['name_save'] = False
 
-            await self.detect_foci(config)
+            await self.detect_clusters(config)
 
             save_spots(self.spots_post_clustering, 'ZYXF',  path_save / f'{name_base}__spots_foci.csv')
             save_foci(self.foci,  path_save / f'{name_base}__foci.csv')
@@ -1224,6 +1197,224 @@ class ImJoyPlugin():
 
         api.alert('Batch processing finished!')
         api.showStatus('Batch processing finished!')
+
+
+    async def clean_segmentation(self,config):
+        '''
+        Clean up segmentation results.
+        '''
+
+        # Parameters
+        log_config('[FISH-QUANT][clean_segmentation]', config)
+        sub_path_old = config['assign_subfolder']
+        sub_path_new = config['assign_subfolder_new']
+        ident_cell = config['assign_ident_cell']
+        ident_nuc = config['assign_ident_nuc']       
+        ch_cell = config['assign_ch_cell']
+        ch_nuc = config['assign_ch_nuc']  
+
+        # Path to segmentation results
+        path_analysis = Path(config['path_root']) / config['path_sub_analysis']
+        if not path_analysis.is_dir():
+            api.alert(f'NO ANALYSIS FOLDER FOUND: {str(path_analysis)}')
+            return
+
+        path_segmentation = path_analysis / sub_path_old
+        if not path_segmentation.is_dir(): 
+            api.alert(f'NO FOLDER WITH SEGMENTATION RESULTS FOUND: {str(self.path_segmentation)}')
+            return
+
+        # Loop over segmentation results
+        api.showStatus(f'Cleaning up segmentation results (see log for details)')
+        for f_cell in path_segmentation.glob(f'*{ident_cell}*'):
+
+            api.log(f'\n\n >>>> Analyzing segmentation result for: {f_cell}\n')
+
+            # Get file with cell segmentationFQ-
+            f_nuc = Path(str(f_cell).replace(ident_cell, ident_nuc).replace(ch_cell, ch_nuc))
+            if not f_nuc.is_file():
+                api.log(f'File with nuclear segmentation not found: {f_nuc}')
+
+            # Load label images
+            nuc_label = io.imread(str(f_nuc))
+            cell_label = io.imread(str(f_cell))
+
+            # Path to save results
+            path_save = Path(str(f_nuc.parent).replace(sub_path_old, sub_path_new))
+            if not path_save.is_dir():
+                path_save.mkdir(parents=True)
+                api.log(f'Created path to save new segmentation masks: {path_save}')
+
+            new_nuc_label, new_cell_label = segmentation.match_nuc_cell(nuc_label, cell_label, single_nuc=False, cell_alone=False)
+
+            # Save new label images
+            nuc_name = Path(str(f_nuc).replace(sub_path_old, sub_path_new))
+            cell_name = Path(str(f_cell).replace(sub_path_old, sub_path_new))
+            io.imsave(nuc_name, new_nuc_label)
+            io.imsave(cell_name, new_cell_label)
+
+        api.showStatus(f'Cleaning up segmentation results (see log for details)')
+
+
+    def assign_rnas_cells(self,config):
+        '''
+        Assing RNAs to cells
+        '''
+
+        # Parameters
+        log_config('[FISH-QUANT][clean_segmentation]', config)
+
+        plot_individual_cells = config['plot_individual_cells_enable']
+
+        # Path for analysis
+        path_analysis = Path(config['path_root']) / config['path_sub_analysis']
+        if not path_analysis.is_dir():
+            api.alert(f'NO ANALYSIS FOLDER FOUND: {str(path_analysis)}')
+            return
+
+        path_acquisition = Path(config['path_root']) / config['path_sub_acquisition']
+        if not path_acquisition.is_dir():
+            api.alert(f'NO ACQUISITION FOLDER FOUND: {str(path_acquisition)}')
+            return
+
+        # >> Specify spot detection and segmentation results
+        path_spot_detection = path_analysis / 'spot_detection'
+        
+        path_save = path_spot_detection / 'results_per_fov'
+        if not path_save.is_dir():
+                path_save.mkdir(parents=True)
+
+        if  config['clean_segmentation_enable']:
+            path_segmentation = path_analysis / config['assign_subfolder_new']
+        else:
+            path_segmentation = path_analysis / config['assign_subfolder']
+
+        # Channel specifiers
+        channels = {'spots': config['assign_ch_spots'],
+                    'cells': config['assign_ch_cell'],
+                    'nuclei': config['assign_ch_nuc']
+                    }
+
+        # Diverse suffix in file names
+        suffix = {'spots': config['assign_ident_spots'],
+                  'fish_image': config['img_ext'],
+                  'segment_nuclei': config['assign_ident_nuc'],    
+                  'segment_cells': config['assign_ident_cell'],
+                  'foci': '__foci.csv',
+                  'summary': '_SPOTS_SUMMARY.csv',
+                  'fov_results': '__fov_results.json',
+                }
+
+        #  Read all relevant files
+        for f_spots in path_spot_detection.glob(f"*{suffix['spots']}"):
+
+            api.log(f'Analyzing spots detection file {str(f_spots)}')
+            spots_all = np.loadtxt(str(f_spots), delimiter=',', skiprows=1, dtype=np.int64)
+
+            # Files with foci detection
+            f_foci = Path(str(f_spots).replace(suffix['spots'], suffix['foci']))
+            if f_foci.is_file():    
+                foci_all = np.loadtxt(str(f_foci), delimiter=',', skiprows=1, dtype=np.int64)
+            else:
+                api.log(f'  File with foci not found: {str(f_foci)}')
+                foci_all = None
+
+            # File with masks of cells
+            name_mask_cells = f_spots.name.replace(suffix['spots'], suffix['segment_cells']).replace(channels['spots'], channels['cells'])
+            f_mask_cells = path_segmentation / name_mask_cells
+            if f_mask_cells.is_file():
+                cell_label = stack.read_image(str(f_mask_cells))
+            else:
+                api.log(f'  File with mask of cells not found: {str(f_mask_cells)}')    
+                continue
+
+            # File with masks of nuclei
+            name_mask_nuc = f_spots.name.replace(suffix['spots'], suffix['segment_nuclei']).replace(channels['spots'], channels['nuclei'])
+            f_mask_nuc = path_segmentation / name_mask_nuc
+            if f_mask_nuc.is_file():
+                nuc_label = stack.read_image(str(f_mask_nuc))
+            else:
+                api.log(f'  File with mask of nuclei not found: {str(f_mask_nuc)}')
+                continue
+
+            # Load raw image
+            name_img = f_spots.name.replace(suffix['spots'], f'.{suffix["fish_image"]}')
+            f_img_full = path_acquisition / name_img
+            api.log(str(f_img_full))
+
+            if f_img_full.is_file():
+                smfish = stack.read_image(str(f_img_full))
+                smfish_mip = stack.rescale(smfish, channel_to_stretch=0)
+                smfish_mip = stack.maximum_projection(smfish_mip)   
+            else:
+                api.log(f'  smFISH image not found: {str(f_img_full)}')
+                continue
+
+            # >> Verify localization of spots and nuclei
+
+            # Spots & nuclei
+            if spots_all is not None and nuc_label is not None:
+                spots_in_nuc, spots_out_nuc = stack.identify_objects_in_region(nuc_label, spots_all, ndim=3)
+                print(f"Spots (total/cyto/nucleus): {spots_all.shape[0]}/{spots_out_nuc.shape[0]}/{spots_in_nuc.shape[0]}")
+            else:
+                spots_in_nuc = None
+                spots_out_nuc = None 
+                
+            # Clusters & nuclei
+            if spots_all is not None and nuc_label is not None and foci_all is not None:
+                spots_no_ts, foci_no_ts, ts = stack.remove_transcription_site(spots_all, foci_all, nuc_label, ndim=3)
+                print(f"Detected spots (without transcription sites): {spots_no_ts.shape[0]}")
+            else:
+                spots_no_ts = None
+                foci_no_ts = None
+                ts = None
+
+            # >>> Extract detailed results for image
+            fov_results = stack.extract_cell(
+                rna_coord=spots_all,
+                cell_label=cell_label, 
+                nuc_label=nuc_label,
+                ndim=smfish.ndim, 
+                others_coord={"foci": foci_no_ts, "transcription_site": ts},
+                image=smfish_mip)
+
+            api.log("number of cells identified: {0}".format(len(fov_results)))
+
+            # >>> Save summary file
+            # TODO: once added, add option: delimiter=','
+            f_results = path_save / f_spots.name.replace(suffix['spots'],suffix['summary'])
+            stack.summarize_extraction_results(fov_results, 
+                                               ndim=smfish.ndim,  
+                                               path_output=str(f_results))
+
+            # >>> Plot results of individual cells
+            if plot_individual_cells:
+
+                # Create folder
+                path_save_cells = path_save / f_img_full.stem
+                if not path_save_cells.is_dir():
+                    path_save_cells.mkdir(parents=True)
+
+                # Loop over cells
+                for i, cell_results in enumerate(fov_results):
+
+                    cell_id = cell_results["cell_id"]
+
+                    cell_coord = cell_results["cell_coord"]
+                    cell_mask = cell_results["cell_mask"]
+                    nuc_coord = cell_results["nuc_coord"]
+                    nuc_mask = cell_results["nuc_mask"]
+                    rna_coord = cell_results["rna_coord"]
+                    foci_coord = cell_results["foci"]
+                    ts_coord = cell_results["transcription_site"]
+                    smfish_mip = cell_results["image"]
+
+                    name_save = path_save_cells / f'plot_cell_{cell_id}'
+                    plot.plot_cell(ndim=smfish.ndim, cell_coord=cell_coord, nuc_coord=nuc_coord, 
+                        rna_coord=rna_coord, foci_coord=foci_coord, other_coord=ts_coord, 
+                        image=smfish_mip, cell_mask=cell_mask, nuc_mask=nuc_mask, 
+                        title="Cell {0}".format(cell_id), framesize=(12, 10), show=False,
+                        path_output=str(name_save), ext="png")
 
 api.export(ImJoyPlugin())
 </script>
