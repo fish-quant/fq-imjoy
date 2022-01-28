@@ -1343,8 +1343,8 @@ api.export(new ImJoyPlugin())
               <b-button type="is-primary" :loading="running_decompose_dense_regions" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_dense_regions">Decompose dense regions</b-button>
             </b-field>
 
-            <!-- Specify spot size -->
-            <b-field label="Spot size" horizontal grouped>
+            <!-- Specify spot radius -->
+            <b-field label="Spot radius" horizontal grouped>
               <b-field>
                 <p class="control"> <span class="button is-static">XY [nm]</span></p>
                 <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
@@ -1369,7 +1369,7 @@ api.export(new ImJoyPlugin())
                 <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
               </b-field>
               <b-field>
-                <p class="control"> <span class="button is-static">Radius [nm]</span></p>
+                <p class="control"> <span class="button is-static">Max distance [nm]</span></p>
                 <b-input placeholder="400" v-model.number="foci_radius"></b-input>
               </b-field>
             </b-field> <!-- END: specify pixel size -->
