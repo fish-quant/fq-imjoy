@@ -77,9 +77,10 @@ that match you file-name. In order to analyze this file-name, we only need the f
 * `*` matches the previous token between zero and unlimited times.
 * `\.` matches the character `.` once.
 * `_` matches the character `_` once.
-* (?P<fov>.*) is a named capture group (name `fov`), which allows to extract the part that matches to this subgroup. 
+* (?P<fov>.*) is a named capture group (name `fov`), which allows to extract the part that matches to this subgroup.
 
-With this, we can write the following regular expression 
+With this, we can write the following regular expression
+
 ```regexp
 (?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\.(?P<img_ext>.*)`.
 ```
@@ -101,5 +102,3 @@ on [https://regex101.com/](https://regex101.com/)).
 __IMPORTANT__: if you have multiple images, e.g. different channels, of the same field of view, and you want to load them at the same
 time into the interfacem you **have** to guarantee that the **fov** and **file_ident** are identical for these images. If they are not, 
 the images will not be matched, and the images will not show up. Construct your regular expression accordingly!
-
-

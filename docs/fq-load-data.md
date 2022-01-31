@@ -6,6 +6,12 @@ In the tab, you can define where your data is located, its naming convention, an
 !!! info
     Most specified parameters (except the channel list), will be stored and reused when you launch ImJoy the next time.
 
+## Demo data
+
+Already processed demo data is available from within the FISH-quant interface, when you press on the button `Get zipped (demo) data`.
+
+Pressing this button will download these data, and pre-fill the necessary fields in the user-interface.
+
 ## Typical workflow
 
 ### Data specifications

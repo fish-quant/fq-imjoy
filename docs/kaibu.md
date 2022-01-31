@@ -1,17 +1,17 @@
-## Kaibu Image viewer
+# Overview
 
 Images and analysis results are displayed with [Kaibu](https://kaibu.org/#/about).
 
 ![kaibu_screenshot.png](img/kaibu_screenshot.png){: style="width:500px"}
 
-### Layers
+## Layers
 
 A central concept in Kaibu are **layers**. Each layer can contain different content (images, spot detection results, ...).
 
 * The visibility of a layer can be turned on and off by clicking on the eye symbol.
 * When clicking on a layer a content specific menu is show, e.g. to change the contrast of an image.
 
-### Inspection of your image
+## Inspection of your image
 
 Once your image is opend, you can interact with your image.
 
