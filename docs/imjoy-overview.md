@@ -7,13 +7,13 @@
 
 Some of its main **features** are:
 
-    1. Specific functionality is provided by **plugins**, which can be installed with simple links. Available 
-        plugins are listed in the plugin list on the left part of the interface. Plugins using Python require 
-        a **Plugin engine** to be executed. Installation and usasage is detailed below.  
+1. Specific functionality is provided by **plugins**, which can be installed with simple links. Available 
+    plugins are listed in the plugin list on the left part of the interface. Plugins using Python require 
+    a **Plugin engine** to be executed. Installation and usasage is detailed below.  
 
-    2. ImJoy can have several **workspaces**. Each workspace can contain multiple plugins and is usually
-        dedicated to a specific data processing task. Workspaces can be selected from little puzzle 
-        symbol in the upper left part of the interface.
+2. ImJoy can have several **workspaces**. Each workspace can contain multiple plugins and is usually
+    dedicated to a specific data processing task. Workspaces can be selected from little puzzle 
+    symbol in the upper left part of the interface.
 
 ![imjoy-interface](img/imjoy-interface.png)
 

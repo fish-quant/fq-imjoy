@@ -1,17 +1,15 @@
 # ImJoy plugin engine
 
 Most of the provided plugins use Python for data processing. To use these plugins, 
-you have to connect ImJoy to a Plugin engine (powered by [Jupyter]). We use [**Jupyter notebooks**]((https://jupyter.org/))
-as an engine, which can be installed via Miniconda. 
+you have to connect ImJoy to a Plugin engine, which can be installed via Miniconda.
 
-If you install the engine as explained below, it runs on your local machine, so **no data-transfer over the internet is taking place**.
+If you install this engine as explained below, it runs on your local machine, so **no data-transfer over the internet is taking place**.
 
 ## Install plugin engine
 
 This you only need to do **once**.
 
-We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
-choose latest Python version (3.X) and your operating system. 
+We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html). Choose latest Python version (3.X) and your operating system. 
 
 You  can then use the **annoconda prompt** to excecute the commands listed below
 
@@ -19,12 +17,13 @@ You  can then use the **annoconda prompt** to excecute the commands listed below
 * MacOS: Open Launchpad, then click the terminal icon.
 * Linux: Open a terminal window
 
-We recommend creating a **dedicated environment** to run code in this analysis package. Having a dedicated environment, increases stability of the code by reducing possible conflicts with other installed packages. To create an environment called `fq-imjoy`, 
-open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`):
+We recommend creating a **dedicated environment** to run code in this analysis package. Having a dedicated environment, increases stability of the code by reducing possible conflicts with other installed packages. To create an environment called `fq-imjoy`, open an anaconda prompt and type:
 
 ``` bash
 conda create --name fq-imjoy python=3.7
 ```
+
+Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`).
 
 **Activate the environment**:
 

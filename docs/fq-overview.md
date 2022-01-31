@@ -19,16 +19,7 @@ These plugins are saved in the  **workspace `fq-main`**. If you open ImJoy again
 
 Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins. 
 
-!!! info "`FISH-QUANT`: the main plugin."
-
-
-    This **Python plugin** performs the actual data analysis and 
-    runs on a Juypter engine, as described in the [installation instructions](imjoy-overview.md#connect-jupyter-engine). 
-    
-    So when using FISH-QUANT, you have to connect ImJoy to a Jupyter engine and make sure that 
-    the FISH-QUANT is running on this engine.  
-
-    ![fq-plugins.png](img/fq-plugins.png){: style="width:200px"}
+![fq-plugins.png](img/fq-plugins.png){: style="width:300px"}
 
 ### Choosing plugin engine
 
