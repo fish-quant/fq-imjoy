@@ -1,16 +1,24 @@
-# Overview 
+# Overview
 
-## Installation
+Installing the FISH-quant plugin, requires that you have a **Plugin engine** installed, and ImJoy
+connected to it as explained  [here](imjoy-installation.md#).
 
-* If you use FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a> 
-    - First time installation can take a few minutes, since several Python libraries are installed.
-    - More details about installing plugins are [here](imjoy-overview.md/#installing-plugins)).
+## Plugin installation
 
-* Once installed, the plugin will be saved in the  **workspace `fq-main`** as described [here](imjoy-overview.md#opening-a-workspace).  
+If you use the FISH-quant plugin for **the first time**, you can install it with 
+<a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a>. 
 
-In the ImJoy app, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins.
+Pressing this link, will open a new instance of ImJoy and display the install dialog. Simply press `Install`. More details about 
+installing plugins are [here](imjoy-overview.md/#installing-plugins)).
 
-!!! info "The main important plugin is `FISH-QUANT`."
+This installation can take a while since all necessary libraries are installed.
+
+These plugins are saved in the  **workspace `fq-main`**. If you open ImJoy again, you can select this workspace and you will find your plugins.
+
+
+Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins. 
+
+!!! info "`FISH-QUANT`: the main plugin."
 
     This **Python plugin** performs the actual data analysis and 
     runs on a Juypter engine, as described in the [installation instructions](imjoy-overview.md#connect-jupyter-engine). 
@@ -19,6 +27,14 @@ In the ImJoy app, you will find the **main plugin** `FISH-QUANT`, as wells as se
     the FISH-QUANT is running on this engine.  
 
     ![fq-plugins.png](img/fq-plugins.png){: style="width:200px"}
+
+### Choosing plugin engine
+
+ImJoy can be connected to multiple engines, e.g. to run different analysis tasks (RNA detection and cell segmentation). 
+If you have only one engine connected to ImJoy, plugins will be **automatically connected** to this engine. 
+ 
+If yoy have multiple engines, you have to choose on which engine the plugin should be running by pressing on the 
+puzzle symbol and choosing the appropriate engine.
 
 ## Starting FISH-QUANT
 
@@ -45,6 +61,7 @@ To maximize the available space in the ImJoy window, you can do two things:
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
 
 ## Kaibu Image viewer
+
 Images and analysis results are displayed with [Kaibu](https://kaibu.org/#/about).
 
 ![kaibu_screenshot.png](img/kaibu_screenshot.png){: style="width:500px"}

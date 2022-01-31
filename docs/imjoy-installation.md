@@ -2,17 +2,25 @@
 
 Most of the provided plugins use Python for data processing. To use these plugins, 
 you have to connect ImJoy to a Plugin engine (powered by [Jupyter]). We use [**Jupyter notebooks**]((https://jupyter.org/))
-as an engine, which can be installed via Miniconda (see installation instructions [below](#install-jupyter-engine-for-imjoy)). 
+as an engine, which can be installed via Miniconda. 
 
-## Install engine
+If you install the engine as explained below, it runs on your local machine, so **no data-transfer over the internet is taking place**.
+
+## Install plugin engine
 
 This you only need to do **once**.
 
 We recommend installing [**Miniconda** with Python](https://docs.conda.io/en/latest/miniconda.html): 
-choose latest Python version (3.X) and your operating system. You  can then use the annoconda prompt 
-to excecute the commands listed below. 
+choose latest Python version (3.X) and your operating system. 
 
-We recommend creating a **dedicated environment** to run code in this analysis package. To create an environment called `fq-imjoy`, open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`):
+You  can then use the **annoconda prompt** to excecute the commands listed below
+
+* Windows: From the Start menu, search for and open "Anaconda Prompt."
+* MacOS: Open Launchpad, then click the terminal icon.
+* Linux: Open a terminal window
+
+We recommend creating a **dedicated environment** to run code in this analysis package. Having a dedicated environment, increases stability of the code by reducing possible conflicts with other installed packages. To create an environment called `fq-imjoy`, 
+open an anaconda prompt and type (Confirm with `y` when asked if you want to proceed (`Proceed ([y]/n)?`):
 
 ``` bash
 conda create --name fq-imjoy python=3.7
@@ -34,37 +42,22 @@ pip install -U imjoy[jupyter]
 
 Once installed the engine is installed, you can start it an connect ImJoy to it.
 
-* Please note that this engine runs on your local machine, so no data-transfer over the internet is taking place. 
-* In order to connect to a PLugin engine, you need to specify its url that also contains a token (a passphrase). 
-    If you launch a Jupyter notebook for the first time, you have to provide this URL to ImJoy
-    (indicated below with **First time only**). After this, ImJoy will remember it. 
+1. **Launch engine**
+    1. Open **anaconda terminal**.
+    2. **Activate environment**: `conda activate fq-imjoy`
+    3. **Start Jupyter engine**: `imjoy --jupyter`. Copy the provide URL+token (see screenshot below).
 
-![terminal-launch-jupyter.png](img/terminal-launch-jupyter.png)
+        ![terminal-launch-jupyter.png](img/terminal-launch-jupyter.png)
 
-1. Launch a **Plugin Engine for ImJoy**:
+2. **Connect ImJoy to Jupyter**: in the ImJoy app, press on the rocket symbol 🚀 in the upper right corner. 
+      * **First time only**: select `Add Jupyter-Engine`, paste the URL from the step above, e.g. `http://127.0.0.1:8888/?token=8b4885e452db1af7cd7b3cfa6c62036cbae46995e473c25e`,
+        and you can give a new name to the engine
+      * **Subsequent use**: press on the pre-defined plugin engine to connect to it (of course you have to launch it first).
+        ![imjoy-connect-jupyter.gif](img/imjoy-connect-jupyter.gif)
 
-    1. Start an **anaconda terminal**. 
-    2. **Activate the environment**: `conda activate fq-imjoy`
-    3. **Start Jupyter engine**: `imjoy --jupyter`
-    4. **First time only**: copy the provided URL including the token, 
-        e.g. `http://127.0.0.1:8888/?token=8b4885e452db1af7cd7b3cfa6c62036cbae46995e473c25e`
+Please note that you can connect ImJoy to multiple engines, e.g. to run different analysis workflows. 
 
-2. **Connect ImJoy to Jupyter Engine**:
-
-    1. In the ImJoy app, press on the rocket symbol in the upper right corner.
-         * **First time only**: select `Add Jupyter-Engine`, paste the URL from the step above, and you can give a new name to the engine
-         * **Subsequent use**: press on the pre-defined plugin engine to connect to it (of course you have to launch it first).
-
-3. If this is the only engine, plugins will be **automatically connected**. You can verify this, 
-   by clicking on the puzzle symbol next to the plugin name. Depending on the plugin, installation
-   might take a while, during this period the plugin name will be in red.  
-
-    If yoy have multiple engines, you have to choose on which engine the plugin should be running 
-    (more details [below](#plugin-running-on-wrong-engine)).
-
-   ![imjoy-connect-jupyter.gif](img/imjoy-connect-jupyter.gif)
-
-## Managing engines
+### Manage engines
 
 ImJoy remembers the plugin engines it connected to (including the token). You can obtain the list of all
 registered engines by pressing on the rocket symbol.
@@ -88,8 +81,8 @@ You have several options
 At one point, your conda environment might get corrupted. You can easily remove it, and create a new one
 
 1. Open anaconda terminal
-0. **Activate base environment**: `conda deactivate`
-0. **Remove `fq-imjoy` environment**: `conda env remove --name fq-imjoy`
+2. **Activate base environment**: `conda deactivate`
+3. **Remove `fq-imjoy` environment**: `conda env remove --name fq-imjoy`
 
 ### Specify your own Jupyter token
 
@@ -104,4 +97,3 @@ When launched like this, you will not get the full Jupyter URL in the terminal, 
 When copying this link to the ImJoy app for the first time you have to replace the `...` by the token you actually specified.
 
 The next time you start jupyter with `imjoy --jupyter` your custom token will be used.
-
