@@ -27,7 +27,7 @@ ImJoy can be connected to multiple engines, e.g. to run different analysis tasks
 If you have only one engine connected to ImJoy, plugins will be **automatically connected** to this engine. 
 
 If yoy have multiple engines, you have to choose on which engine the plugin should be running by pressing on the 
-puzzle symbol and choosing the appropriate engine.
+puzzle symbol next to `FISH-QUANT` and choosing the appropriate engine.
 
 ## Starting FISH-QUANT
 
