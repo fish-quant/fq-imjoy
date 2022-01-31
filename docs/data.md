@@ -5,6 +5,12 @@ Here we describe how data has to be
 * **... organized**: data processing can be done for a batch of images, but for this data has to be organized as specified below.
 * **...named**: FISH-quant extracts important information from the file-names. This requires a certain naming convention described below. 
 
+## Demo data
+
+Already processed demo data can be downloaded from [**Dropbox**](https://www.dropbox.com/sh/yr1s5olqwkvyx0i/AADH0QQtdNuWWq7z9wgQpLiOa?dl=0). With these data, you can verify if the different analysis steps are properly executed.
+
+This test data is also directly available from within the FISH-quant interface, when you press on the button `Get zipped (demo) data`.
+
 ## Organization
 
 We strongly recommend the following data-organization on which this workflow has been tested. 
@@ -96,6 +102,4 @@ __IMPORTANT__: if you have multiple images, e.g. different channels, of the same
 time into the interfacem you **have** to guarantee that the **fov** and **file_ident** are identical for these images. If they are not, 
 the images will not be matched, and the images will not show up. Construct your regular expression accordingly!
 
-## Test data
 
-Already processed test data can be downloaded from [**Dropbox**](https://www.dropbox.com/sh/yr1s5olqwkvyx0i/AADH0QQtdNuWWq7z9wgQpLiOa?dl=0). With these data, you can verify if the different analysis steps are properly executed.

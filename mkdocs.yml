@@ -62,11 +62,12 @@ nav:
       - Overview: imjoy-overview.md
       - Plugin engine: imjoy-installation.md
 
-    - RNA detection:
+    - FISH-quant:
       - Overview: fq-overview.md
       - Data specifications: data.md
       - Loading data: fq-load-data.md
       - Spot detection: fq-spot-detection.md
+      - Kaibu: kaibu.md
 
     - Support workflows:
       - Split channels: fiji-split-channels.md 

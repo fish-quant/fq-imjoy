@@ -1,6 +1,8 @@
 # Overview
 
-Installing the FISH-quant plugin, requires that you have a **Plugin engine** installed, and ImJoy
+Here, we describe how to install the FISH-quant plugin.
+
+Thist installation requires that you have a **Plugin engine** installed, and ImJoy
 connected to it as explained  [here](imjoy-installation.md#).
 
 ## Plugin installation
@@ -14,7 +16,6 @@ installing plugins are [here](imjoy-overview.md/#installing-plugins)).
 This installation can take a while since all necessary libraries are installed.
 
 These plugins are saved in the  **workspace `fq-main`**. If you open ImJoy again, you can select this workspace and you will find your plugins.
-
 
 Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins. 
 
@@ -32,7 +33,7 @@ Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as seve
 
 ImJoy can be connected to multiple engines, e.g. to run different analysis tasks (RNA detection and cell segmentation). 
 If you have only one engine connected to ImJoy, plugins will be **automatically connected** to this engine. 
- 
+
 If yoy have multiple engines, you have to choose on which engine the plugin should be running by pressing on the 
 puzzle symbol and choosing the appropriate engine.
 
@@ -59,35 +60,3 @@ To maximize the available space in the ImJoy window, you can do two things:
 2. **Minimize the plugin side-bar** once you launched FISH-quant.
 
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
-
-## Kaibu Image viewer
-
-Images and analysis results are displayed with [Kaibu](https://kaibu.org/#/about).
-
-![kaibu_screenshot.png](img/kaibu_screenshot.png){: style="width:500px"}
-
-### Layers
-
-A central concept in Kaibu are **layers**. Each layer can contain different content (images, spot detection results, ...).
-
-* The visibility of a layer can be turned on and off by clicking on the eye symbol.
-* When clicking on a layer a content specific menu is show, e.g. to change the contrast of an image.
-
-### Inspection of your image
-
-Once your image is opend, you can interact with your image.
-
-__Navigate__:
-
-* **Zoom** either with the dedicated buttons, or with the mouse-wheel, or gestures on touch-screens.
-* **Pan** with pressed mouse button, or corresponding gestures on a touch screen.
-
-In order to see pixel values of an image layer, minimize the Kaibu side-bar.
-
-* When **hoovering** over a pixel you will see relevant information such as its position and importantly intensity value.
-
-__Appearance__:
-For an image layer, you can  
-
-* Change the **lookup table**.
-* Change the **contrast of the image**.

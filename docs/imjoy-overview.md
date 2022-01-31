@@ -4,7 +4,8 @@
 
 * While ImJoy is a browser app, **NO** user data will be transferred over the internet.
 * For best stability, we recommend using [**Chrome**](https://www.google.com/chrome/) to run the ImJoy app.  
-* Some of its main **features** are:
+
+Some of its main **features** are:
 
     1. Specific functionality is provided by **plugins**, which can be installed with simple links. Available 
         plugins are listed in the plugin list on the left part of the interface. Plugins using Python require 
@@ -20,7 +21,7 @@
 
 We provide installation links to install for the different ImJoy plugins. If you press on such an installation link,
 
-1. The ImJoy app will open and display a dialog asking if you want to install the specified plugin. 
+1. The ImJoy app will open and display a dialog asking if you want to install the specified plugin.
 2. To confirm installation, press the `install` button.
 3. If you have no engine connected, you will see a pop window. It informs you that if you don't specify an PLugin engine, the plugin will be launched on binder. 
 
