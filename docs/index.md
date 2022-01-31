@@ -33,4 +33,3 @@ for you to use the toll, so that you can get starte quickly. If you like what yo
 this documentation and process your own data. 
 
 ![fq-interactive.png](img/fq-interactive.png){: style="width:500px"}
-
