@@ -21,6 +21,7 @@ Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as seve
 
 !!! info "`FISH-QUANT`: the main plugin."
 
+
     This **Python plugin** performs the actual data analysis and 
     runs on a Juypter engine, as described in the [installation instructions](imjoy-overview.md#connect-jupyter-engine). 
     
@@ -60,3 +61,4 @@ To maximize the available space in the ImJoy window, you can do two things:
 2. **Minimize the plugin side-bar** once you launched FISH-quant.
 
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
+

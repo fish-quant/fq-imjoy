@@ -25,6 +25,7 @@ so-called plugin engine which runs Python (only once). When you use FISH-quant, 
   
 ## Interactive documentation
 
+
 If you want to get a feeling for how the interface looks like and what kind of analysis you can do, 
 check out our interactive documentation [**here**](https://fish-quant.github.io/fq-interactive-docs/#/fq-imjoy).
 

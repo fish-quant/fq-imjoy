@@ -22,6 +22,7 @@ Some of its main **features** are:
 We provide installation links to install for the different ImJoy plugins. If you press on such an installation link,
 
 1. The ImJoy app will open and display a dialog asking if you want to install the specified plugin.
+
 2. To confirm installation, press the `install` button.
 3. If you have no engine connected, you will see a pop window. It informs you that if you don't specify an PLugin engine, the plugin will be launched on binder. 
 

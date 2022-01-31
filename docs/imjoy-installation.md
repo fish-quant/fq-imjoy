@@ -84,6 +84,7 @@ At one point, your conda environment might get corrupted. You can easily remove 
 2. **Activate base environment**: `conda deactivate`
 3. **Remove `fq-imjoy` environment**: `conda env remove --name fq-imjoy`
 
+
 ### Specify your own Jupyter token
 
 You can specify your own token `yourtoken`

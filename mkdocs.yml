@@ -63,6 +63,7 @@ nav:
       - Plugin engine: imjoy-installation.md
 
     - FISH-quant:
+
       - Overview: fq-overview.md
       - Data specifications: data.md
       - Loading data: fq-load-data.md
