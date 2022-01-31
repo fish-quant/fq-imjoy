@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -22,7 +22,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
   "api_version": "0.1.8",
   "env": [{"type": "binder", "spec": "fish-quant/fq-imjoy/binder", "skip_requirements": true}],
   "permissions": [],
-  "requirements": { "stable":["big-fish==0.5.0"],
+  "requirements": { "stable":["big-fish==0.6.0"],
                     "dev": [""]},
     "dependencies":  [
           "fish-quant/fq-imjoy:FQ-interface"
@@ -50,7 +50,7 @@ from skimage import io
 import pandas as pd
 from skimage.exposure import rescale_intensity
 import bigfish  # Is there a way to get the version without import?
-from bigfish import stack, plot, detection, segmentation
+from bigfish import stack, plot, detection, segmentation, multistack
 
 # TEMPORARY BUG FIX 
 # 1. fix_1: flipped orientation of images in kaibu:
@@ -969,7 +969,7 @@ class ImJoyPlugin():
     async def decompose_dense_regions(self,config):
         """
         Decompose clusters.
-        For more details see bigfish: detection.decompose_cluster
+        For more details see bigfish: detection.decompose_dense
         """
         # Parameters
         log_config('[FISH-QUANT][decompose_dense_regions]', config)
@@ -984,14 +984,12 @@ class ImJoyPlugin():
         spots_post_decomposition, clusters, reference_spot = detection.decompose_dense(
             img, 
             spots=self.spots, 
-            voxel_size_z = config['voxel_size_z'], 
-            voxel_size_yx = config['voxel_size_yx'],
-            psf_z = config['psf_size_z'], 
-            psf_yx = config['psf_size_xy'], 
+            voxel_size = (config['voxel_size_z'], config['voxel_size_yx'],  config['voxel_size_yx']),
+            spot_radius = (config['psf_size_z'], config['psf_size_xy'], config['psf_size_xy']),
             alpha = config['cluster_alpha'], 
             beta = config['cluster_beta'])
 
-        api.log(f'[FISH-QUANT][decompose_cluster] from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
+        api.log(f'[FISH-QUANT][decompose_dense_regions] from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
         api.showStatus(f'Cluster decomposition: from {len(self.spots)} to {len(spots_post_decomposition)} spots.')
 
         self.spots_post_decomposition = spots_post_decomposition
@@ -1013,11 +1011,10 @@ class ImJoyPlugin():
             create_folder(path_save)
             name_save = str(path_save / f'{name_base}__cluster_calling')
 
-        # Detect foci
+        # Detect clusters
         spots_post_clustering, foci = detection.detect_clusters(
             spots =  self.spots_post_decomposition, 
-            voxel_size_z = config['voxel_size_z'], 
-            voxel_size_yx = config['voxel_size_yx'],
+            voxel_size = (config['voxel_size_z'], config['voxel_size_yx'], config['voxel_size_yx']),
             radius = config['foci_radius'], 
             nb_min_spots = config['foci_nb_min_spots'])
 
@@ -1036,7 +1033,7 @@ class ImJoyPlugin():
                 image_contrasted = stack.maximum_projection(image_contrasted)
 
                 # Consider entire image as a cell
-                fov_results = stack.extract_cell(
+                fov_results = multistack.extract_cell(
                     cell_label=np.ones(image_contrasted.shape).astype('uint8'),   # Consider entire image as a cell
                     ndim=3, 
                     rna_coord=spots_post_clustering, 
@@ -1230,7 +1227,7 @@ class ImJoyPlugin():
 
             api.log(f'\n\n >>>> Analyzing segmentation result for: {f_cell}\n')
 
-            # Get file with cell segmentationFQ-
+            # Get file with cell segmentation
             f_nuc = Path(str(f_cell).replace(ident_cell, ident_nuc).replace(ch_cell, ch_nuc))
             if not f_nuc.is_file():
                 api.log(f'File with nuclear segmentation not found: {f_nuc}')
@@ -1245,7 +1242,7 @@ class ImJoyPlugin():
                 path_save.mkdir(parents=True)
                 api.log(f'Created path to save new segmentation masks: {path_save}')
 
-            new_nuc_label, new_cell_label = segmentation.match_nuc_cell(nuc_label, cell_label, single_nuc=False, cell_alone=False)
+            new_nuc_label, new_cell_label = multistack.match_nuc_cell(nuc_label, cell_label, single_nuc=False, cell_alone=False)
 
             # Save new label images
             nuc_name = Path(str(f_nuc).replace(sub_path_old, sub_path_new))
@@ -1265,6 +1262,7 @@ class ImJoyPlugin():
         log_config('[FISH-QUANT][clean_segmentation]', config)
 
         plot_individual_cells = config['plot_individual_cells_enable']
+        remove_cropped_cell = config['remove_cropped_cell']
 
         # Path for analysis
         path_analysis = Path(config['path_root']) / config['path_sub_analysis']
@@ -1354,7 +1352,7 @@ class ImJoyPlugin():
 
             # Spots & nuclei
             if spots_all is not None and nuc_label is not None:
-                spots_in_nuc, spots_out_nuc = stack.identify_objects_in_region(nuc_label, spots_all, ndim=3)
+                spots_in_nuc, spots_out_nuc = multistack.identify_objects_in_region(nuc_label, spots_all, ndim=3)
                 print(f"Spots (total/cyto/nucleus): {spots_all.shape[0]}/{spots_out_nuc.shape[0]}/{spots_in_nuc.shape[0]}")
             else:
                 spots_in_nuc = None
@@ -1362,7 +1360,7 @@ class ImJoyPlugin():
                 
             # Clusters & nuclei
             if spots_all is not None and nuc_label is not None and foci_all is not None:
-                spots_no_ts, foci_no_ts, ts = stack.remove_transcription_site(spots_all, foci_all, nuc_label, ndim=3)
+                spots_no_ts, foci_no_ts, ts = multistack.remove_transcription_site(spots_all, foci_all, nuc_label, ndim=3)
                 print(f"Detected spots (without transcription sites): {spots_no_ts.shape[0]}")
             else:
                 spots_no_ts = None
@@ -1370,20 +1368,21 @@ class ImJoyPlugin():
                 ts = None
 
             # >>> Extract detailed results for image
-            fov_results = stack.extract_cell(
+            fov_results = multistack.extract_cell(
                 rna_coord=spots_all,
                 cell_label=cell_label, 
                 nuc_label=nuc_label,
                 ndim=smfish.ndim, 
                 others_coord={"foci": foci_no_ts, "transcription_site": ts},
-                image=smfish_mip)
+                image=smfish_mip,
+                remove_cropped_cell=remove_cropped_cell)
 
             api.log("number of cells identified: {0}".format(len(fov_results)))
 
             # >>> Save summary file
             # TODO: once added, add option: delimiter=','
             f_results = path_save / f_spots.name.replace(suffix['spots'],suffix['summary'])
-            stack.summarize_extraction_results(fov_results, 
+            multistack.summarize_extraction_results(fov_results, 
                                                ndim=smfish.ndim,  
                                                path_output=str(f_results))
 

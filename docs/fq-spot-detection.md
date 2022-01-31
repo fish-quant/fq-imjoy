@@ -1,12 +1,14 @@
 # Spot detection
 
-## Overview
+Spot detection is performed with a standard spot detection approach on either 2D or 3D images. 
 
-Spot detection is performed with a standard spot detection approach on either 2D or 3D images. For more details and some
-benchmarking, we refer to our paper ([Tsanov et al., NAR, 2016](https://academic.oup.com/nar/article/44/22/e165/2691336)).
+The following analysis steps are performed. Fore more detail, we refer to the section [**section**](fq-spot-detection.md/#some-background)
+or our paper  ([Tsanov et al., NAR, 2016](https://academic.oup.com/nar/article/44/22/e165/2691336)).
 
 1. Images are **filtered** with a Laplacian of Gaussian (Log) filter. This removes background and enhances local contrast of small spots.
 2. Spots are **detected** with a local maximum approach. As the name implies, spots are considered if they are above a user-defined threshold and further away from another spot than a user-defined distance.
+
+## Workflow
 
 In this tab, the user will specify
 
@@ -14,7 +16,8 @@ In this tab, the user will specify
 * Parameter of the local maximum detection: minimum distance and intensity threshold
 * Apply this detection either to one image, or all images in the specified data folder.
 
-## Workflow
+Images and spot detection results are displayed with the ImJoy image viewer Kaibu. It is intuitive in its usage, for some 
+details see [here](kaibu.md).
 
 ### Select channel and region
 
@@ -75,18 +78,19 @@ Spot detection is performed with a local maximum detection on the filtered image
     For each analysed images, results files will be created in the specified results folder. 
     More details on the results files can be found below.
 
-## Decompositon of dense areas and cluster detection
+## [Optional] Decompose dense areas
 
 The implemented RNA detection approach works well for reasonably separated spots. However, it fails once
 spots are too close or even overlapping, e.g. in transcription sites. Such denser areas are usually only 
 detected once and lead thus to an underdetection.
 
 For such cases, we implemented an additional module that allows to 
+
 1. Decompose such dense areas, i.e. we attempt to place indidivual RNA molecules to reproduce the signal.
 2. Cluster calling. We use a spatial cluster approach (DBscan), where you can specify under which criteria 
    you consider an accumulation a cluster. 
 
-### Decompose such dense areas
+### Decomposition
 
 The basic idea is simple
 
@@ -100,12 +104,9 @@ The basic idea is simple
 
 You can controll this behavior with several parameters
 
-- `psf_xy` and `psf_z`: estimated size of the spots in nanometer. Used to determine cropping size around reference spot.
-
-**Advanced**
-
-- `alpha`: Intensity percentile used to compute the reference spots. Value betweon 0 and 1. Higher values mean that the reference spot is brighter, and fewer spots will be needed to describe the dense region. Default is 0.5, meaning the reference spot considered is the median spot.
-- `beta`: Multiplicative factor for the intensity threshold of a dense region. Calculated from the max intensity of the reference spots. Default is 1. Higher values will results in a more restrictive selection of candidate regions. 
+* `Spot Radius`: estimated radius of the spots in nanometer. Used to determine cropping size around reference spot.
+* `alpha`: Intensity percentile used to compute the reference spots. Value betweon 0 and 1. Higher values mean that the reference spot is brighter, and fewer spots will be needed to describe the dense region. Default is 0.5, meaning the reference spot considered is the median spot.
+* `beta`: Multiplicative factor for the intensity threshold of a dense region. Calculated from the max intensity of the reference spots. Default is 1. Higher values will results in a more restrictive selection of candidate regions.
 
 When clicking on the button `Decompose dense regions`, the specified settings will be applied. A Kaibu window image will be shown
 with the decomposed results. You can also zoom in to inspect the results further.
@@ -153,23 +154,23 @@ Further, a folder `plots_foci` will be created containing the spot detection res
 The RNA detection is performed on the entire image. If you want to obtained results for individual cells and nuclei, 
 we provide a dedicated processing module under `Post-processing`.
 
-You first need to segment your cells/nuclei, we provide a dedicated deep-learning based tool for this, which is described [**here**](https://fq-segmentation.readthedocs.io/en/latest/). But you can also use your own tools if you prefer. 
+You first need to segment your cells/nuclei, we provide a dedicated deep-learning based tool for this, which is described [**here**](https://fq-segmentation.readthedocs.io/en/latest/). But you can also use your own tools if you prefer.
 
 The results, however, segmentation results have to follow **certain requirements**:
 
-- Segmentation results have to be stored in a dedicated subfolder in the analysis folder, usually called `segmentation-results`
-- Segmentations are stored as a label image (png), where each object is a filled mask with a constant value. 0 is reserved for background. 
-- These masks are identified with the name of the image, followed by a suffix, e.g. `__mask__cells.png`
+* Segmentation results have to be stored in a dedicated subfolder in the analysis folder, usually called `segmentation-results`
+* Segmentations are stored as a label image (png), where each object is a filled mask with a constant value. 0 is reserved for background. 
+* These masks are identified with the name of the image, followed by a suffix, e.g. `__mask__cells.png`
 
 Lastly, in order to know that a cell and a nucleus belong together, they have to have the same constant value. If this is not the case, 
 we provide a little processing script that goes over all cells, looks for the corresponding nucleus, gives them the same index, and stores
-the results in new folder. 
+the results in new folder.
 
 Once you specified all parameters permitting to identify the spot detection and segmentation results, you can press on `Assign RNAs to cells`. 
 This will create a new folder `results_per_fov`, where several files are created for each image
 
-- `_SPOTS_SUMMARY.csv`: containes RNA counts for each cell (how many total, in cytoplasm or nuclei, in foci transcription sites)
-- if you enable the option `Create plots ...`, a folder with the name of the image will be created containing a plot for each cell. 
+* `_SPOTS_SUMMARY.csv`: containes RNA counts for each cell (how many total, in cytoplasm or nuclei, in foci transcription sites)
+* if you enable the option `Create plots ...`, a folder with the name of the image will be created containing a plot for each cell. 
 
 ### Parameters
 
@@ -177,16 +178,16 @@ This will create a new folder `results_per_fov`, where several files are created
 
 **File identifiers**: suffix to determine which files will be considered
 
-- `Spots`: this can either be the detection results of individual spots `__spots.csv` or after cluster detection `__spots_foci.csv`
--  `Cells`, `Nuclei: what's the suffix used to save the label images for cells and nuclei.
+* `Spots`: this can either be the detection results of individual spots `__spots.csv` or after cluster detection `__spots_foci.csv`
+   `Cells`, `Nuclei: what's the suffix used to save the label images for cells and nuclei.
 
 **Channel identifiers**: unique string in the file-name for the different channels containing the detected spots and were used to
 segment cells and nuclei
 
-**Subfolder**: folder in the analysis folder containing the segmentation results. 
+**Subfolder**: folder in the analysis folder containing the segmentation results.
 
 If you want to clean the segmentation results and assign nuclei to cells, you can enable the dropdown menu, and specify the new
-subfolder were the cleaned masks should be stored. 
+subfolder were the cleaned masks should be stored.
 
 ## Some background
 

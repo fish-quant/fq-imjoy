@@ -7,7 +7,7 @@
   {
    "name": "FISH-QUANT",
    "type": "native-python",
-   "version": "0.0.15",
+   "version": "0.0.16",
    "description": "Process smFISH images.",
    "tags": [
     "stable",
@@ -33,7 +33,7 @@
    "permissions": [],
    "requirements": {
     "stable": [
-     "big-fish==0.5.0"
+     "big-fish==0.6.0"
     ],
     "dev": [
      ""
@@ -50,7 +50,7 @@
    "type": "window",
    "tags": [],
    "ui": "",
-   "version": "0.0.10",
+   "version": "0.0.11",
    "cover": "",
    "description": "User-interface of FQ.",
    "icon": "extension",
@@ -74,43 +74,6 @@
     "h": 20
    },
    "uri": "imjoy-plugins\\FQ-interface.imjoy.html"
-  },
-  {
-   "name": "FQ-match-cells-nuclei",
-   "type": "native-python",
-   "version": "0.0.1",
-   "description": "Pre-process 3D images to obtain 2D images for segmentation.",
-   "tags": [
-    "stable",
-    "dev"
-   ],
-   "ui": [
-    "<span style='font-weight: 550; color:#666362'>Path LABELS</span>: {id: 'path_labels', type: 'string', placeholder: 'paste-path-to-data'}",
-    "<span style='font-weight: 550; color:#666362'>Path SAVE</span>: {id: 'path_save', type: 'string', placeholder: 'segmentation-results˃˃segmentation-fq'}",
-    "<span style='font-weight: 550; color:#666362'>Ident NUCLEI</span>: {id: 'ident_nuc', type: 'string', placeholder: 'mask__nuclei'}",
-    "<span style='font-weight: 550; color:#666362'>Ident CELLS</span>: {id: 'ident_cell', type: 'string', placeholder: 'mask__cells'}",
-    "<span style='font-weight: 550; color:#666362'>Channel NUCLEI</span>: {id: 'ch_nuc', type: 'string', placeholder: 'dapi'}",
-    "<span style='font-weight: 550; color:#666362'>Channel CELLS</span>: {id: 'ch_cell', type: 'string', placeholder: 'cy3'}",
-    "<span style='font-weight: 550; color:#666362'>Search recursive</span>: {id: 'search_recursive', type: 'choose', options: ['false', 'true'], placeholder: 'false'}"
-   ],
-   "cover": "",
-   "inputs": null,
-   "outputs": null,
-   "flags": [],
-   "icon": "extension",
-   "api_version": "0.1.8",
-   "env": "",
-   "permissions": [],
-   "requirements": {
-    "stable": [
-     "pip: -U git+https://github.com/fish-quant/big-fish@master#egg=big-fish"
-    ],
-    "dev": [
-     ""
-    ]
-   },
-   "dependencies": [],
-   "uri": "imjoy-plugins\\FQ-match-cells-nuclei.imjoy.html"
   },
   {
    "name": "SNR-calculation",

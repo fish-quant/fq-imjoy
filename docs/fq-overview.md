@@ -1,24 +1,33 @@
-# Overview 
+# Overview
 
-## Installation
+Here, we describe how to install the FISH-quant plugin.
 
-* If you use FISH-quant for **the first time**, you can install it with <a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a> 
-    - First time installation can take a few minutes, since several Python libraries are installed.
-    - More details about installing plugins are [here](imjoy-overview.md/#installing-plugins)).
+Thist installation requires that you have a **Plugin engine** installed, and ImJoy
+connected to it as explained  [here](imjoy-installation.md#).
 
-* Once installed, the plugin will be saved in the  **workspace `fq-main`** as described [here](imjoy-overview.md#opening-a-workspace).  
+## Plugin installation
 
-In the ImJoy app, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins.
+If you use the FISH-quant plugin for **the first time**, you can install it with 
+<a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a>. 
 
-!!! info "The main important plugin is `FISH-QUANT`."
+Pressing this link, will open a new instance of ImJoy and display the install dialog. Simply press `Install`. More details about 
+installing plugins are [here](imjoy-overview.md/#installing-plugins).
 
-    This **Python plugin** performs the actual data analysis and 
-    runs on a Juypter engine, as described in the [installation instructions](imjoy-overview.md#connect-jupyter-engine). 
-    
-    So when using FISH-QUANT, you have to connect ImJoy to a Jupyter engine and make sure that 
-    the FISH-QUANT is running on this engine.  
+This installation can take a while since all necessary libraries are installed.
 
-    ![fq-plugins.png](img/fq-plugins.png){: style="width:200px"}
+These plugins are saved in the  **workspace `fq-main`**. If you open ImJoy again, you can select this workspace and you will find your plugins.
+
+Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins. 
+
+![fq-plugins.png](img/fq-plugins.png){: style="width:300px"}
+
+### Choosing plugin engine
+
+ImJoy can be connected to multiple engines, e.g. to run different analysis tasks (RNA detection and cell segmentation). 
+If you have only one engine connected to ImJoy, plugins will be **automatically connected** to this engine. 
+
+If yoy have multiple engines, you have to choose on which engine the plugin should be running by pressing on the 
+puzzle symbol and choosing the appropriate engine.
 
 ## Starting FISH-QUANT
 
@@ -44,33 +53,3 @@ To maximize the available space in the ImJoy window, you can do two things:
 
     ![imjoy-collapse-plugin-menu.gif](img/imjoy-collapse-plugin-menu.gif){: style="width:600px"}
 
-## Kaibu Image viewer
-Images and analysis results are displayed with [Kaibu](https://kaibu.org/#/about).
-
-![kaibu_screenshot.png](img/kaibu_screenshot.png){: style="width:500px"}
-
-### Layers
-
-A central concept in Kaibu are **layers**. Each layer can contain different content (images, spot detection results, ...).
-
-* The visibility of a layer can be turned on and off by clicking on the eye symbol.
-* When clicking on a layer a content specific menu is show, e.g. to change the contrast of an image.
-
-### Inspection of your image
-
-Once your image is opend, you can interact with your image.
-
-__Navigate__:
-
-* **Zoom** either with the dedicated buttons, or with the mouse-wheel, or gestures on touch-screens.
-* **Pan** with pressed mouse button, or corresponding gestures on a touch screen.
-
-In order to see pixel values of an image layer, minimize the Kaibu side-bar.
-
-* When **hoovering** over a pixel you will see relevant information such as its position and importantly intensity value.
-
-__Appearance__:
-For an image layer, you can  
-
-* Change the **lookup table**.
-* Change the **contrast of the image**.

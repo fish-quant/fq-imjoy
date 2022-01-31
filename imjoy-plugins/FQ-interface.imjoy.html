@@ -8,7 +8,7 @@ User-interface of FISH-quant implemented with buefy.
   "type": "window",
   "tags": [],
   "ui": "",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "cover": "",
   "description": "User-interface of FQ.",
   "icon": "extension",
@@ -186,13 +186,14 @@ class ImJoyPlugin {
 
           // For spots-cells assignment & segmentation post-processing
           assign_subfolder: 'segmentation-results',
-          assign_subfolder_new: 'segmentation-bigfish',
+          assign_subfolder_new: 'segmentation-results-matched',
           assign_ident_spots: '__spots_foci.csv',
           assign_ident_cell: '__mask__cells.png',
           assign_ident_nuc: '__mask__nuclei.png',          
           assign_ch_cell: 'cy3',
           assign_ch_nuc: 'dapi',  
           assign_ch_spots: 'cy3',
+          remove_cropped_cell: false,
           clean_segmentation_enable: false,
           plot_individual_cells_enable: false,
           
@@ -383,6 +384,7 @@ class ImJoyPlugin {
           // Clean segmentation masks
           btn_clean_segmentation: async function(){
             self.clean_segmentation()
+            this.assign_subfolder = this.assign_subfolder_new
           },
 
           // Assign RNAs to cells
@@ -489,6 +491,7 @@ class ImJoyPlugin {
       assign_ch_cell: this.store.assign_ch_cell,
       assign_ch_nuc: this.store.assign_ch_nuc,  
       assign_ch_spots: this.store.assign_ch_spots,
+      remove_cropped_cell: this.store.remove_cropped_cell,
       clean_segmentation_enable: this.store.clean_segmentation_enable,
       plot_individual_cells_enable: this.store.plot_individual_cells_enable,
     }
@@ -1340,8 +1343,8 @@ api.export(new ImJoyPlugin())
               <b-button type="is-primary" :loading="running_decompose_dense_regions" :disabled="status_detection_applied==false || analyze_clusters==false" @click="btn_decompose_dense_regions">Decompose dense regions</b-button>
             </b-field>
 
-            <!-- Specify spot size -->
-            <b-field label="Spot size" horizontal grouped>
+            <!-- Specify spot radius -->
+            <b-field label="Spot radius" horizontal grouped>
               <b-field>
                 <p class="control"> <span class="button is-static">XY [nm]</span></p>
                 <b-input placeholder="200" v-model.number="psf_size_xy"></b-input>
@@ -1366,7 +1369,7 @@ api.export(new ImJoyPlugin())
                 <b-input placeholder="200" v-model.number="foci_nb_min_spots"></b-input>
               </b-field>
               <b-field>
-                <p class="control"> <span class="button is-static">Radius [nm]</span></p>
+                <p class="control"> <span class="button is-static">Max distance [nm]</span></p>
                 <b-input placeholder="400" v-model.number="foci_radius"></b-input>
               </b-field>
             </b-field> <!-- END: specify pixel size -->
@@ -1433,7 +1436,7 @@ api.export(new ImJoyPlugin())
             <p class="control">
               <b-button rounded outlined type="is-primary" icon-left="help-circle" size="is-small" @click="open_docs('/fq-spot-detection/#assign-rna-detection-results-to-cells-and-nuclei')"></button>
             <p>
-            <p class="subtitle is-6">An optional processing step of segmentation results guarantees that each cell has only one nucleus. </p>
+            <p class="subtitle is-6">Cells and nuclei have to share the same index, this can be obtained with the optional processing step. </p>
           </b-field>
         </div>
       </div>
@@ -1480,6 +1483,7 @@ api.export(new ImJoyPlugin())
             <p class="control"> <span class="button is-static">Segmentation</span></p>
             <b-input v-model="assign_subfolder"></b-input>
           </b-field>
+          
         </b-field> <!-- END: specify Folders containing segmentation results -->
 
 
@@ -1524,6 +1528,9 @@ api.export(new ImJoyPlugin())
         <div class="columns">
           <div class="column is-two-thirds">
               <b-button expanded type="is-primary" :loading="assigning_rnas" :disabled="assign_ch_spots.length==0||assign_ch_nuc.length==0||assign_ch_nuc.length==0" @click="btn_assign_rnas_cells">Assign RNAs to cells</b-button>
+          </div>
+          <div class="column">
+            <b-checkbox v-model="remove_cropped_cell"> Remove cells touching the border</b-checkbox>
           </div>
           <div class="column">
             <b-checkbox v-model="plot_individual_cells_enable"> Create plots of individual cells</b-checkbox>
