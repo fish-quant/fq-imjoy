@@ -8,16 +8,13 @@ connected to it as explained  [here](imjoy-installation.md#).
 ## Plugin installation
 
 If you use the FISH-quant plugin for **the first time**, you can install it with 
-<a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link.**</a>. 
+<a href="https://imjoy.io/#/app?w=fq-main&plugin=fish-quant/fq-imjoy:FISH-QUANT@stable&upgrade=1" target="_blank">**this link**</a>. 
 
-Pressing this link, will open a new instance of ImJoy and display the install dialog. Simply press `Install`. More details about 
-installing plugins are [here](imjoy-overview.md/#installing-plugins).
+This will open a new instance of ImJoy and display the install dialog. Simply press `Install`. For more details on installing plugins in ImJoy see [here](imjoy-overview.md/#installing-plugins.
 
-This installation can take a while since all necessary libraries are installed.
-
-These plugins are saved in the  **workspace `fq-main`**. If you open ImJoy again, you can select this workspace and you will find your plugins.
-
-Once installed, you will find the **main plugin** `FISH-QUANT`, as wells as several helper plugins. 
+* This will install find the **main plugin** `FISH-QUANT`, as wells as several helper plugins.
+* The installation can take a while since all necessary libraries are installed.
+* Plugins are saved in the  **workspace `fq-main`**. If you open ImJoy again, you can select this workspace and you can use them without a new installation.
 
 ![fq-plugins.png](img/fq-plugins.png){: style="width:300px"}
 
