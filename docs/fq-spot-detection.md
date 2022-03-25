@@ -178,8 +178,8 @@ This will create a new folder `results_per_fov`, where several files are created
 
 **File identifiers**: suffix to determine which files will be considered
 
-* `Spots`: this can either be the detection results of individual spots `__spots.csv` or after cluster detection `__spots_foci.csv`
-   `Cells`, `Nuclei: what's the suffix used to save the label images for cells and nuclei.
+* `Spots`: this can either be the detection results of individual spots (`__spots.csv`) or after cluster detection `__spots_foci.csv`. FISH-quant will also look for the results file of detected foci (`__foci.csv`) and load it if present.
+* `Cells`, `Nuclei: used suffix to save the label images for cells and nuclei.
 
 **Channel identifiers**: unique string in the file-name for the different channels containing the detected spots and were used to
 segment cells and nuclei
