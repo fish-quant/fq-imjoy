@@ -7,13 +7,13 @@ Here we describe how data has to be
 
 ## Demo data
 
-Already processed demo data can be downloaded from [**Dropbox**](https://www.dropbox.com/sh/yr1s5olqwkvyx0i/AADH0QQtdNuWWq7z9wgQpLiOa?dl=0). With these data, you can verify if the different analysis steps are properly executed.
+Already processed demo data (in 3D) can be downloaded from [**Dropbox**](https://www.dropbox.com/s/ep1lwxvnfofuaot/fq-imjoy-demo.zip?dl=0). With these data, you can verify if the different analysis steps are properly executed.
 
-This test data is also directly available from within the FISH-quant interface, when you press on the button `Get zipped (demo) data`.
+A smaller (2D) data-set is directly available from within the FISH-quant interface, when you press on the button `Get zipped (demo) data`. You can also download it from  [**Dropbox**](https://www.dropbox.com/s/kda9rgfs3tb1evv/fq-imjoy-tutorial.zip?dl=0)
 
 ## Organization
 
-We strongly recommend the following data-organization on which this workflow has been tested. 
+We strongly recommend the following data-organization on which this workflow has been tested.
 
 The same data organization is also used in the package to perform [cell and nuclear segmentation](https://github.com/fish-quant/segmentation/). This permits to easily combine these workflows.
 
