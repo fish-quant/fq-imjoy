@@ -7,7 +7,7 @@
   {
    "name": "FISH-QUANT",
    "type": "native-python",
-   "version": "0.0.18",
+   "version": "0.0.19",
    "description": "Process smFISH images.",
    "tags": [
     "stable",
@@ -33,7 +33,7 @@
    "permissions": [],
    "requirements": {
     "stable": [
-     "big-fish==0.6.0"
+     "big-fish==0.6.2"
     ],
     "dev": [
      ""
