@@ -1,4 +1,4 @@
 big-fish==0.6.2
 imjoy>=0.11.38
-imjoy-rpc>=0.5.11
+imjoy-rpc>=0.5.9
 nbgitpuller
