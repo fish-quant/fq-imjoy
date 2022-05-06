@@ -10,7 +10,7 @@ big-fish installed in the env where you run this plugin. Either the stable versi
 {
   "name": "FISH-QUANT",
   "type": "native-python",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "Process smFISH images.",
   "tags": ["stable","dev"],
   "ui": "",
@@ -144,7 +144,6 @@ def create_folder(path_new):
 async def create_mip(img, name_save, file_manager, create_url=False, rescale=True):
     """
     Provide a base64 encoded URL of a MIP.
-
     """
 
     # Create MIP for 3D images
@@ -533,6 +532,7 @@ class ImJoyPlugin():
         ch_dict = {channel['identifier']: channel['name'] for channel in channels}
         ch_identifier = list(ch_dict.keys())
         api.log(f'[FISH-QUANT][scan_folder] channel dictionary: {ch_dict}')
+
         # Scan all files create data-frame for files that match the regular expression
         df_regexp = pd.DataFrame()
 
@@ -543,15 +543,14 @@ class ImJoyPlugin():
 
             if match:
                 match_dict = match.groupdict()
-                api.log('     ... match against regular expression')
-                api.log(match_dict)
+                api.log(f'     ... match against regular expression {match_dict}')
 
                 # Add only if image extension matches
                 if match_dict['img_ext'] == config['img_ext']:
                     match_dict.update({'file_name': file})
                     df_regexp = df_regexp.append(match_dict, ignore_index=True)
                 else:
-                    api.log(f' ... ups .... image extension is wrong')
+                    api.log(f' ... image extension is wrong')
                     
             else:
                 api.log('     ... no match against regular expression')
@@ -586,16 +585,15 @@ class ImJoyPlugin():
                     data_dict.update({ch_dict[ch_query]: image_name})
 
                 df_scan = df_scan.append(data_dict, ignore_index=True)
+                
 
         self.path_root = config['path_root']
         self.path_acquisition = path_acquisition
-
         scan_results = df_scan.to_dict('records')
 
         api.showStatus(f'Found {len(scan_results)} images matching the search criteria.')
-        api.log('[FISH-QUANT][scan_folder] scan results:')
+        api.log(f'[FISH-QUANT][scan_folder] scan results: {scan_results}')
         api.log(f'Found {len(scan_results)} images matching the search criteria.')
-        api.log(scan_results)
         
         # Save analysis details
         self.analysis_details['data_specs']['path_root'] = str(config['path_root'])
@@ -636,7 +634,7 @@ class ImJoyPlugin():
             create_folder(path_save)
             api.log(f'[FISH-QUANT][load_image] path for MIPs: {path_save}')
 
-        # Loop over channels and build 5D tensor (starfish)
+        # Loop over channels
         imgs_3d = []
         mip_tensors = []
         image_names = {}
