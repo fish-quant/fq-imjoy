@@ -2,7 +2,7 @@
 
 https://gist.github.com/seanbuscay/5877413
 
-Create branch in Github
+## Create branch in Github
 ```
 git checkout --orphan binder
 git rm -rf .
@@ -11,9 +11,12 @@ git commit -a -m "add requirements.txt"
 git push origin binder
 ```
 
-Use in plugin
+## Usage in ImJoy plugin:
+
 Add
+
 ```
 {"type": "binder", "spec": "fish-quant/fq-imjoy/binder", "skip_requirements": true}
 ```
+
 to `env` of your plugin config
