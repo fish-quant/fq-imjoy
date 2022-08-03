@@ -82,7 +82,7 @@ that match you file-name. In order to analyze this file-name, we only need the f
 With this, we can write the following regular expression
 
 ```regexp
-(?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\.(?P<img_ext>.*)`.
+(?P<file_ident>.*)_(?P<fov>.*)_(?P<channel>.*)\.(?P<img_ext>.*)
 ```
 
 This allows to analyze a given filename, e.g. `test_pos001_cy3.tif` and extract the different subgroups
