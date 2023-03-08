@@ -9,7 +9,7 @@ This repository provides several ImJoy plugins to run analysis workflows for smF
 
 For more information, please consult the dedicated [**documentation**](https://fq-imjoy.readthedocs.io/en/latest/).
 
-If you encounter a problems, please file an [**issue**](https://github.com/fish-quant/fq-imjoy/issues).
+If you encounter a problem, please file an [**issue**](https://github.com/fish-quant/fq-imjoy/issues).
 
 # Ongoing work
 
